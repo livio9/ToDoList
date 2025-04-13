@@ -13,6 +13,10 @@ public interface TaskDao {
     @Query("SELECT * FROM todos")
     List<Todo> getAll();
 
+    // 查询未被软删除的任务
+    @Query("SELECT * FROM todos WHERE deleted = 0")
+    List<Todo> getVisibleTodos();
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTodo(Todo todo);
 

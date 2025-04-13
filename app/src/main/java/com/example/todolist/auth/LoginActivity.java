@@ -2,12 +2,16 @@ package com.example.todolist.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.todolist.sync.SyncWorker;
 import com.example.todolist.ui.MainActivity;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -56,8 +60,22 @@ public class LoginActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // 登录成功，进入主界面
                             Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                            finish();
+//                            SyncWorker.triggerSyncNow(getApplicationContext());
+                            SyncWorker.pullCloudToLocal(getApplicationContext());
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                finish();
+                            }, 1000); // 延迟1秒进入主界面
+//                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+//                            if (user != null) {
+//                                String uid = user.getUid();
+//                                Log.d("FirebaseUID", "当前用户 UID: " + uid);  // 打印到 Logcat
+//                                Toast.makeText(getApplicationContext(), "当前UID: " + uid, Toast.LENGTH_LONG).show(); // 显示给用户看
+//                            }
+
+//                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+//                            finish();
+
                         } else {
                             // 登录失败
                             Toast.makeText(LoginActivity.this, "登录失败："

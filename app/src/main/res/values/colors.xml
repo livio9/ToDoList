@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 基础颜色 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- 应用主题颜色 -->
+    <color name="primary">#3F51B5</color>      <!-- 主要颜色：靛蓝色 -->
+    <color name="primary_dark">#303F9F</color> <!-- 深一点的主色调 -->
+    <color name="primary_light">#E8EAF6</color> <!-- 浅一点的主色调 -->
+    <color name="accent">#FF4081</color>       <!-- 强调色：亮粉色 -->
+    
+    <!-- 文本颜色 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    
+    <!-- 任务状态颜色 -->
+    <color name="task_completed">#9E9E9E</color>
+    <color name="task_pending">#212121</color>
+    <color name="task_overdue">#F44336</color>
+    
+    <!-- 背景颜色 -->
+    <color name="background">#F5F7FA</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="divider">#EEEEEE</color>
+    
+    <!-- 类别颜色 -->
+    <color name="category_work">#4CAF50</color>     <!-- 工作：绿色 -->
+    <color name="category_personal">#7E57C2</color> <!-- 个人：紫色 -->
+    <color name="category_other">#FF9800</color>    <!-- 其他：橙色 -->
 </resources>

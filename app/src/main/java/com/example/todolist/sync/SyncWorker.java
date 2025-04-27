@@ -34,45 +34,92 @@ public class SyncWorker extends Worker {
     }
 
     public static void pullCloudToLocal(Context applicationContext) {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            return;
-        }
-        String uid = user.getUid();
-        TaskDao taskDao = AppDatabase.getInstance(applicationContext).taskDao();
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
-
-        new Thread(() -> {
-            try {
-                // 获取云端所有任务
-                QuerySnapshot snapshot = com.google.android.gms.tasks.Tasks.await(cloudTasksRef.get());
-                List<DocumentSnapshot> cloudDocs = snapshot.getDocuments();
-                // 获取本地所有任务
-                List<Todo> localTasks = taskDao.getAll();
-
-                // 建立本地映射
-                Map<String, Todo> localMap = new HashMap<>();
-                for (Todo t : localTasks) {
-                    localMap.put(t.id, t);
-                }
-
-                // 遍历云端任务, 仅执行"云 -> 本地"更新
-                for (DocumentSnapshot doc : cloudDocs) {
-                    Todo cloudTodo = doc.toObject(Todo.class);
-                    if (cloudTodo == null) continue;
-                    Todo localTodo = localMap.get(cloudTodo.id);
-                    // 如果本地为空, 或云端的更新更晚, 则覆盖本地
-                    if (localTodo == null || cloudTodo.updatedAt > localTodo.updatedAt) {
-                        taskDao.insertTodo(cloudTodo);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) {
+                return;
             }
-        }).start();
-        Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
-        applicationContext.sendBroadcast(intent);
+            String uid = user.getUid();
+            TaskDao taskDao = AppDatabase.getInstance(applicationContext).taskDao();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
+
+            new Thread(() -> {
+                try {
+                    // 获取云端所有任务
+                    QuerySnapshot snapshot = com.google.android.gms.tasks.Tasks.await(cloudTasksRef.get());
+                    List<DocumentSnapshot> cloudDocs = snapshot.getDocuments();
+                    // 获取本地所有任务
+                    List<Todo> localTasks = taskDao.getAll();
+
+                    // 建立本地映射
+                    Map<String, Todo> localMap = new HashMap<>();
+                    for (Todo t : localTasks) {
+                        localMap.put(t.id, t);
+                    }
+
+                    // 遍历云端任务, 仅执行"云 -> 本地"更新
+                    for (DocumentSnapshot doc : cloudDocs) {
+                        Todo cloudTodo = doc.toObject(Todo.class);
+                        if (cloudTodo == null) continue;
+                        Todo localTodo = localMap.get(cloudTodo.id);
+                        // 如果本地为空, 或云端的更新更晚, 则覆盖本地
+                        if (localTodo == null || cloudTodo.updatedAt > localTodo.updatedAt) {
+                            taskDao.insertTodo(cloudTodo);
+                        }
+                    }
+                    
+                    try {
+                        Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
+                        applicationContext.sendBroadcast(intent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void pushLocalToCloud(Context applicationContext) {
+        try {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) {
+                return;
+            }
+            
+            String uid = user.getUid();
+            TaskDao taskDao = AppDatabase.getInstance(applicationContext).taskDao();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
+
+            new Thread(() -> {
+                try {
+                    // 获取所有本地任务
+                    List<Todo> localTasks = taskDao.getAll();
+                    
+                    // 批量上传到Firestore
+                    for (Todo todo : localTasks) {
+                        cloudTasksRef.document(todo.id).set(todo);
+                    }
+                    
+                    // 通知数据已更新
+                    try {
+                        Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
+                        applicationContext.sendBroadcast(intent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @NonNull

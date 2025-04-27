@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.todolist"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.todolist"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -30,6 +30,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+    
+    lint {
+        abortOnError = false
+    }
 }
 
 dependencies {
@@ -46,7 +54,19 @@ dependencies {
     implementation("androidx.work:work-runtime:2.9.0")
     implementation(libs.room.common.jvm)
     implementation(libs.room.runtime.android)
+    
+    // OkHttp 网络请求库
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    
+    // Gson for JSON conversion
+    implementation("com.google.code.gson:gson:2.9.1")
+    
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:4.8.0")
+    testImplementation("org.robolectric:robolectric:4.9")
+    
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
 }

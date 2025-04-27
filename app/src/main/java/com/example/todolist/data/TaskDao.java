@@ -13,8 +13,8 @@ public interface TaskDao {
     @Query("SELECT * FROM todos")
     List<Todo> getAll();
 
-    // 查询未被软删除的任务
-    @Query("SELECT * FROM todos WHERE deleted = 0")
+    // 查询未被软删除且不属于代办集的任务
+    @Query("SELECT * FROM todos WHERE deleted = 0 AND belongsToTaskGroup = 0")
     List<Todo> getVisibleTodos();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -28,4 +28,14 @@ public interface TaskDao {
 
     @Query("DELETE FROM todos")
     void deleteAll();
+    
+    // 逻辑删除任务（软删除）
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+    void logicalDeleteTodo(String taskId, long timestamp);
+    
+    // 重载方法，使用当前时间戳
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+    default void logicalDeleteTodo(String taskId) {
+        logicalDeleteTodo(taskId, System.currentTimeMillis());
+    }
 }

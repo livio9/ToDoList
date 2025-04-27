@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.todolist">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- 应用需要的权限 -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -11,7 +11,8 @@
         android:label="ToDoList"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ToDoList">
+        android:theme="@style/Theme.ToDoList"
+        android:usesCleartextTraffic="true">
         <!-- 登录 Activity，设置为Launcher启动界面 -->
         <activity android:name=".auth.LoginActivity"
             android:exported="true">
@@ -21,8 +22,16 @@
             </intent-filter>
         </activity>
         <!-- 主界面 Activity -->
-        <activity android:name=".ui.MainActivity" />
+        <activity android:name=".ui.MainActivity" 
+            android:exported="true" />
         <!-- 添加/编辑任务 Activity -->
-        <activity android:name=".ui.AddEditTaskActivity" />
+        <activity android:name=".ui.AddEditTaskActivity" 
+            android:exported="true" />
+        <!-- 统计分析 Activity -->
+        <activity android:name=".ui.StatisticsActivity" 
+            android:exported="true" />
+        <!-- 代办集详情 Activity -->
+        <activity android:name=".ui.TaskGroupActivity" 
+            android:exported="true" />
     </application>
 </manifest>

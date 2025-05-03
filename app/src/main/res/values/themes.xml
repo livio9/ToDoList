@@ -5,5 +5,345 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.Todolist" parent="Base.Theme.Todolist" />
+    <!-- 蓝色系主题 - 默认主题 -->
+    <style name="Theme.ToDoList" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme1_primary</item>
+        <item name="colorPrimaryVariant">@color/theme1_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme1_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme1_accent</item>
+        <item name="colorSecondaryVariant">@color/theme1_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme1_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme1_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme1_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton</item>
+    </style>
+    
+    <!-- 红色系主题 -->
+    <style name="Theme.ToDoList.Red" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme2_primary</item>
+        <item name="colorPrimaryVariant">@color/theme2_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme2_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme2_accent</item>
+        <item name="colorSecondaryVariant">@color/theme2_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme2_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme2_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme2_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Red</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Red</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Red</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Red</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Red</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Red</item>
+    </style>
+    
+    <!-- 绿色系主题 -->
+    <style name="Theme.ToDoList.Green" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme3_primary</item>
+        <item name="colorPrimaryVariant">@color/theme3_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme3_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme3_accent</item>
+        <item name="colorSecondaryVariant">@color/theme3_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme3_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme3_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme3_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Green</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Green</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Green</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Green</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Green</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Green</item>
+    </style>
+    
+    <!-- 紫色系主题 -->
+    <style name="Theme.ToDoList.Purple" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme4_primary</item>
+        <item name="colorPrimaryVariant">@color/theme4_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme4_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme4_accent</item>
+        <item name="colorSecondaryVariant">@color/theme4_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme4_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme4_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme4_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Purple</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Purple</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Purple</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Purple</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Purple</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Purple</item>
+    </style>
+    
+    <!-- 粉色系主题 -->
+    <style name="Theme.ToDoList.Pink" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme5_primary</item>
+        <item name="colorPrimaryVariant">@color/theme5_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme5_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme5_accent</item>
+        <item name="colorSecondaryVariant">@color/theme5_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme5_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme5_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme5_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Pink</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Pink</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Pink</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Pink</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Pink</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Pink</item>
+    </style>
+    
+    <!-- 橙色系主题 -->
+    <style name="Theme.ToDoList.Orange" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme6_primary</item>
+        <item name="colorPrimaryVariant">@color/theme6_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme6_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme6_accent</item>
+        <item name="colorSecondaryVariant">@color/theme6_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme6_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme6_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme6_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Orange</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Orange</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Orange</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Orange</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Orange</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Orange</item>
+    </style>
+    
+    <!-- 黄色系主题 -->
+    <style name="Theme.ToDoList.Yellow" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme7_primary</item>
+        <item name="colorPrimaryVariant">@color/theme7_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme7_primary_dark</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorSecondary">@color/theme7_accent</item>
+        <item name="colorSecondaryVariant">@color/theme7_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme7_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme7_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme7_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Yellow</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Yellow</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Yellow</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Yellow</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Yellow</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Yellow</item>
+    </style>
+    
+    <!-- 大地色系主题 -->
+    <style name="Theme.ToDoList.Brown" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme8_primary</item>
+        <item name="colorPrimaryVariant">@color/theme8_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme8_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme8_accent</item>
+        <item name="colorSecondaryVariant">@color/theme8_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme8_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme8_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme8_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Brown</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Brown</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Brown</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Brown</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Brown</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Brown</item>
+    </style>
+    
+    <!-- 黑色系主题 -->
+    <style name="Theme.ToDoList.Black" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/theme9_primary</item>
+        <item name="colorPrimaryVariant">@color/theme9_primary_dark</item>
+        <item name="colorPrimaryDark">@color/theme9_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme9_accent</item>
+        <item name="colorSecondaryVariant">@color/theme9_primary_darkest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- 扩展主题颜色属性 -->
+        <item name="colorPrimaryLight">@color/theme9_primary_light</item>
+        <item name="colorPrimaryLightest">@color/theme9_primary_lightest</item>
+        
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/theme9_primary_dark</item>
+        
+        <!-- 背景颜色 -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 控件样式 -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Black</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Black</item>
+        <item name="cardViewStyle">@style/Widget.App.CardView</item>
+        <item name="chipStyle">@style/Widget.App.Chip.Black</item>
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation.Black</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar.Black</item>
+        <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton.Black</item>
+    </style>
 </resources>

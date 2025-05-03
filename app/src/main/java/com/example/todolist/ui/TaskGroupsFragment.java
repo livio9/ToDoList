@@ -3,6 +3,8 @@ package com.example.todolist.ui;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -368,6 +371,30 @@ public class TaskGroupsFragment extends Fragment {
             holder.textTitle.setText(taskGroup.title);
             holder.textCategory.setText(taskGroup.category);
             
+            // 根据类别设置不同颜色
+            int backgroundColor;
+            switch (taskGroup.category) {
+                case "工作":
+                    backgroundColor = ContextCompat.getColor(context, R.color.category_work);
+                    break;
+                case "学习":
+                    backgroundColor = ContextCompat.getColor(context, R.color.category_study);
+                    break;
+                case "个人":
+                    backgroundColor = ContextCompat.getColor(context, R.color.category_personal);
+                    break;
+                case "健康":
+                    backgroundColor = ContextCompat.getColor(context, R.color.category_health);
+                    break;
+                default:
+                    backgroundColor = ContextCompat.getColor(context, R.color.category_other);
+                    break;
+            }
+            
+            // 设置类别标签背景颜色
+            holder.textCategory.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+            holder.textCategory.setTextColor(ContextCompat.getColor(context, R.color.white));
+            
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             holder.textCreatedAt.setText(sdf.format(taskGroup.createdAt));
             
@@ -484,9 +511,42 @@ public class TaskGroupsFragment extends Fragment {
             if (result != null) {
                 showDecompositionResultDialog(result);
             } else {
-                String errorMsg = error != null ? error.getMessage() : "未知错误";
-                Toast.makeText(requireContext(), 
-                    "任务分解失败: " + errorMsg, Toast.LENGTH_LONG).show();
+                String errorMsg = "未知错误";
+                if (error != null) {
+                    errorMsg = error.getMessage();
+                    
+                    // 对OpenRouter API错误进行特殊处理
+                    if (errorMsg.contains("API返回错误: Internal Server Error") || 
+                        errorMsg.contains("500")) {
+                        errorMsg = "AI服务器暂时不可用，请稍后再试";
+                    } else if (errorMsg.contains("API响应中缺少choices字段")) {
+                        errorMsg = "AI服务返回格式异常，请稍后再试";
+                    } else if (errorMsg.contains("无法从API响应中提取有效的JSON数据")) {
+                        errorMsg = "AI返回数据格式错误，请稍后再试";
+                    } else if (errorMsg.contains("timed out")) {
+                        errorMsg = "AI服务连接超时，请检查网络后重试";
+                    }
+                }
+                
+                // 显示错误提示
+                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                builder.setTitle("任务分解失败")
+                       .setMessage("抱歉，无法分解任务：" + errorMsg)
+                       .setPositiveButton("重试", (dialog, which) -> {
+                           // 如果输入框还存在，重新尝试
+                           View dialogView = getLayoutInflater().inflate(R.layout.dialog_create_task_group, null);
+                           EditText editTaskGroupTitle = dialogView.findViewById(R.id.editTaskGroupTitle);
+                           String lastTitle = editTaskGroupTitle.getText().toString().trim();
+                           if (!lastTitle.isEmpty()) {
+                               new DecomposeTaskAsyncTask().execute(lastTitle);
+                           } else {
+                               showCreateTaskGroupDialog();
+                           }
+                       })
+                       .setNegativeButton("取消", null)
+                       .show();
+                
+                Log.e(TAG, "任务分解失败: " + (error != null ? error.toString() : "未知错误"), error);
             }
         }
     }

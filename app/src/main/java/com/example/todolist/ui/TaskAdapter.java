@@ -1,10 +1,12 @@
 package com.example.todolist.ui;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -78,57 +80,43 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.textTitle.setText(todo.title);
         
         // 根据完成状态设置标题文字效果（删除线/正常）
-        if (todo.completed) {
-            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-            holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_completed));
-        } else {
-            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-            // 判断是否已过期，过期任务显示红色
-            long now = System.currentTimeMillis();
-            if (todo.time < now) {
-                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_overdue));
-            } else {
-                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_pending));
-            }
-        }
+        updateTitleAppearance(holder, todo.completed, todo.time);
         
         // 格式化任务时间
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         String timeStr = sdf.format(new Date(todo.time));
         
-        // 设置详细信息
-        StringBuilder details = new StringBuilder(timeStr);
+        // 设置时间和地点
+        holder.textTime.setText(timeStr);
+        
         if (todo.place != null && !todo.place.isEmpty()) {
-            details.append(" | ").append(todo.place);
-        }
-        holder.textDetails.setText(details.toString());
-        
-        // 设置分类芯片
-        if (todo.category != null && !todo.category.isEmpty()) {
-            holder.chipCategory.setVisibility(View.VISIBLE);
-            handleCategoryChip(holder.chipCategory, todo.category);
+            holder.textPlace.setText(todo.place);
+            holder.layoutPlace.setVisibility(View.VISIBLE);
         } else {
-            holder.chipCategory.setVisibility(View.GONE);
+            holder.layoutPlace.setVisibility(View.GONE);
         }
         
-        holder.checkDone.setChecked(todo.completed);
+        // 设置分类标签
+        if (todo.category != null && !todo.category.isEmpty()) {
+            holder.textCategory.setVisibility(View.VISIBLE);
+            handleCategoryChip(holder.textCategory, todo.category);
+        } else {
+            holder.textCategory.setVisibility(View.GONE);
+        }
+        
+        holder.checkCompleted.setChecked(todo.completed);
 
-        // 复选框勾选事件：更新完成状态
-        holder.checkDone.setOnClickListener(v -> {
-            boolean newStatus = holder.checkDone.isChecked();
-            // 更新标题的样式
+        // 复选框勾选事件：更新完成状态，并添加动画效果
+        holder.checkCompleted.setOnClickListener(v -> {
+            boolean newStatus = holder.checkCompleted.isChecked();
+            
+            // 添加动画效果
             if (newStatus) {
-                holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_completed));
+                // 勾选时的动画
+                animateTaskCompletion(holder);
             } else {
-                holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-                // 判断是否已过期
-                long now = System.currentTimeMillis();
-                if (todo.time < now) {
-                    holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_overdue));
-                } else {
-                    holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_pending));
-                }
+                // 取消勾选时的动画
+                animateTaskUncomplete(holder);
             }
             
             // 更新数据对象并异步保存到本地数据库
@@ -163,6 +151,72 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         });
     }
 
+    // 更新标题外观的辅助方法
+    private void updateTitleAppearance(@NonNull ViewHolder holder, boolean completed, long taskTime) {
+        if (completed) {
+            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_completed));
+        } else {
+            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+            // 判断是否已过期，过期任务显示红色
+            long now = System.currentTimeMillis();
+            if (taskTime < now) {
+                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_overdue));
+            } else {
+                holder.textTitle.setTextColor(context.getResources().getColor(R.color.text_primary));
+            }
+        }
+    }
+    
+    // 任务完成动画效果
+    private void animateTaskCompletion(@NonNull ViewHolder holder) {
+        // 添加删除线动画
+        ValueAnimator strikeAnimator = ValueAnimator.ofInt(0, holder.textTitle.getText().length());
+        strikeAnimator.setDuration(300);
+        strikeAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        strikeAnimator.addUpdateListener(animation -> {
+            int progress = (int) animation.getAnimatedValue();
+            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_completed));
+            holder.textTitle.invalidate();
+        });
+        strikeAnimator.start();
+        
+        // 添加淡出动画
+        ValueAnimator alphaAnimator = ValueAnimator.ofFloat(1.0f, 0.7f);
+        alphaAnimator.setDuration(300);
+        alphaAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        alphaAnimator.addUpdateListener(animation -> {
+            float alpha = (float) animation.getAnimatedValue();
+            holder.itemView.setAlpha(alpha);
+        });
+        alphaAnimator.start();
+    }
+    
+    // 任务取消完成动画效果
+    private void animateTaskUncomplete(@NonNull ViewHolder holder) {
+        // 添加恢复动画
+        ValueAnimator alphaAnimator = ValueAnimator.ofFloat(0.7f, 1.0f);
+        alphaAnimator.setDuration(300);
+        alphaAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        alphaAnimator.addUpdateListener(animation -> {
+            float alpha = (float) animation.getAnimatedValue();
+            holder.itemView.setAlpha(alpha);
+            holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+            
+            // 判断是否已过期，过期任务显示红色
+            Todo todo = taskList.get(holder.getAdapterPosition());
+            long now = System.currentTimeMillis();
+            if (todo.time < now) {
+                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_overdue));
+            } else {
+                holder.textTitle.setTextColor(context.getResources().getColor(R.color.text_primary));
+            }
+            holder.textTitle.invalidate();
+        });
+        alphaAnimator.start();
+    }
+
     @Override
     public int getItemCount() {
         return taskList != null ? taskList.size() : 0;
@@ -170,25 +224,27 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     // 自定义 ViewHolder，持有每个列表项的子视图
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        MaterialCheckBox checkDone;
+        MaterialCheckBox checkCompleted; // 改为MaterialCheckBox
         TextView textTitle;
-        TextView textDetails;
+        TextView textTime;
         TextView textPlace;
-        Chip chipCategory;
+        TextView textCategory;
+        View layoutPlace;
         
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            checkDone = itemView.findViewById(R.id.checkDone);
-            textTitle = itemView.findViewById(R.id.textTitle);
-            textDetails = itemView.findViewById(R.id.textDetails);
-            textPlace = itemView.findViewById(R.id.textPlace);
-            chipCategory = itemView.findViewById(R.id.chipCategory);
+            checkCompleted = itemView.findViewById(R.id.checkBoxCompleted);
+            textTitle = itemView.findViewById(R.id.textViewTitle);
+            textTime = itemView.findViewById(R.id.textViewTime);
+            textPlace = itemView.findViewById(R.id.textViewPlace);
+            textCategory = itemView.findViewById(R.id.textViewCategory);
+            layoutPlace = itemView.findViewById(R.id.layoutPlace);
         }
     }
 
     // 添加handleCategoryChip方法，根据不同类别设置不同颜色
-    private void handleCategoryChip(Chip chip, String category) {
-        Context context = chip.getContext();
+    private void handleCategoryChip(TextView textView, String category) {
+        Context context = textView.getContext();
         int backgroundColor;
         
         switch (category) {
@@ -198,6 +254,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             case "个人":
                 backgroundColor = ContextCompat.getColor(context, R.color.category_personal);
                 break;
+            case "学习":
+                backgroundColor = ContextCompat.getColor(context, R.color.category_study);
+                break;
+            case "健康":
+                backgroundColor = ContextCompat.getColor(context, R.color.category_health);
+                break;
             case "其他":
                 backgroundColor = ContextCompat.getColor(context, R.color.category_other);
                 break;
@@ -206,7 +268,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 break;
         }
         
-        chip.setChipBackgroundColor(ColorStateList.valueOf(backgroundColor));
-        chip.setText(category);
+        textView.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        textView.setText(category);
     }
 }

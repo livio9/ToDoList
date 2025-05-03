@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 扩展主题颜色属性 -->
+    <attr name="colorPrimaryLight" format="color" />
+    <attr name="colorPrimaryLightest" format="color" />
+</resources> 

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 
+import androidx.core.content.ContextCompat;
+
 public class TaskGroupActivity extends AppCompatActivity {
     private TaskGroup taskGroup;
     private RecyclerView recyclerSubTasks;
@@ -135,44 +137,82 @@ public class TaskGroupActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * 加载代办集和子任务
+     */
     private void loadTaskGroup(String groupId) {
         Executors.newSingleThreadExecutor().execute(() -> {
-            // 加载代办集
-            taskGroup = taskGroupDao.getTaskGroupById(groupId);
-            if (taskGroup == null) {
+            try {
+                // 加载代办集
+                taskGroup = taskGroupDao.getTaskGroupById(groupId);
+                if (taskGroup == null) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                    return;
+                }
+
+                // 更新UI显示代办集信息
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
-                    finish();
+                    textGroupName.setText(taskGroup.title);
+                    textCategory.setText("类别: " + taskGroup.category);
+                    
+                    // 设置类别标签颜色
+                    int backgroundColor;
+                    switch (taskGroup.category) {
+                        case "工作":
+                            backgroundColor = ContextCompat.getColor(this, R.color.category_work);
+                            break;
+                        case "学习":
+                            backgroundColor = ContextCompat.getColor(this, R.color.category_study);
+                            break;
+                        case "个人":
+                            backgroundColor = ContextCompat.getColor(this, R.color.category_personal);
+                            break;
+                        case "健康":
+                            backgroundColor = ContextCompat.getColor(this, R.color.category_health);
+                            break;
+                        default:
+                            backgroundColor = ContextCompat.getColor(this, R.color.category_other);
+                            break;
+                    }
+                    
+                    // 使用颜色作为文本颜色
+                    textCategory.setTextColor(backgroundColor);
+                    
+                    textEstimatedDays.setText("预计完成天数: " + taskGroup.estimatedDays);
+                    
+                    // 格式化日期
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                    textCreatedAt.setText("创建时间: " + sdf.format(taskGroup.createdAt));
                 });
-                return;
-            }
 
-            // 加载子任务
-            List<Todo> tasks = new ArrayList<>();
-            if (taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
-                tasks = taskGroupDao.getSubTasksByIds(taskGroup.subTaskIds);
-            }
-
-            // 更新UI
-            List<Todo> finalTasks = tasks;
-            runOnUiThread(() -> {
-                // 显示代办集信息
-                textGroupName.setText(taskGroup.title);
-                textCategory.setText("类别: " + taskGroup.category);
-                textEstimatedDays.setText("预计完成天数: " + taskGroup.estimatedDays);
+                // 加载子任务
+                List<String> subTaskIds = taskGroup.subTaskIds;
+                List<Todo> tasks = new ArrayList<>();
                 
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-                textCreatedAt.setText("创建时间: " + sdf.format(taskGroup.createdAt));
-
-                // 更新子任务列表
-                subTasks.clear();
-                subTasks.addAll(finalTasks);
-                adapter.notifyDataSetChanged();
-
-                // 如果没有子任务，显示提示
-                findViewById(R.id.textNoTasks).setVisibility(
-                        subTasks.isEmpty() ? View.VISIBLE : View.GONE);
-            });
+                if (subTaskIds != null && !subTaskIds.isEmpty()) {
+                    for (String taskId : subTaskIds) {
+                        Todo todo = AppDatabase.getInstance(this).taskDao().getTodoById(taskId);
+                        if (todo != null && !todo.deleted) {
+                            tasks.add(todo);
+                        }
+                    }
+                }
+                
+                // 在UI线程更新列表
+                List<Todo> finalTasks = tasks;
+                runOnUiThread(() -> {
+                    subTasks.clear();
+                    subTasks.addAll(finalTasks);
+                    adapter.notifyDataSetChanged();
+                });
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(this, "加载代办集失败: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
         });
     }
 } 

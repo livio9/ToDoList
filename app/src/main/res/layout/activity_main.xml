@@ -9,16 +9,39 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:elevation="6dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
+            android:background="?attr/colorPrimary"
             app:title="待办事项"
-            app:titleTextColor="@color/white"
-            app:layout_scrollFlags="scroll|enterAlways"/>
+            app:titleTextColor="?attr/colorOnPrimary"
+            app:layout_scrollFlags="scroll|enterAlways">
+            
+            <!-- 添加用户头像 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/userAvatarContainer"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="16dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp">
+                
+                <ImageView
+                    android:id="@+id/userAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_myplaces"
+                    app:tint="?attr/colorOnPrimary"
+                    android:background="?attr/colorPrimaryVariant"
+                    android:contentDescription="用户头像"/>
+            </androidx.cardview.widget.CardView>
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <FrameLayout
@@ -26,15 +49,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="56dp"
+        android:paddingBottom="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
         
-    <!-- 底部导航栏 -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
+    <!-- 底部导航栏 - 优化圆角和阴影效果 -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@color/white"
-        app:menu="@menu/menu_bottom_nav"
-        app:labelVisibilityMode="labeled"/>
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp">
+        
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            app:itemIconTint="?attr/colorPrimary"
+            app:itemTextColor="?attr/colorPrimary"
+            app:menu="@menu/menu_bottom_nav"
+            app:labelVisibilityMode="labeled"/>
+    </com.google.android.material.card.MaterialCardView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

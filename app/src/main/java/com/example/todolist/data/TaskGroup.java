@@ -48,4 +48,8 @@ public class TaskGroup implements Serializable {
             subTaskIds.add(taskId);
         }
     }
+    
+    public void removeSubTask(String taskId) {
+        subTaskIds.remove(taskId);
+    }
 } 

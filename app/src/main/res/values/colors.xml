@@ -4,29 +4,116 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <!-- 应用主题颜色 -->
-    <color name="primary">#3F51B5</color>      <!-- 主要颜色：靛蓝色 -->
-    <color name="primary_dark">#303F9F</color> <!-- 深一点的主色调 -->
-    <color name="primary_light">#E8EAF6</color> <!-- 浅一点的主色调 -->
-    <color name="accent">#FF4081</color>       <!-- 强调色：亮粉色 -->
+    <!-- 应用主题颜色 - 偏蓝色的浅蓝绿色主题 (默认) -->
+    <color name="primary">#3EAED8</color>      <!-- 主要颜色：偏蓝的浅蓝绿色 -->
+    <color name="primary_dark">#1E88C3</color> <!-- 深一点的主色调 -->
+    <color name="primary_light">#8CCEEB</color> <!-- 浅一点的主色调 -->
+    <color name="accent">#FFAB91</color>       <!-- 强调色：柔和珊瑚橙 -->
+    <color name="accent_light">#FFCCBC</color> <!-- 浅一点的强调色 -->
+    <color name="accent_dark">#FF7043</color>  <!-- 深一点的强调色 -->
     
     <!-- 文本颜色 -->
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="text_hint">#BDBDBD</color>
+    <color name="text_primary">#34495E</color>  <!-- 深灰蓝色 -->
+    <color name="text_secondary">#7F8C8D</color> <!-- 中等灰色调 -->
+    <color name="text_hint">#BDC3C7</color>      <!-- 明亮灰色 -->
     
     <!-- 任务状态颜色 -->
-    <color name="task_completed">#9E9E9E</color>
-    <color name="task_pending">#212121</color>
-    <color name="task_overdue">#F44336</color>
+    <color name="task_completed">#95A5A6</color>
+    <color name="task_pending">#34495E</color>
+    <color name="task_overdue">#E74C3C</color>
     
     <!-- 背景颜色 -->
-    <color name="background">#F5F7FA</color>
+    <color name="background">#F9FBFB</color>
     <color name="card_background">#FFFFFF</color>
-    <color name="divider">#EEEEEE</color>
+    <color name="divider">#EAEDED</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="shadow">#20000000</color>
     
-    <!-- 类别颜色 -->
-    <color name="category_work">#4CAF50</color>     <!-- 工作：绿色 -->
-    <color name="category_personal">#7E57C2</color> <!-- 个人：紫色 -->
-    <color name="category_other">#FF9800</color>    <!-- 其他：橙色 -->
+    <!-- 导航栏颜色 -->
+    <color name="nav_unselected">#BDC3C7</color>
+    
+    <!-- 类别颜色 - 柔和色调 -->
+    <color name="category_work">#1E88C3</color>     <!-- 工作：柔和蓝色 -->
+    <color name="category_personal">#7986CB</color> <!-- 个人：柔和紫色 -->
+    <color name="category_study">#4FC3F7</color>    <!-- 学习：柔和蓝色 -->
+    <color name="category_health">#4DB6AC</color>   <!-- 健康：浅蓝绿色 -->
+    <color name="category_other">#FFB74D</color>    <!-- 其他：柔和橙色 -->
+    
+    <!-- 优先级颜色 -->
+    <color name="priority_high">#E74C3C</color>     <!-- 高优先级：红色 -->
+    <color name="priority_medium">#F39C12</color>   <!-- 中优先级：橙色 -->
+    <color name="priority_low">#27AE60</color>      <!-- 低优先级：绿色 -->
+    
+    <!-- =============== 色卡主题色 =============== -->
+    <!-- 主题1: 蓝色系 - 5个明显递进层次 -->
+    <color name="theme1_primary_darkest">#0D3B5C</color>  <!-- 最深 -->
+    <color name="theme1_primary_dark">#1A5D8F</color>     <!-- 深 -->
+    <color name="theme1_primary">#4384A6</color>          <!-- 中 -->
+    <color name="theme1_primary_light">#83C3E6</color>    <!-- 浅 -->
+    <color name="theme1_primary_lightest">#D9EDF7</color> <!-- 最浅 -->
+    <color name="theme1_accent">#7FA6C5</color>           <!-- 强调色 -->
+    
+    <!-- 主题2: 红色系 - 5个明显递进层次 -->
+    <color name="theme2_primary_darkest">#84210F</color>  <!-- 最深 -->
+    <color name="theme2_primary_dark">#C2381B</color>     <!-- 深 -->
+    <color name="theme2_primary">#ED6D46</color>          <!-- 中 -->
+    <color name="theme2_primary_light">#F7A28C</color>    <!-- 浅 -->
+    <color name="theme2_primary_lightest">#FFDCD3</color> <!-- 最浅 -->
+    <color name="theme2_accent">#F0845D</color>           <!-- 强调色 -->
+    
+    <!-- 主题3: 绿色系 - 5个明显递进层次 -->
+    <color name="theme3_primary_darkest">#1F4D3B</color>  <!-- 最深 -->
+    <color name="theme3_primary_dark">#357A57</color>     <!-- 深 -->
+    <color name="theme3_primary">#7ABF91</color>          <!-- 中 -->
+    <color name="theme3_primary_light">#A5DBBD</color>    <!-- 浅 -->
+    <color name="theme3_primary_lightest">#DEF2E8</color> <!-- 最浅 -->
+    <color name="theme3_accent">#69BD52</color>           <!-- 强调色 -->
+    
+    <!-- 主题4: 紫色系 - 5个明显递进层次 -->
+    <color name="theme4_primary_darkest">#3C204C</color>  <!-- 最深 -->
+    <color name="theme4_primary_dark">#644080</color>     <!-- 深 -->
+    <color name="theme4_primary">#B782B0</color>          <!-- 中 -->
+    <color name="theme4_primary_light">#D2A8CD</color>    <!-- 浅 -->
+    <color name="theme4_primary_lightest">#F0E3ED</color> <!-- 最浅 -->
+    <color name="theme4_accent">#8A73BB</color>           <!-- 强调色 -->
+    
+    <!-- 主题5: 粉色系 - 5个明显递进层次 -->
+    <color name="theme5_primary_darkest">#7A1F42</color>  <!-- 最深 -->
+    <color name="theme5_primary_dark">#B3376B</color>     <!-- 深 -->
+    <color name="theme5_primary">#C97D97</color>          <!-- 中 -->
+    <color name="theme5_primary_light">#E6B4C3</color>    <!-- 浅 -->
+    <color name="theme5_primary_lightest">#F9E6EC</color> <!-- 最浅 -->
+    <color name="theme5_accent">#CD5D85</color>           <!-- 强调色 -->
+    
+    <!-- 主题6: 橙色系 - 5个明显递进层次 -->
+    <color name="theme6_primary_darkest">#7A3305</color>  <!-- 最深 -->
+    <color name="theme6_primary_dark">#B9571E</color>     <!-- 深 -->
+    <color name="theme6_primary">#E88856</color>          <!-- 中 -->
+    <color name="theme6_primary_light">#FBB288</color>    <!-- 浅 -->
+    <color name="theme6_primary_lightest">#FFEADB</color> <!-- 最浅 -->
+    <color name="theme6_accent">#F98025</color>           <!-- 强调色 -->
+    
+    <!-- 主题7: 黄色系 - 5个明显递进层次 -->
+    <color name="theme7_primary_darkest">#856A05</color>  <!-- 最深 -->
+    <color name="theme7_primary_dark">#C3980B</color>     <!-- 深 -->
+    <color name="theme7_primary">#E8B140</color>          <!-- 中 -->
+    <color name="theme7_primary_light">#F2D680</color>    <!-- 浅 -->
+    <color name="theme7_primary_lightest">#FFF8DB</color> <!-- 最浅 -->
+    <color name="theme7_accent">#D9AA1E</color>           <!-- 强调色 -->
+    
+    <!-- 主题8: 大地色系 - 5个明显递进层次 -->
+    <color name="theme8_primary_darkest">#614035</color>  <!-- 最深 -->
+    <color name="theme8_primary_dark">#8E5F50</color>     <!-- 深 -->
+    <color name="theme8_primary">#D3AB89</color>          <!-- 中 -->
+    <color name="theme8_primary_light">#E4C7B0</color>    <!-- 浅 -->
+    <color name="theme8_primary_lightest">#F6EFE6</color> <!-- 最浅 -->
+    <color name="theme8_accent">#D57635</color>           <!-- 强调色 -->
+    
+    <!-- 主题9: 黑色系 - 5个明显递进层次 -->
+    <color name="theme9_primary_darkest">#0A0A0A</color>  <!-- 最深 -->
+    <color name="theme9_primary_dark">#252525</color>     <!-- 深 -->
+    <color name="theme9_primary">#3E3E3E</color>          <!-- 中 -->
+    <color name="theme9_primary_light">#707070</color>    <!-- 浅 -->
+    <color name="theme9_primary_lightest">#C0C0C0</color> <!-- 最浅 -->
+    <color name="theme9_accent">#47433D</color>           <!-- 强调色 -->
 </resources>

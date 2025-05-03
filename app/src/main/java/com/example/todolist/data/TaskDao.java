@@ -16,6 +16,10 @@ public interface TaskDao {
     // 查询未被软删除且不属于代办集的任务
     @Query("SELECT * FROM todos WHERE deleted = 0 AND belongsToTaskGroup = 0")
     List<Todo> getVisibleTodos();
+    
+    // 根据ID查询单个任务
+    @Query("SELECT * FROM todos WHERE id = :taskId")
+    Todo getTodoById(String taskId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTodo(Todo todo);

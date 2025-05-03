@@ -1,111 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
-    android:layout_marginHorizontal="4dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp"
-    app:strokeWidth="0dp"
-    app:cardBackgroundColor="@color/card_background">
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="3dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="4dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="10dp">
 
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkDone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:buttonTint="@color/primary"/>
-
-        <TextView
-            android:id="@+id/textTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/checkDone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="数据库lab2"/>
-
         <LinearLayout
-            android:id="@+id/timeLayout"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="6dp"
-            app:layout_constraintStart_toStartOf="@id/textTitle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textTitle">
-            
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@android:drawable/ic_menu_my_calendar"
-                app:tint="@color/text_secondary"/>
-                
+            android:gravity="center_vertical">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/checkBoxCompleted"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="10dp"
+                app:buttonTint="?attr/colorPrimary"
+                android:buttonTint="?attr/colorPrimary" />
+
             <TextView
-                android:id="@+id/textDetails"
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginStart="4dp"
-                tools:text="2025-04-13 23:59 | 无"/>
-        </LinearLayout>
-        
-        <LinearLayout
-            android:id="@+id/placeLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="4dp"
-            app:layout_constraintStart_toStartOf="@id/timeLayout"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/timeLayout">
-            
+                android:layout_weight="1"
+                android:textColor="?attr/android:textColorPrimary"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:ellipsize="end"
+                tools:text="完成Android项目作业" />
+
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@android:drawable/ic_menu_mylocation"
-                app:tint="@color/text_secondary"/>
-                
-            <TextView
-                android:id="@+id/textPlace"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginStart="4dp"
-                tools:text="无"/>
+                android:id="@+id/imageViewOptions"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="6dp"
+                android:padding="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_more"
+                app:tint="?attr/android:textColorSecondary"
+                android:contentDescription="更多选项" />
         </LinearLayout>
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipCategory"
-            android:layout_width="wrap_content"
-            android:layout_height="24dp"
-            android:layout_marginTop="6dp"
-            android:textSize="10sp"
-            android:textColor="@color/white"
-            app:chipMinHeight="24dp"
-            app:chipMinTouchTargetSize="24dp"
-            app:layout_constraintStart_toStartOf="@id/placeLayout"
-            app:layout_constraintTop_toBottomOf="@id/placeLayout"
-            tools:text="个人"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</com.google.android.material.card.MaterialCardView>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <LinearLayout
+                android:id="@+id/layoutTaskInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <!-- 任务时间 -->
+                <LinearLayout
+                    android:id="@+id/layoutTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@android:drawable/ic_menu_my_calendar"
+                        app:tint="?attr/colorPrimary"
+                        android:contentDescription="任务时间" />
+
+                    <TextView
+                        android:id="@+id/textViewTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:textColor="?attr/android:textColorSecondary"
+                        android:textSize="12sp"
+                        tools:text="2023年5月30日 15:30" />
+                </LinearLayout>
+
+                <!-- 任务地点 -->
+                <LinearLayout
+                    android:id="@+id/layoutPlace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="10dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        app:tint="?attr/colorPrimary"
+                        android:contentDescription="任务地点" />
+
+                    <TextView
+                        android:id="@+id/textViewPlace"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:textColor="?attr/android:textColorSecondary"
+                        android:textSize="12sp"
+                        tools:text="图书馆" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 任务类别 -->
+            <TextView
+                android:id="@+id/textViewCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_category_chip"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="11sp"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="10dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="6dp"
+                tools:text="学习" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

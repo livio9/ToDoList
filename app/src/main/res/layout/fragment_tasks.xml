@@ -11,70 +11,103 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <HorizontalScrollView
+        <!-- 过滤器部分 - 优化样式 -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:background="@color/primary"
-            android:paddingVertical="12dp">
+            app:cardCornerRadius="0dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="2dp">
 
-            <LinearLayout
-                android:id="@+id/filterBar"
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
+            <HorizontalScrollView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp">
+                android:scrollbars="none"
+                android:background="?attr/colorPrimary"
+                android:paddingVertical="5dp">
 
-                <com.google.android.material.chip.ChipGroup
+                <LinearLayout
+                    android:id="@+id/filterBar"
+                    android:orientation="horizontal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:chipSpacingHorizontal="8dp"
-                    android:layout_marginEnd="4dp">
+                    android:paddingHorizontal="10dp">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/spinnerTime"
-                        style="@style/Widget.App.Chip"
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="全部时间" />
-                </com.google.android.material.chip.ChipGroup>
+                        app:singleSelection="true"
+                        app:chipSpacingHorizontal="6dp"
+                        android:layout_marginEnd="3dp">
 
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:chipSpacingHorizontal="8dp"
-                    android:layout_marginEnd="4dp">
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/spinnerTime"
+                            style="@style/Widget.App.Chip.Small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="全部时间" />
+                    </com.google.android.material.chip.ChipGroup>
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/spinnerCategory"
-                        style="@style/Widget.App.Chip"
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="全部类别" />
-                </com.google.android.material.chip.ChipGroup>
+                        app:singleSelection="true"
+                        app:chipSpacingHorizontal="6dp"
+                        android:layout_marginEnd="3dp">
 
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:chipSpacingHorizontal="8dp">
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/spinnerCategory"
+                            style="@style/Widget.App.Chip.Small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="全部类别" />
+                    </com.google.android.material.chip.ChipGroup>
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/spinnerStatus"
-                        style="@style/Widget.App.Chip"
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="全部状态" />
-                </com.google.android.material.chip.ChipGroup>
-            </LinearLayout>
-        </HorizontalScrollView>
+                        app:singleSelection="true"
+                        app:chipSpacingHorizontal="6dp"
+                        android:layout_marginEnd="3dp">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/spinnerStatus"
+                            style="@style/Widget.App.Chip.Small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="全部状态" />
+                    </com.google.android.material.chip.ChipGroup>
+                    
+                    <!-- 新增 AI 推荐标签 -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:chipSpacingHorizontal="6dp">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipAiRecommend"
+                            style="@style/Widget.App.Chip.Small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            app:chipIcon="@android:drawable/ic_menu_sort_alphabetically"
+                            app:chipIconTint="?attr/colorOnPrimary"
+                            app:chipIconSize="14dp"
+                            android:text="AI推荐" />
+                    </com.google.android.material.chip.ChipGroup>
+                </LinearLayout>
+            </HorizontalScrollView>
+        </com.google.android.material.card.MaterialCardView>
         
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:clipToPadding="false"
+            android:paddingBottom="80dp"
+            android:scrollbars="none"
+            android:overScrollMode="always"
+            android:fadeScrollbars="true">
             
             <LinearLayout
                 android:layout_width="match_parent"
@@ -82,14 +115,14 @@
                 android:orientation="vertical"
                 android:padding="12dp">
                 
-                <!-- 任务部分 -->
+                <!-- 任务部分 - 美化标题 -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="待办事项"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/android:textColorPrimary"
                     android:layout_marginBottom="8dp"/>
                 
                 <!-- 任务列表 -->
@@ -104,54 +137,63 @@
                         android:contentDescription="待办事项列表"
                         android:nestedScrollingEnabled="false"/>
                     
-                    <!-- 空视图 -->
+                    <!-- 空视图 - 优化样式 -->
                     <LinearLayout
                         android:id="@+id/emptyView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
+                        android:layout_gravity="center"
+                        android:layout_margin="32dp"
+                        android:background="@drawable/empty_view_background"
                         android:gravity="center"
-                        android:padding="24dp"
+                        android:orientation="vertical"
+                        android:padding="32dp"
                         android:visibility="gone">
                         
                         <ImageView
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
-                            android:src="@android:drawable/ic_menu_agenda"
-                            app:tint="@color/primary_light"/>
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:contentDescription="无任务"
+                            android:src="@drawable/ic_empty_task" 
+                            app:tint="?attr/colorPrimary"/>
                         
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="没有待办事项"
-                            android:textSize="16sp"
-                            android:textColor="@color/text_secondary"
-                            android:layout_marginTop="16dp"/>
+                            android:layout_marginTop="24dp"
+                            android:text="没有待办任务"
+                            android:textColor="?attr/android:textColorPrimary"
+                            android:textSize="20sp"
+                            android:fontFamily="sans-serif-medium" />
                         
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="点击右下角的 + 按钮添加"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_hint"
-                            android:layout_marginTop="8dp"/>
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="点击下方加号按钮添加新任务"
+                            android:textColor="?attr/android:textColorSecondary"
+                            android:textSize="16sp" />
                     </LinearLayout>
                 </FrameLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 
-    <!-- 添加任务的浮动按钮 -->
+    <!-- 添加任务的浮动按钮 - 优化样式 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="添加任务"
         app:srcCompat="@android:drawable/ic_input_add"
-        app:tint="@color/white"
+        app:tint="?attr/colorOnPrimary"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="20dp"
         android:layout_marginBottom="72dp"
+        app:fabSize="normal"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
-        app:backgroundTint="@color/accent"/>
+        app:backgroundTint="?attr/colorPrimary"
+        app:elevation="8dp"
+        app:borderWidth="0dp"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

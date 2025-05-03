@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="32dp"
-    android:background="@color/background"
+    android:background="@drawable/login_gradient_background"
     tools:context=".auth.LoginActivity">
 
     <ImageView
@@ -14,7 +14,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:src="@android:drawable/ic_menu_agenda"
-        android:tint="@color/primary"
+        app:tint="@color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:text="欢迎使用待办事项"
         android:textSize="24sp"
-        android:textColor="@color/text_primary"
+        android:textColor="@color/white"
         android:textStyle="bold"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/imgLogo"
@@ -42,77 +42,122 @@
         android:layout_height="wrap_content"
         android:text="请登录或注册账号"
         android:textSize="16sp"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/white"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="32dp"
         app:layout_constraintTop_toBottomOf="@id/textWelcome"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/inputLayoutEmail" />
+        app:layout_constraintBottom_toTopOf="@id/cardLoginForm" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/inputLayoutEmail"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardLoginForm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="电子邮箱"
-        style="@style/Widget.App.TextInputLayout"
-        app:startIconDrawable="@android:drawable/ic_dialog_email"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
         app:layout_constraintTop_toBottomOf="@id/textLoginPrompt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/inputLayoutPassword">
+        app:layout_constraintBottom_toTopOf="@id/buttonFingerprintLogin">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editEmail"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/inputLayoutPassword"
-        android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/inputLayoutEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="电子邮箱"
+                style="@style/Widget.App.TextInputLayout"
+                app:startIconDrawable="@android:drawable/ic_dialog_email">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/inputLayoutPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="密码"
+                style="@style/Widget.App.TextInputLayout"
+                app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                app:passwordToggleEnabled="true"
+                android:layout_marginTop="16dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonLogin"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="登录"
+                android:textSize="16sp"
+                android:layout_marginTop="24dp"
+                app:backgroundTint="@color/primary"/>
+                
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonRegister"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="注册"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/primary"/>
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+    
+    <!-- 指纹登录按钮 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/buttonFingerprintLogin"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="密码"
-        style="@style/Widget.App.TextInputLayout"
-        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-        app:passwordToggleEnabled="true"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/inputLayoutEmail"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/cardLoginForm"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/buttonLogin">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editPassword"
-            android:layout_width="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground">
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"/>
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonLogin"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="登录"
-        android:textSize="16sp"
-        android:layout_marginTop="32dp"
-        app:layout_constraintTop_toBottomOf="@id/inputLayoutPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/buttonRegister"/>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonRegister"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="注册"
-        android:textSize="16sp"
-        android:layout_marginTop="16dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:layout_constraintTop_toBottomOf="@id/buttonLogin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp">
+            
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                app:tint="@color/primary"/>
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="指纹快速登录"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginStart="12dp"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,63 +1,550 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ToDoList" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- 主题颜色 -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorSecondaryVariant">@color/accent</item>
-        <item name="colorOnSecondary">@color/white</item>
-        
-        <!-- 状态栏颜色 -->
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        
-        <!-- 背景颜色 -->
-        <item name="android:windowBackground">@color/background</item>
-        
-        <!-- 文本颜色 -->
-        <item name="android:textColorPrimary">@color/text_primary</item>
-        <item name="android:textColorSecondary">@color/text_secondary</item>
-        <item name="android:textColorHint">@color/text_hint</item>
-        
-        <!-- 控件样式 -->
-        <item name="materialButtonStyle">@style/Widget.App.Button</item>
-        <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
-        <item name="cardViewStyle">@style/Widget.App.CardView</item>
-        <item name="chipStyle">@style/Widget.App.Chip</item>
-    </style>
-    
+    <!-- ================= 蓝色系主题样式 ================= -->
     <!-- 按钮样式 -->
     <style name="Widget.App.Button" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@color/white</item>
-        <item name="backgroundTint">@color/primary</item>
-        <item name="cornerRadius">8dp</item>
+        <item name="backgroundTint">@color/theme1_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="elevation">2dp</item>
     </style>
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/primary</item>
-        <item name="hintTextColor">@color/primary</item>
+        <item name="boxStrokeColor">@color/theme1_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme1_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
     </style>
     
     <!-- 卡片样式 -->
     <style name="Widget.App.CardView" parent="Widget.MaterialComponents.CardView">
         <item name="cardBackgroundColor">@color/card_background</item>
-        <item name="cardElevation">2dp</item>
-        <item name="cardCornerRadius">8dp</item>
+        <item name="cardElevation">4dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="contentPadding">16dp</item>
+        <item name="cardPreventCornerOverlap">true</item>
+        <item name="cardUseCompatPadding">true</item>
     </style>
 
     <!-- 自定义Chip样式 -->
     <style name="Widget.App.Chip" parent="Widget.MaterialComponents.Chip.Choice">
-        <item name="android:textColor">@color/white</item>
-        <item name="chipBackgroundColor">@color/primary_dark</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
         <item name="closeIconVisible">false</item>
         <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 小型Chip样式 用于过滤栏 -->
+    <style name="Widget.App.Chip.Small" parent="Widget.App.Chip">
+        <item name="android:textSize">12sp</item>
+        <item name="chipMinHeight">28dp</item>
+        <item name="chipStartPadding">6dp</item>
+        <item name="chipEndPadding">6dp</item>
+        <item name="android:minHeight">28dp</item>
+        <item name="chipIconSize">14dp</item>
     </style>
 
     <!-- Chip文本样式 -->
     <style name="TextAppearance.App.Chip" parent="TextAppearance.MaterialComponents.Chip">
         <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme1_primary</item>
+        <item name="itemTextColor">@color/theme1_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme1_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme1_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme1_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme1_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- 优先级标签样式 -->
+    <style name="Widget.App.PriorityChip" parent="Widget.App.Chip">
+        <item name="android:textSize">12sp</item>
+        <item name="chipMinHeight">24dp</item>
+        <item name="chipIconSize">16dp</item>
+    </style>
+    
+    <!-- 类别标签样式 -->
+    <style name="Widget.App.CategoryChip" parent="Widget.App.Chip">
+        <item name="chipIcon">@null</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="chipEndPadding">8dp</item>
+    </style>
+    
+    <!-- ================= 红色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Red" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme2_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Red" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme2_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme2_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Red" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Red" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme2_primary</item>
+        <item name="itemTextColor">@color/theme2_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Red" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme2_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme2_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Red" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme2_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme2_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 绿色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Green" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme3_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Green" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme3_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme3_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Green" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Green" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme3_primary</item>
+        <item name="itemTextColor">@color/theme3_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Green" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme3_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme3_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Green" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme3_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme3_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 紫色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Purple" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme4_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Purple" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme4_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme4_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Purple" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Purple" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme4_primary</item>
+        <item name="itemTextColor">@color/theme4_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Purple" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme4_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme4_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Purple" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme4_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme4_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 粉色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Pink" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme5_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Pink" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme5_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme5_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Pink" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Pink" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme5_primary</item>
+        <item name="itemTextColor">@color/theme5_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Pink" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme5_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme5_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Pink" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme5_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme5_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 橙色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Orange" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme6_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Orange" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme6_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme6_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Orange" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Orange" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme6_primary</item>
+        <item name="itemTextColor">@color/theme6_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Orange" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme6_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme6_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Orange" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme6_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme6_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 黄色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Yellow" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/black</item>
+        <item name="backgroundTint">@color/theme7_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Yellow" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme7_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme7_primary_darkest</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Yellow" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip.Yellow</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <style name="TextAppearance.App.Chip.Yellow" parent="TextAppearance.MaterialComponents.Chip">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Yellow" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme7_primary_darkest</item>
+        <item name="itemTextColor">@color/theme7_primary_darkest</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Yellow" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme7_primary</item>
+        <item name="titleTextColor">@color/black</item>
+        <item name="subtitleTextColor">@color/theme7_primary_darkest</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Yellow" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme7_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme7_primary_dark</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 大地色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Brown" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme8_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Brown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme8_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme8_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Brown" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Brown" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme8_primary</item>
+        <item name="itemTextColor">@color/theme8_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Brown" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme8_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme8_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Brown" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme8_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme8_primary_light</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- ================= 黑色系主题样式 ================= -->
+    <!-- 按钮样式 -->
+    <style name="Widget.App.Button.Black" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/theme9_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+    
+    <!-- 文本输入框样式 -->
+    <style name="Widget.App.TextInputLayout.Black" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/theme9_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="hintTextColor">@color/theme9_primary</item>
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+    </style>
+    
+    <!-- 自定义Chip样式 -->
+    <style name="Widget.App.Chip.Black" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="chipBackgroundColor">?attr/colorPrimary</item>
+        <item name="closeIconVisible">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Chip</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
+    </style>
+    
+    <!-- 底部导航栏样式 -->
+    <style name="Widget.App.BottomNavigation.Black" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/white</item>
+        <item name="itemIconTint">@color/theme9_primary</item>
+        <item name="itemTextColor">@color/theme9_primary</item>
+        <item name="elevation">8dp</item>
+    </style>
+    
+    <!-- 工具栏样式 -->
+    <style name="Widget.App.Toolbar.Black" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/theme9_primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="subtitleTextColor">@color/theme9_primary_light</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+    
+    <!-- 悬浮按钮样式 -->
+    <style name="Widget.App.FloatingActionButton.Black" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/theme9_accent</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/theme9_primary_light</item>
+        <item name="elevation">6dp</item>
     </style>
 </resources>

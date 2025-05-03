@@ -24,6 +24,10 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="80dp"
+        android:scrollbars="none"
+        android:fadeScrollbars="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -38,19 +42,19 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="2dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:id="@+id/textGroupName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="20sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
                         android:text="代办集名称"/>
 
@@ -58,24 +62,24 @@
                         android:id="@+id/textCategory"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:layout_marginTop="8dp"
+                        android:textSize="13sp"
+                        android:layout_marginTop="6dp"
                         android:text="类别: 工作"/>
 
                     <TextView
                         android:id="@+id/textEstimatedDays"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:layout_marginTop="4dp"
+                        android:textSize="13sp"
+                        android:layout_marginTop="3dp"
                         android:text="预计完成天数: 7"/>
 
                     <TextView
                         android:id="@+id/textCreatedAt"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:layout_marginTop="4dp"
+                        android:textSize="13sp"
+                        android:layout_marginTop="3dp"
                         android:text="创建时间: 2023-05-01 10:00"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -86,8 +90,8 @@
                 android:layout_height="wrap_content"
                 android:text="子任务列表"
                 android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp"/>
+                android:textSize="15sp"
+                android:layout_marginBottom="6dp"/>
 
             <!-- 无任务提示 -->
             <TextView
@@ -114,7 +118,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="16dp"
         android:src="@android:drawable/ic_input_add"
         app:fabSize="normal"
         app:tint="@android:color/white"

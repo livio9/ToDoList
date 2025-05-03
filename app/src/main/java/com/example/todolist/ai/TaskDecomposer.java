@@ -164,6 +164,19 @@ public class TaskDecomposer {
             
             // 解析响应
             JSONObject jsonResponse = new JSONObject(responseBody);
+            
+            // 检查API是否返回错误
+            if (jsonResponse.has("error")) {
+                JSONObject error = jsonResponse.getJSONObject("error");
+                String errorMessage = error.getString("message");
+                throw new IOException("API返回错误: " + errorMessage);
+            }
+            
+            // 检查是否存在choices字段
+            if (!jsonResponse.has("choices")) {
+                throw new JSONException("API响应中缺少choices字段");
+            }
+            
             String content = jsonResponse.getJSONArray("choices")
                     .getJSONObject(0)
                     .getJSONObject("message")
@@ -171,7 +184,19 @@ public class TaskDecomposer {
             
             // 从内容中提取JSON字符串
             String jsonContent = extractJsonFromString(content);
+            
+            // 检查是否成功提取到JSON
+            if (jsonContent.trim().isEmpty() || !jsonContent.startsWith("{")) {
+                throw new JSONException("无法从API响应中提取有效的JSON数据");
+            }
+            
             JSONObject taskJson = new JSONObject(jsonContent);
+            
+            // 检查必要字段是否存在
+            if (!taskJson.has("mainTask") || !taskJson.has("category") || 
+                !taskJson.has("estimatedDays") || !taskJson.has("subTasks")) {
+                throw new JSONException("API返回的JSON缺少必要字段");
+            }
             
             // 创建分解结果对象
             DecompositionResult result = new DecompositionResult(

@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
@@ -38,11 +39,14 @@ public class AddEditTaskActivity extends AppCompatActivity {
     private TextInputEditText editTitle;
     private EditText editPlace;
     private MaterialAutoCompleteTextView spinnerCategory;
+    private MaterialAutoCompleteTextView spinnerPriorityInput;
     private TextView textDateTime;
     private SwitchMaterial checkCompleted;
+    private SwitchMaterial switchPomodoro;
     private Button buttonSave;
     private Button buttonDelete;
     private Button buttonAiDecompose;
+    private MaterialCardView pomodoroCard;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
     private FirebaseFirestore firestore;
@@ -87,19 +91,28 @@ public class AddEditTaskActivity extends AppCompatActivity {
         editTitle = findViewById(R.id.editTitle);
         editPlace = findViewById(R.id.editPlace);
         spinnerCategory = findViewById(R.id.spinnerCategoryInput);
+        spinnerPriorityInput = findViewById(R.id.spinnerPriorityInput);
         textDateTime = findViewById(R.id.textDateTime);
         checkCompleted = findViewById(R.id.checkCompleted);
         buttonSave = findViewById(R.id.buttonSave);
         buttonDelete = findViewById(R.id.buttonDelete);
         buttonAiDecompose = findViewById(R.id.buttonAiDecompose);
+        switchPomodoro = findViewById(R.id.switchPomodoro);
+        pomodoroCard = findViewById(R.id.pomodoroCard);
         
         // 设置按钮布局为横向
         LinearLayout buttonContainer = findViewById(R.id.buttonContainer);
         
         // 设置类别下拉框选项
-        String[] categories = {"工作", "个人", "学习", "其他"};
+        String[] categories = {"工作", "个人", "学习", "健康", "其他"};
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, categories);
         spinnerCategory.setAdapter(catAdapter);
+
+        // 设置优先级下拉框选项
+        String[] priorities = {"高", "中", "低"};
+        ArrayAdapter<String> priorityAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, priorities);
+        spinnerPriorityInput.setAdapter(priorityAdapter);
+        spinnerPriorityInput.setText("中", false); // 默认优先级为中
 
         // 判断编辑还是新增
         currentTodo = (Todo) getIntent().getSerializableExtra("todo");
@@ -107,6 +120,14 @@ public class AddEditTaskActivity extends AppCompatActivity {
             editTitle.setText(currentTodo.title);
             editPlace.setText(currentTodo.place);
             checkCompleted.setChecked(currentTodo.completed);
+            
+            // 设置优先级
+            String priority = currentTodo.priority != null ? currentTodo.priority : "中";
+            spinnerPriorityInput.setText(priority, false);
+            
+            // 设置番茄时钟开关状态
+            switchPomodoro.setChecked(currentTodo.pomodoroEnabled != null ? currentTodo.pomodoroEnabled : false);
+            
             int catIndex = 0;
             for (int i = 0; i < categories.length; i++) {
                 if (categories[i].equals(currentTodo.category)) {
@@ -125,10 +146,14 @@ public class AddEditTaskActivity extends AppCompatActivity {
             updateDateTimeText();
             checkCompleted.setChecked(false);
             buttonDelete.setVisibility(parentGroupId != null ? Button.VISIBLE : Button.GONE);
+            switchPomodoro.setChecked(false);
         }
         
         // AI分解按钮只在代办集模式下显示
         buttonAiDecompose.setVisibility(isTaskGroupMode ? View.VISIBLE : View.GONE);
+
+        // 番茄时钟卡片只在非代办集模式下显示
+        pomodoroCard.setVisibility(isTaskGroupMode ? View.GONE : View.VISIBLE);
 
         textDateTime.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
@@ -154,12 +179,24 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 }, hour, minute, true).show();
             }, year, month, day).show();
         });
+        
+        // 地点选择点击事件
+        View endIconView = ((View) editPlace.getParent().getParent()).findViewById(com.google.android.material.R.id.text_input_end_icon);
+        if (endIconView != null) {
+            endIconView.setOnClickListener(v -> {
+                // 这里可以添加打开地图选择位置的逻辑
+                Toast.makeText(AddEditTaskActivity.this, "地图功能即将上线", Toast.LENGTH_SHORT).show();
+            });
+        }
 
         buttonSave.setOnClickListener(v -> {
             String title = editTitle.getText().toString().trim();
             String place = editPlace.getText().toString().trim();
             String category = spinnerCategory.getText().toString();
+            String priority = spinnerPriorityInput.getText().toString();
             boolean completed = checkCompleted.isChecked();
+            boolean pomodoroEnabled = switchPomodoro.isChecked();
+            
             if (TextUtils.isEmpty(title)) {
                 Toast.makeText(AddEditTaskActivity.this, "标题不能为空", Toast.LENGTH_SHORT).show();
                 return;
@@ -182,6 +219,11 @@ public class AddEditTaskActivity extends AppCompatActivity {
                     currentTodo.belongsToTaskGroup = true;
                 }
             }
+            
+            // 保存优先级和番茄钟设置
+            currentTodo.priority = priority;
+            currentTodo.pomodoroEnabled = pomodoroEnabled;
+            
             // 每次保存更新更新时间，并确保标记未删除
             currentTodo.updatedAt = System.currentTimeMillis();
             currentTodo.deleted = false;
@@ -200,37 +242,71 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 }).start();
             }
             
-            new Thread(() -> taskDao.insertTodo(currentTodo)).start();
-
-            // 同步到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("tasks").document(currentTodo.id)
-                        .set(currentTodo);
-            }
-            Toast.makeText(AddEditTaskActivity.this, "已保存", Toast.LENGTH_SHORT).show();
-            finish();
-        });
-
-        // 删除操作：采用软删除
-        buttonDelete.setOnClickListener(v -> {
-            if (currentTodo != null) {
-                currentTodo.deleted = true;
-                currentTodo.updatedAt = System.currentTimeMillis();
-                new Thread(() -> taskDao.insertTodo(currentTodo)).start();
+            // 异步保存任务到本地数据库
+            new Thread(() -> {
+                taskDao.insertTodo(currentTodo);
+                
+                // 如果用户已登录，同步到Firestore
                 if (auth.getCurrentUser() != null) {
                     firestore.collection("users")
                             .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(currentTodo.id)
-                            .update("deleted", true, "updatedAt", currentTodo.updatedAt);
+                            .collection("tasks")
+                            .document(currentTodo.id)
+                            .set(currentTodo);
                 }
-                Toast.makeText(AddEditTaskActivity.this, "任务已删除", Toast.LENGTH_SHORT).show();
-            }
-            finish();
+                
+                runOnUiThread(() -> {
+                    Toast.makeText(AddEditTaskActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_OK);
+                    finish();
+                });
+            }).start();
         });
         
-        // 设置AI任务分解按钮点击事件
+        buttonDelete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("确认删除")
+                    .setMessage("确定要删除这个任务吗？")
+                    .setPositiveButton("确定", (dialog, which) -> {
+                        if (currentTodo != null) {
+                            new Thread(() -> {
+                                // 标记为已删除而不是物理删除
+                                currentTodo.deleted = true;
+                                taskDao.insertTodo(currentTodo);
+                                
+                                // 如果是子任务，从代办集中移除
+                                if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
+                                    TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
+                                    if (group != null) {
+                                        group.removeSubTask(currentTodo.id);
+                                        taskGroupDao.insertTaskGroup(group);
+                                    }
+                                }
+                                
+                                // 同步到Firestore
+                                if (auth.getCurrentUser() != null) {
+                                    firestore.collection("users")
+                                            .document(auth.getCurrentUser().getUid())
+                                            .collection("tasks")
+                                            .document(currentTodo.id)
+                                            .update("deleted", true);
+                                }
+                                
+                                runOnUiThread(() -> {
+                                    Toast.makeText(AddEditTaskActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
+                                    setResult(RESULT_OK);
+                                    finish();
+                                });
+                            }).start();
+                        } else if (parentGroupId != null) {
+                            setResult(RESULT_CANCELED);
+                            finish();
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        });
+        
         buttonAiDecompose.setOnClickListener(v -> {
             String title = editTitle.getText().toString().trim();
             if (TextUtils.isEmpty(title)) {
@@ -238,18 +314,28 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 return;
             }
             
-            // 执行任务分解
             new DecomposeTaskAsyncTask().execute(title);
         });
     }
+    
+    // 显示番茄时钟对话框
+    public void showPomodoroTimer(Todo task) {
+        PomodoroTimerDialog dialog = new PomodoroTimerDialog(this, task);
+        dialog.setOnTimerCompletedListener(isBreakCompleted -> {
+            if (isBreakCompleted) {
+                Toast.makeText(this, "休息结束，开始新的专注", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "专注完成，开始休息", Toast.LENGTH_SHORT).show();
+            }
+        });
+        dialog.show();
+    }
 
     private void updateDateTimeText() {
-        if (selectedCalendar == null) {
-            selectedCalendar = Calendar.getInstance();
+        if (selectedCalendar != null) {
+            String dateTimeStr = String.format("%tY年%<tm月%<td日 %<tH:%<tM", selectedCalendar);
+            textDateTime.setText(dateTimeStr);
         }
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
-        String formatted = sdf.format(selectedCalendar.getTime());
-        textDateTime.setText(formatted);
     }
     
     /**
@@ -459,9 +545,38 @@ public class AddEditTaskActivity extends AppCompatActivity {
             if (result != null) {
                 showDecompositionResultDialog(result);
             } else {
-                String errorMsg = error != null ? error.getMessage() : "未知错误";
-                Toast.makeText(AddEditTaskActivity.this, 
-                    "任务分解失败: " + errorMsg, Toast.LENGTH_LONG).show();
+                String errorMsg = "未知错误";
+                if (error != null) {
+                    errorMsg = error.getMessage();
+                    
+                    // 对OpenRouter API错误进行特殊处理
+                    if (errorMsg.contains("API返回错误: Internal Server Error") || 
+                        errorMsg.contains("500")) {
+                        errorMsg = "AI服务器暂时不可用，请稍后再试";
+                    } else if (errorMsg.contains("API响应中缺少choices字段")) {
+                        errorMsg = "AI服务返回格式异常，请稍后再试";
+                    } else if (errorMsg.contains("无法从API响应中提取有效的JSON数据")) {
+                        errorMsg = "AI返回数据格式错误，请稍后再试";
+                    } else if (errorMsg.contains("timed out")) {
+                        errorMsg = "AI服务连接超时，请检查网络后重试";
+                    }
+                }
+                
+                // 显示错误提示
+                AlertDialog.Builder builder = new AlertDialog.Builder(AddEditTaskActivity.this);
+                builder.setTitle("任务分解失败")
+                       .setMessage("抱歉，无法分解任务：" + errorMsg)
+                       .setPositiveButton("重试", (dialog, which) -> {
+                           // 重新尝试，使用当前编辑框中的标题
+                           String title = editTitle.getText().toString().trim();
+                           if (!title.isEmpty()) {
+                               new DecomposeTaskAsyncTask().execute(title);
+                           }
+                       })
+                       .setNegativeButton("取消", null)
+                       .show();
+                
+                Log.e(TAG, "任务分解失败: " + (error != null ? error.toString() : "未知错误"), error);
             }
         }
     }

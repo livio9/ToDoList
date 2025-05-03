@@ -85,11 +85,11 @@ public class TaskGroupActivity extends AppCompatActivity {
         adapter.setOnItemLongClickListener(todo -> {
             // 长按删除任务
             Executors.newSingleThreadExecutor().execute(() -> {
-                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodo(todo.id);
+                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodo(todo.uuid);
                 
                 // 从代办集中移除
                 if (taskGroup != null) {
-                    taskGroup.subTaskIds.remove(todo.id);
+                    taskGroup.subTaskIds.remove(todo.uuid);
                     taskGroupDao.insertTaskGroup(taskGroup);
                 }
                 
@@ -122,7 +122,7 @@ public class TaskGroupActivity extends AppCompatActivity {
         super.onResume();
         // 刷新代办集和子任务
         if (taskGroup != null) {
-            loadTaskGroup(taskGroup.id);
+            loadTaskGroup(taskGroup.uuid);
         }
     }
 

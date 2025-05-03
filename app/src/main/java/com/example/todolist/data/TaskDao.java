@@ -28,13 +28,13 @@ public interface TaskDao {
 
     @Query("DELETE FROM todos")
     void deleteAll();
-    
+
     // 逻辑删除任务（软删除）
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+    @Query("UPDATE todos SET deleted = 1, clientUpdatedAt = :timestamp WHERE uuid = :taskId")
     void logicalDeleteTodo(String taskId, long timestamp);
-    
+
     // 重载方法，使用当前时间戳
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+    @Query("UPDATE todos SET deleted = 1, clientUpdatedAt = :timestamp WHERE uuid = :taskId")
     default void logicalDeleteTodo(String taskId) {
         logicalDeleteTodo(taskId, System.currentTimeMillis());
     }

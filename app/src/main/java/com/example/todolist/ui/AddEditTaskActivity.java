@@ -182,7 +182,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 }
             }
             // 每次保存更新更新时间，并确保标记未删除
-            currentTodo.updatedAt = System.currentTimeMillis();
+            currentTodo.clientUpdatedAt = System.currentTimeMillis();
             currentTodo.deleted = false;
 
             // 如果是子任务，关联到代办集
@@ -193,7 +193,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 new Thread(() -> {
                     TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
                     if (group != null) {
-                        group.addSubTask(currentTodo.id);
+                        group.addSubTask(currentTodo.uuid);
                         taskGroupDao.insertTaskGroup(group);
                     }
                 }).start();
@@ -203,13 +203,13 @@ public class AddEditTaskActivity extends AppCompatActivity {
 
             // 同步到云端
             ParseObject todoObject = new ParseObject("Todo");
-            todoObject.put("id", currentTodo.id);
+            todoObject.put("uuid", currentTodo.uuid);
             todoObject.put("title", currentTodo.title);
             todoObject.put("time", currentTodo.time);
             todoObject.put("place", currentTodo.place);
             todoObject.put("category", currentTodo.category);
             todoObject.put("completed", currentTodo.completed);
-            todoObject.put("updatedAt", currentTodo.updatedAt);
+            todoObject.put("clientUpdatedAt", currentTodo.clientUpdatedAt);
             todoObject.put("deleted", currentTodo.deleted);
             todoObject.put("belongsToTaskGroup", currentTodo.belongsToTaskGroup);
             todoObject.put("user", ParseUser.getCurrentUser());
@@ -223,14 +223,14 @@ public class AddEditTaskActivity extends AppCompatActivity {
         buttonDelete.setOnClickListener(v -> {
             if (currentTodo != null) {
                 currentTodo.deleted = true;
-                currentTodo.updatedAt = System.currentTimeMillis();
+                currentTodo.clientUpdatedAt = System.currentTimeMillis();
                 new Thread(() -> taskDao.insertTodo(currentTodo)).start();
                 ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-                query.whereEqualTo("id", currentTodo.id);
+                query.whereEqualTo("uuid", currentTodo.uuid);
                 query.getFirstInBackground((object, e) -> {
                     if (object != null) {
                         object.put("deleted", true);
-                        object.put("updatedAt", currentTodo.updatedAt);
+                        object.put("clientUpdatedAt", currentTodo.clientUpdatedAt);
                         object.saveInBackground();
                     }
                 });
@@ -338,7 +338,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
                     false
                 );
                 // 重要：标记这个任务属于代办集，不应显示在主页面
-                newTask.updatedAt = System.currentTimeMillis();
+                newTask.clientUpdatedAt = System.currentTimeMillis();
                 newTask.belongsToTaskGroup = true;  // 标记为属于代办集
 
                 // 将任务时间递增3小时，让子任务时间有序排列
@@ -348,17 +348,17 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 taskDao.insertTodo(newTask);
 
                 // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                taskGroup.addSubTask(newTask.uuid);
 
                 // 同步到云端
                 ParseObject todoObject = new ParseObject("Todo");
-                todoObject.put("id", newTask.id);
+                todoObject.put("uuid", newTask.uuid);
                 todoObject.put("title", newTask.title);
                 todoObject.put("time", newTask.time);
                 todoObject.put("place", newTask.place);
                 todoObject.put("category", newTask.category);
                 todoObject.put("completed", newTask.completed);
-                todoObject.put("updatedAt", newTask.updatedAt);
+                todoObject.put("clientUpdatedAt", newTask.clientUpdatedAt);
                 todoObject.put("deleted", newTask.deleted);
                 todoObject.put("belongsToTaskGroup", newTask.belongsToTaskGroup);
                 todoObject.put("user", ParseUser.getCurrentUser());
@@ -371,7 +371,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
             
             // 同步代办集到云端
             ParseObject groupObject = new ParseObject("TaskGroup");
-            groupObject.put("id", taskGroup.id);
+            groupObject.put("uuid", taskGroup.uuid);
             groupObject.put("title", taskGroup.title);
             groupObject.put("category", taskGroup.category);
             groupObject.put("estimatedDays", taskGroup.estimatedDays);

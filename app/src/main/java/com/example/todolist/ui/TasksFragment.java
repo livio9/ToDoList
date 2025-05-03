@@ -93,7 +93,7 @@ public class TasksFragment extends Fragment {
                             try {
                                 // 软删除操作
                                 todo.deleted = true;
-                                todo.updatedAt = System.currentTimeMillis();
+                                todo.clientUpdatedAt = System.currentTimeMillis();
                                 new Thread(() -> {
                                     try {
                                         taskDao.insertTodo(todo);
@@ -104,11 +104,11 @@ public class TasksFragment extends Fragment {
                                 
                                 try {
                                     ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-                                    query.whereEqualTo("id", todo.id);
+                                    query.whereEqualTo("uuid", todo.uuid);
                                     query.getFirstInBackground((object, e) -> {
                                         if (object != null) {
                                             object.put("deleted", true);
-                                            object.put("updatedAt", todo.updatedAt);
+                                            object.put("clientUpdatedAt", todo.clientUpdatedAt);
                                             object.saveInBackground();
                                         }
                                     });

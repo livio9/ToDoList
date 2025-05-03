@@ -81,7 +81,7 @@ public class TaskGroupsFragment extends Fragment {
             // 设置代办集点击事件
             taskGroupAdapter.setOnItemClickListener(taskGroup -> {
                 Intent intent = new Intent(requireContext(), TaskGroupActivity.class);
-                intent.putExtra("group_id", taskGroup.id);
+                intent.putExtra("group_id", taskGroup.uuid);
                 startActivity(intent);
             });
             
@@ -283,7 +283,7 @@ public class TaskGroupsFragment extends Fragment {
                     false
                 );
                 // 重要：标记这个任务属于代办集，不应显示在主页面
-                newTask.updatedAt = System.currentTimeMillis();
+                newTask.clientUpdatedAt = System.currentTimeMillis();
                 newTask.belongsToTaskGroup = true;  // 标记为属于代办集
                 
                 // 将任务时间递增3小时，让子任务时间有序排列
@@ -293,17 +293,17 @@ public class TaskGroupsFragment extends Fragment {
                 taskDao.insertTodo(newTask);
                 
                 // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                taskGroup.addSubTask(newTask.uuid);
                 
                 // 同步到云端
                 ParseObject todoObject = new ParseObject("Todo");
-                todoObject.put("id", newTask.id);
+                todoObject.put("uuid", newTask.uuid);
                 todoObject.put("title", newTask.title);
                 todoObject.put("time", newTask.time);
                 todoObject.put("place", newTask.place);
                 todoObject.put("category", newTask.category);
                 todoObject.put("completed", newTask.completed);
-                todoObject.put("updatedAt", newTask.updatedAt);
+                todoObject.put("clientUpdatedAt", newTask.clientUpdatedAt);
                 todoObject.put("deleted", newTask.deleted);
                 todoObject.put("belongsToTaskGroup", newTask.belongsToTaskGroup);
                 todoObject.put("user", ParseUser.getCurrentUser());
@@ -316,7 +316,7 @@ public class TaskGroupsFragment extends Fragment {
             
             // 同步代办集到云端
             ParseObject groupObject = new ParseObject("TaskGroup");
-            groupObject.put("id", taskGroup.id);
+            groupObject.put("uuid", taskGroup.uuid);
             groupObject.put("title", taskGroup.title);
             groupObject.put("category", taskGroup.category);
             groupObject.put("estimatedDays", taskGroup.estimatedDays);

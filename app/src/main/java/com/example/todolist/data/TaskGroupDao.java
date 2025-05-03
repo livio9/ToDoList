@@ -14,9 +14,9 @@ public interface TaskGroupDao {
     @Query("SELECT * FROM taskgroups ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroups();
     
-    @Query("SELECT * FROM taskgroups WHERE id = :groupId")
+    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId")
     TaskGroup getTaskGroupById(String groupId);
     
-    @Query("SELECT * FROM todos WHERE id IN (:taskIds) AND deleted = 0 ORDER BY time ASC")
+    @Query("SELECT * FROM todos WHERE uuid IN (:taskIds) AND deleted = 0 ORDER BY time ASC")
     List<Todo> getSubTasksByIds(List<String> taskIds);
 } 

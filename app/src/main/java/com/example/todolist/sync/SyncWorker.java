@@ -30,7 +30,7 @@ import java.util.*;
 public class SyncWorker extends Worker {
     private static Todo toTodo(ParseObject o) {
         return new Todo(
-                o.getString("id"),
+                o.getString("uuid"),
                 o.getString("title"),
                 o.getLong("time"),
                 o.getString("place"),
@@ -40,13 +40,13 @@ public class SyncWorker extends Worker {
     }
     private static ParseObject toParse(Todo t) {
         ParseObject o = new ParseObject("Todo");
-        o.put("id", t.id);
+        o.put("uuid", t.uuid);
         o.put("title", t.title);
         o.put("time", t.time);
         o.put("place", t.place);
         o.put("category", t.category);
         o.put("completed", t.completed);
-        o.put("updatedAt", t.updatedAt);
+        o.put("clientUpdatedAt", t.clientUpdatedAt);
         o.put("deleted", t.deleted);
         o.put("belongsToTaskGroup", t.belongsToTaskGroup);
         o.put("user", ParseUser.getCurrentUser());
@@ -76,16 +76,16 @@ public class SyncWorker extends Worker {
                     // 建立本地映射
                     Map<String, Todo> localMap = new HashMap<>();
                     for (Todo t : localTasks) {
-                        localMap.put(t.id, t);
+                        localMap.put(t.uuid, t);
                     }
 
                     // 遍历云端任务, 仅执行"云 -> 本地"更新
                     for (ParseObject obj : cloudDocs) {
                         Todo cloudTodo = toTodo(obj);
                         if (cloudTodo == null) continue;
-                        Todo localTodo = localMap.get(cloudTodo.id);
+                        Todo localTodo = localMap.get(cloudTodo.uuid);
                         // 如果本地为空, 或云端的更新更晚, 则覆盖本地
-                        if (localTodo == null || cloudTodo.updatedAt > localTodo.updatedAt) {
+                        if (localTodo == null || cloudTodo.clientUpdatedAt > localTodo.clientUpdatedAt) {
                             taskDao.insertTodo(cloudTodo);
                         }
                     }
@@ -152,16 +152,16 @@ public class SyncWorker extends Worker {
             List<Todo> localTasks = taskDao.getAll();
             List<ParseObject> cloudDocs = query.find();
 
-            // 构建映射: id -> Todo
+            // 构建映射: uuid -> Todo
             Map<String, Todo> localMap = new HashMap<>();
             for (Todo t : localTasks) {
-                localMap.put(t.id, t);
+                localMap.put(t.uuid, t);
             }
             Map<String, Todo> cloudMap = new HashMap<>();
             for (ParseObject obj : cloudDocs) {
                 Todo cloudTodo = toTodo(obj);
                 if (cloudTodo != null) {
-                    cloudMap.put(cloudTodo.id, cloudTodo);
+                    cloudMap.put(cloudTodo.uuid, cloudTodo);
                 }
             }
             // 构建所有任务ID的集合
@@ -169,10 +169,10 @@ public class SyncWorker extends Worker {
             allIds.addAll(localMap.keySet());
             allIds.addAll(cloudMap.keySet());
 
-            // 合并逻辑：对于每个 id ，选用更新时间较新的版本（以后可以添加更复杂的冲突策略）
-            for (String id : allIds) {
-                Todo localTodo = localMap.get(id);
-                Todo cloudTodo = cloudMap.get(id);
+            // 合并逻辑：对于每个 uuid ，选用更新时间较新的版本（以后可以添加更复杂的冲突策略）
+            for (String uuid : allIds) {
+                Todo localTodo = localMap.get(uuid);
+                Todo cloudTodo = cloudMap.get(uuid);
                 Todo mergedTodo = null;
                 if (localTodo == null && cloudTodo != null) {
                     // 本地不存在，云端有：下载云端任务到本地
@@ -182,7 +182,7 @@ public class SyncWorker extends Worker {
                     mergedTodo = localTodo;
                 } else if (localTodo != null && cloudTodo != null) {
                     // 双方都有：比较更新时间
-                    if (localTodo.updatedAt >= cloudTodo.updatedAt) {
+                    if (localTodo.clientUpdatedAt >= cloudTodo.clientUpdatedAt) {
                         mergedTodo = localTodo;
                     } else {
                         mergedTodo = cloudTodo;

@@ -19,7 +19,7 @@ import java.util.List;
 public class TaskGroup implements Serializable {
     @PrimaryKey
     @NonNull
-    public String id;            // 唯一ID
+    public String uuid;            // 唯一ID
     public String title;         // 待办集标题
     public String category;      // 分类
     public int estimatedDays;    // 预计完成天数
@@ -28,14 +28,14 @@ public class TaskGroup implements Serializable {
 
     // 无参数构造函数，Room使用这个构造函数创建对象
     public TaskGroup() {
-        this.id = "";
+        this.uuid = "";
         subTaskIds = new ArrayList<>();
     }
 
     // 使用@Ignore标记，告诉Room不要使用这个构造函数
     @Ignore
-    public TaskGroup(@NonNull String id, String title, String category, int estimatedDays) {
-        this.id = id;
+    public TaskGroup(@NonNull String uuid, String title, String category, int estimatedDays) {
+        this.uuid = uuid;
         this.title = title;
         this.category = category;
         this.estimatedDays = estimatedDays;

@@ -140,7 +140,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             
             // 同步更新云端任务的完成状态字段
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-            query.whereEqualTo("id", todo.id);
+            query.whereEqualTo("uuid", todo.uuid);
             query.getFirstInBackground((object, e) -> {
                 if (object != null) {
                     object.put("completed", newStatus);

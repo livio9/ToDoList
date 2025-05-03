@@ -19,8 +19,8 @@ import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskDao;
 import com.example.todolist.data.Todo;
 import com.example.todolist.sync.SyncWorker;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.parse.ParseUser;
+
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class ProfileFragment extends Fragment {
     private LinearLayout layoutSync;
     private LinearLayout layoutHelp;
     
-    private FirebaseAuth auth;
+
     private TaskDao taskDao;
 
     public ProfileFragment() {
@@ -50,8 +50,7 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
         
         try {
-            // 初始化Firebase
-            auth = FirebaseAuth.getInstance();
+
             
             // 初始化数据库
             taskDao = AppDatabase.getInstance(requireContext()).taskDao();
@@ -114,17 +113,17 @@ public class ProfileFragment extends Fragment {
     
     private void setupUserInfo() {
         try {
-            FirebaseUser user = auth.getCurrentUser();
+            ParseUser user = ParseUser.getCurrentUser();
             if (user != null) {
-                // 设置用户名（使用邮箱前缀）
+                String username = user.getUsername();
                 String email = user.getEmail();
-                String userName = email != null ? email.split("@")[0] : "用户";
-                textUserName.setText(userName);
+                textUserName.setText(username != null ? username : "用户");
                 textUserEmail.setText(email != null ? email : "未设置邮箱");
             } else {
                 textUserName.setText("未登录用户");
                 textUserEmail.setText("请登录账号");
             }
+
         } catch (Exception e) {
             Log.e(TAG, "设置用户信息失败", e);
             textUserName.setText("加载失败");
@@ -175,8 +174,8 @@ public class ProfileFragment extends Fragment {
     private void logoutUser() {
         try {
             // 退出登录
-            FirebaseAuth.getInstance().signOut();
-            
+            ParseUser.logOut();
+
             // 取消定期同步
             SyncWorker.cancelPeriodicSync(requireContext());
             

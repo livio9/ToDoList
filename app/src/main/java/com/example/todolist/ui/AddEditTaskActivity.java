@@ -25,8 +25,10 @@ import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.Todo;
 import com.example.todolist.R;
 import com.example.todolist.ai.TaskDecomposer;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
+import com.parse.ParseQuery;
+
 import org.json.JSONException;
 import java.io.IOException;
 import java.util.Calendar;
@@ -45,8 +47,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
     private Button buttonAiDecompose;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
-    private FirebaseFirestore firestore;
-    private FirebaseAuth auth;
+
     private Todo currentTodo;         // 编辑模式下传入的任务对象
     private Calendar selectedCalendar; // 选定的日期时间
     private boolean isTaskGroupMode = false; // 是否为代办集模式
@@ -80,8 +81,6 @@ public class AddEditTaskActivity extends AppCompatActivity {
         // 初始化 DAO 和 Firebase 引用
         taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
         taskGroupDao = AppDatabase.getInstance(getApplicationContext()).taskGroupDao();
-        firestore = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
         
         // 获取界面控件引用
         editTitle = findViewById(R.id.editTitle);
@@ -126,7 +125,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
             checkCompleted.setChecked(false);
             buttonDelete.setVisibility(parentGroupId != null ? Button.VISIBLE : Button.GONE);
         }
-        
+
         // AI分解按钮只在代办集模式下显示
         buttonAiDecompose.setVisibility(isTaskGroupMode ? View.VISIBLE : View.GONE);
 
@@ -185,12 +184,12 @@ public class AddEditTaskActivity extends AppCompatActivity {
             // 每次保存更新更新时间，并确保标记未删除
             currentTodo.updatedAt = System.currentTimeMillis();
             currentTodo.deleted = false;
-            
+
             // 如果是子任务，关联到代办集
             if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
                 // 标记为属于代办集的任务
                 currentTodo.belongsToTaskGroup = true;
-                
+
                 new Thread(() -> {
                     TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
                     if (group != null) {
@@ -199,16 +198,23 @@ public class AddEditTaskActivity extends AppCompatActivity {
                     }
                 }).start();
             }
-            
+
             new Thread(() -> taskDao.insertTodo(currentTodo)).start();
 
             // 同步到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("tasks").document(currentTodo.id)
-                        .set(currentTodo);
-            }
+            ParseObject todoObject = new ParseObject("Todo");
+            todoObject.put("id", currentTodo.id);
+            todoObject.put("title", currentTodo.title);
+            todoObject.put("time", currentTodo.time);
+            todoObject.put("place", currentTodo.place);
+            todoObject.put("category", currentTodo.category);
+            todoObject.put("completed", currentTodo.completed);
+            todoObject.put("updatedAt", currentTodo.updatedAt);
+            todoObject.put("deleted", currentTodo.deleted);
+            todoObject.put("belongsToTaskGroup", currentTodo.belongsToTaskGroup);
+            todoObject.put("user", ParseUser.getCurrentUser());
+            todoObject.saveInBackground();
+
             Toast.makeText(AddEditTaskActivity.this, "已保存", Toast.LENGTH_SHORT).show();
             finish();
         });
@@ -219,17 +225,21 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 currentTodo.deleted = true;
                 currentTodo.updatedAt = System.currentTimeMillis();
                 new Thread(() -> taskDao.insertTodo(currentTodo)).start();
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(currentTodo.id)
-                            .update("deleted", true, "updatedAt", currentTodo.updatedAt);
-                }
+                ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
+                query.whereEqualTo("id", currentTodo.id);
+                query.getFirstInBackground((object, e) -> {
+                    if (object != null) {
+                        object.put("deleted", true);
+                        object.put("updatedAt", currentTodo.updatedAt);
+                        object.saveInBackground();
+                    }
+                });
+
                 Toast.makeText(AddEditTaskActivity.this, "任务已删除", Toast.LENGTH_SHORT).show();
             }
             finish();
         });
-        
+
         // 设置AI任务分解按钮点击事件
         buttonAiDecompose.setOnClickListener(v -> {
             String title = editTitle.getText().toString().trim();
@@ -237,7 +247,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 Toast.makeText(AddEditTaskActivity.this, "请先输入任务标题", Toast.LENGTH_SHORT).show();
                 return;
             }
-            
+
             // 执行任务分解
             new DecomposeTaskAsyncTask().execute(title);
         });
@@ -251,7 +261,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
         String formatted = sdf.format(selectedCalendar.getTime());
         textDateTime.setText(formatted);
     }
-    
+
     /**
      * 显示任务分解结果对话框
      */
@@ -262,17 +272,17 @@ public class AddEditTaskActivity extends AppCompatActivity {
         TextView textCategory = dialogView.findViewById(R.id.textCategory);
         TextView textEstimatedDays = dialogView.findViewById(R.id.textEstimatedDays);
         RecyclerView recyclerSubTasks = dialogView.findViewById(R.id.recyclerSubTasks);
-        
+
         // 设置主任务信息
         textMainTask.setText(result.getMainTask());
         textCategory.setText("推荐类别: " + result.getCategory());
         textEstimatedDays.setText("预计天数: " + result.getEstimatedDays());
-        
+
         // 设置子任务列表
         recyclerSubTasks.setLayoutManager(new LinearLayoutManager(this));
         SubTaskAdapter adapter = new SubTaskAdapter(result.getSubTasks());
         recyclerSubTasks.setAdapter(adapter);
-        
+
         // 创建并显示对话框
         new AlertDialog.Builder(this)
             .setTitle("任务分解结果")
@@ -284,7 +294,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
             .setNegativeButton("取消", null)
             .show();
     }
-    
+
     /**
      * 保存为代办集
      */
@@ -297,24 +307,24 @@ public class AddEditTaskActivity extends AppCompatActivity {
             result.getCategory(),
             result.getEstimatedDays()
         );
-        
+
         // 保存代办集
         new Thread(() -> {
             taskGroupDao.insertTaskGroup(taskGroup);
-            
+
             // 获取当前任务的一些信息作为子任务的默认值
             String place = editPlace.getText().toString().trim();
             String category = result.getCategory();
             if (TextUtils.isEmpty(category) || !isValidCategory(category)) {
                 category = spinnerCategory.getText().toString();
             }
-            
+
             // 设置第一个子任务的开始时间
             Calendar taskCalendar = Calendar.getInstance();
             if (selectedCalendar != null) {
                 taskCalendar.setTimeInMillis(selectedCalendar.getTimeInMillis());
             }
-            
+
             // 为每个子任务创建新的Todo对象并保存
             final String finalCategory = category;
             for (TaskDecomposer.SubTask subTask : result.getSubTasks()) {
@@ -330,35 +340,44 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 // 重要：标记这个任务属于代办集，不应显示在主页面
                 newTask.updatedAt = System.currentTimeMillis();
                 newTask.belongsToTaskGroup = true;  // 标记为属于代办集
-                
+
                 // 将任务时间递增3小时，让子任务时间有序排列
                 taskCalendar.add(Calendar.HOUR_OF_DAY, 3);
-                
+
                 // 保存到本地数据库
                 taskDao.insertTodo(newTask);
-                
+
                 // 添加到代办集
                 taskGroup.addSubTask(newTask.id);
-                
+
                 // 同步到云端
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(newTask.id)
-                            .set(newTask);
-                }
+                ParseObject todoObject = new ParseObject("Todo");
+                todoObject.put("id", newTask.id);
+                todoObject.put("title", newTask.title);
+                todoObject.put("time", newTask.time);
+                todoObject.put("place", newTask.place);
+                todoObject.put("category", newTask.category);
+                todoObject.put("completed", newTask.completed);
+                todoObject.put("updatedAt", newTask.updatedAt);
+                todoObject.put("deleted", newTask.deleted);
+                todoObject.put("belongsToTaskGroup", newTask.belongsToTaskGroup);
+                todoObject.put("user", ParseUser.getCurrentUser());
+                todoObject.saveInBackground();
+
             }
             
             // 更新代办集
             taskGroupDao.insertTaskGroup(taskGroup);
             
             // 同步代办集到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("taskgroups").document(taskGroup.id)
-                        .set(taskGroup);
-            }
+            ParseObject groupObject = new ParseObject("TaskGroup");
+            groupObject.put("id", taskGroup.id);
+            groupObject.put("title", taskGroup.title);
+            groupObject.put("category", taskGroup.category);
+            groupObject.put("estimatedDays", taskGroup.estimatedDays);
+            groupObject.put("user", ParseUser.getCurrentUser());
+            groupObject.saveInBackground();
+
         }).start();
         
         Toast.makeText(this, "已创建代办集：" + result.getMainTask(), Toast.LENGTH_SHORT).show();

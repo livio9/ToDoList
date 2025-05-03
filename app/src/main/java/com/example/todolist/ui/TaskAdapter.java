@@ -14,8 +14,9 @@ import com.example.todolist.data.Todo;
 import com.example.todolist.R;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.chip.Chip;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
@@ -138,13 +139,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }).start();
             
             // 同步更新云端任务的完成状态字段
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            if (auth.getCurrentUser() != null) {
-                FirebaseFirestore.getInstance().collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("tasks").document(todo.id)
-                        .update("completed", newStatus);
-            }
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
+            query.whereEqualTo("id", todo.id);
+            query.getFirstInBackground((object, e) -> {
+                if (object != null) {
+                    object.put("completed", newStatus);
+                    object.saveInBackground();
+                }
+            });
         });
 
         // 列表项点击：触发监听回调（打开编辑）

@@ -27,8 +27,8 @@ import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.TaskGroupDao;
 import com.example.todolist.data.Todo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 
 import org.json.JSONException;
 
@@ -46,8 +46,7 @@ public class TaskGroupsFragment extends Fragment {
     private View emptyViewGroups;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
-    private FirebaseAuth auth;
-    private FirebaseFirestore firestore;
+
     private TaskGroupAdapter taskGroupAdapter;
     private List<TaskGroup> allTaskGroups = new ArrayList<>();
 
@@ -68,8 +67,7 @@ public class TaskGroupsFragment extends Fragment {
             // 初始化DAO和Firebase
             taskDao = AppDatabase.getInstance(requireContext()).taskDao();
             taskGroupDao = AppDatabase.getInstance(requireContext()).taskGroupDao();
-            auth = FirebaseAuth.getInstance();
-            firestore = FirebaseFirestore.getInstance();
+
             
             // 初始化UI组件
             recyclerViewGroups = view.findViewById(R.id.recyclerViewGroups);
@@ -298,25 +296,34 @@ public class TaskGroupsFragment extends Fragment {
                 taskGroup.addSubTask(newTask.id);
                 
                 // 同步到云端
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(newTask.id)
-                            .set(newTask);
-                }
+                ParseObject todoObject = new ParseObject("Todo");
+                todoObject.put("id", newTask.id);
+                todoObject.put("title", newTask.title);
+                todoObject.put("time", newTask.time);
+                todoObject.put("place", newTask.place);
+                todoObject.put("category", newTask.category);
+                todoObject.put("completed", newTask.completed);
+                todoObject.put("updatedAt", newTask.updatedAt);
+                todoObject.put("deleted", newTask.deleted);
+                todoObject.put("belongsToTaskGroup", newTask.belongsToTaskGroup);
+                todoObject.put("user", ParseUser.getCurrentUser());
+                todoObject.saveInBackground();
+
             }
             
             // 更新代办集
             taskGroupDao.insertTaskGroup(taskGroup);
             
             // 同步代办集到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("taskgroups").document(taskGroup.id)
-                        .set(taskGroup);
-            }
-            
+            ParseObject groupObject = new ParseObject("TaskGroup");
+            groupObject.put("id", taskGroup.id);
+            groupObject.put("title", taskGroup.title);
+            groupObject.put("category", taskGroup.category);
+            groupObject.put("estimatedDays", taskGroup.estimatedDays);
+            groupObject.put("user", ParseUser.getCurrentUser());
+            groupObject.saveInBackground();
+
+
             // 刷新界面
             getActivity().runOnUiThread(() -> {
                 loadTaskGroups();

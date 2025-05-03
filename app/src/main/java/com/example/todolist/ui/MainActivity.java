@@ -18,18 +18,17 @@ import com.example.todolist.data.TaskDao;
 import com.example.todolist.auth.LoginActivity;
 import com.example.todolist.R;
 import com.example.todolist.sync.SyncWorker;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+
 import android.view.View;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.parse.ParseUser;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private TaskDao taskDao;
-    private FirebaseAuth auth;
-    private FirebaseFirestore firestore;
+
     private BottomNavigationView bottomNavigation;
     
     private TasksFragment tasksFragment;
@@ -60,15 +59,7 @@ public class MainActivity extends AppCompatActivity {
                 // 工具栏失败不影响主要功能
             }
             
-            try {
-                auth = FirebaseAuth.getInstance();
-                firestore = FirebaseFirestore.getInstance();
-            } catch (Exception e) {
-                Log.e(TAG, "Firebase初始化失败", e);
-                auth = null;
-                firestore = null;
-                Toast.makeText(this, "云同步功能不可用", Toast.LENGTH_SHORT).show();
-            }
+
 
             try {
                 taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
@@ -94,10 +85,9 @@ public class MainActivity extends AppCompatActivity {
             
             // 登录后立即拉取云端数据，恢复本地数据
             try {
-                if (auth != null && auth.getCurrentUser() != null) {
+                if (ParseUser.getCurrentUser() != null) {
                     SyncWorker.schedulePeriodicSync(getApplicationContext());
                     SyncWorker.triggerSyncNow(getApplicationContext());
-                    // 增加拉云操作，避免本地为空造成的问题
                     SyncWorker.pullCloudToLocal(getApplicationContext());
                 }
             } catch (Exception e) {

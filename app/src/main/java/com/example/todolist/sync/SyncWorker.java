@@ -15,12 +15,12 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskDao;
 import com.example.todolist.data.Todo;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+
 import com.google.android.gms.tasks.Tasks;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -28,27 +28,48 @@ import java.util.concurrent.TimeUnit;
 import java.util.*;
 
 public class SyncWorker extends Worker {
-
+    private static Todo toTodo(ParseObject o) {
+        return new Todo(
+                o.getString("id"),
+                o.getString("title"),
+                o.getLong("time"),
+                o.getString("place"),
+                o.getString("category"),
+                o.getBoolean("completed")
+        );
+    }
+    private static ParseObject toParse(Todo t) {
+        ParseObject o = new ParseObject("Todo");
+        o.put("id", t.id);
+        o.put("title", t.title);
+        o.put("time", t.time);
+        o.put("place", t.place);
+        o.put("category", t.category);
+        o.put("completed", t.completed);
+        o.put("updatedAt", t.updatedAt);
+        o.put("deleted", t.deleted);
+        o.put("belongsToTaskGroup", t.belongsToTaskGroup);
+        o.put("user", ParseUser.getCurrentUser());
+        return o;
+    }
     public SyncWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
     public static void pullCloudToLocal(Context applicationContext) {
         try {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
                 return;
             }
-            String uid = user.getUid();
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
             TaskDao taskDao = AppDatabase.getInstance(applicationContext).taskDao();
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
+            query.whereEqualTo("user", ParseUser.getCurrentUser());
 
             new Thread(() -> {
                 try {
                     // 获取云端所有任务
-                    QuerySnapshot snapshot = com.google.android.gms.tasks.Tasks.await(cloudTasksRef.get());
-                    List<DocumentSnapshot> cloudDocs = snapshot.getDocuments();
+                    List<ParseObject> cloudDocs = query.find();
                     // 获取本地所有任务
                     List<Todo> localTasks = taskDao.getAll();
 
@@ -59,8 +80,8 @@ public class SyncWorker extends Worker {
                     }
 
                     // 遍历云端任务, 仅执行"云 -> 本地"更新
-                    for (DocumentSnapshot doc : cloudDocs) {
-                        Todo cloudTodo = doc.toObject(Todo.class);
+                    for (ParseObject obj : cloudDocs) {
+                        Todo cloudTodo = toTodo(obj);
                         if (cloudTodo == null) continue;
                         Todo localTodo = localMap.get(cloudTodo.id);
                         // 如果本地为空, 或云端的更新更晚, 则覆盖本地
@@ -86,15 +107,12 @@ public class SyncWorker extends Worker {
 
     public static void pushLocalToCloud(Context applicationContext) {
         try {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
                 return;
             }
-            
-            String uid = user.getUid();
+
             TaskDao taskDao = AppDatabase.getInstance(applicationContext).taskDao();
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
 
             new Thread(() -> {
                 try {
@@ -103,7 +121,7 @@ public class SyncWorker extends Worker {
                     
                     // 批量上传到Firestore
                     for (Todo todo : localTasks) {
-                        cloudTasksRef.document(todo.id).set(todo);
+                        toParse(todo).save();
                     }
                     
                     // 通知数据已更新
@@ -125,20 +143,14 @@ public class SyncWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            return Result.success();
-        }
-        String uid = user.getUid();
+        if (ParseUser.getCurrentUser() == null) return Result.success();
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
         TaskDao taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference cloudTasksRef = db.collection("users").document(uid).collection("tasks");
-
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
         try {
             // 获取本地和云端任务列表
             List<Todo> localTasks = taskDao.getAll();
-            QuerySnapshot snapshot = Tasks.await(cloudTasksRef.get());
-            List<DocumentSnapshot> cloudDocs = snapshot.getDocuments();
+            List<ParseObject> cloudDocs = query.find();
 
             // 构建映射: id -> Todo
             Map<String, Todo> localMap = new HashMap<>();
@@ -146,8 +158,8 @@ public class SyncWorker extends Worker {
                 localMap.put(t.id, t);
             }
             Map<String, Todo> cloudMap = new HashMap<>();
-            for (DocumentSnapshot doc : cloudDocs) {
-                Todo cloudTodo = doc.toObject(Todo.class);
+            for (ParseObject obj : cloudDocs) {
+                Todo cloudTodo = toTodo(obj);
                 if (cloudTodo != null) {
                     cloudMap.put(cloudTodo.id, cloudTodo);
                 }
@@ -180,11 +192,11 @@ public class SyncWorker extends Worker {
                     // 更新本地数据库
                     taskDao.insertTodo(mergedTodo);
                     // 更新云端
-                    cloudTasksRef.document(mergedTodo.id).set(mergedTodo);
+                    toParse(mergedTodo).saveInBackground();
                 }
             }
             return Result.success();
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ParseException e) {
             e.printStackTrace();
             return Result.retry();
         }

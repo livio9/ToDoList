@@ -14,8 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.todolist.sync.SyncWorker;
 import com.example.todolist.ui.MainActivity;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.parse.ParseUser;
+import com.parse.LogInCallback;
+import com.parse.SignUpCallback;
+import com.parse.ParseException;
+
 import com.example.todolist.R;
 
 public class LoginActivity extends AppCompatActivity {
@@ -23,7 +26,6 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editPassword;
     private Button btnLogin;
     private Button btnRegister;
-    private FirebaseAuth auth;
     private static final String TAG = "LoginActivity";
     private boolean firebaseInitialized = false;
 
@@ -31,36 +33,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "LoginActivity onCreate 开始");
-        
-        try {
-            // 初始化 Firebase
-            if (FirebaseApp.getApps(this).isEmpty()) {
-                try {
-                    FirebaseApp.initializeApp(this);
-                    auth = FirebaseAuth.getInstance();
-                    firebaseInitialized = true;
-                    Log.d(TAG, "Firebase 初始化成功");
-                } catch (Exception e) {
-                    Log.e(TAG, "Firebase 初始化失败", e);
-                    firebaseInitialized = false;
-                    // Firebase初始化失败，继续加载UI
-                }
-            } else {
-                auth = FirebaseAuth.getInstance();
-                firebaseInitialized = true;
-                Log.d(TAG, "Firebase实例已存在");
-            }
-            
-            // 如果Firebase初始化成功且用户已经登录，直接进入主界面
-            if (firebaseInitialized && auth.getCurrentUser() != null) {
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                finish();
-                return;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Firebase初始化或登录状态检查失败", e);
-            // 继续加载UI，用户可以手动登录
-        }
+
         
         // 加载登录界面布局
         try {
@@ -98,29 +71,27 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 
                 try {
-                    // 使用 Firebase Auth 进行登录
-                    auth.signInWithEmailAndPassword(email, password)
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    // 登录成功，进入主界面
-                                    Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
-                                    try {
-                                        SyncWorker.pullCloudToLocal(getApplicationContext());
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "同步数据失败", e);
-                                    }
-                                    
-                                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                        finish();
-                                    }, 1000); // 延迟1秒进入主界面
-                                } else {
-                                    // 登录失败
-                                    Exception e = task.getException();
-                                    Log.e(TAG, "登录失败", e);
-                                    Toast.makeText(LoginActivity.this, "登录失败：" + (e != null ? e.getMessage() : "未知错误"), Toast.LENGTH_LONG).show();
+                    ParseUser.logInInBackground(email, password, new LogInCallback() {
+                        @Override
+                        public void done(ParseUser user, ParseException e) {
+                            if (user != null) {
+                                Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                                try {
+                                    SyncWorker.pullCloudToLocal(getApplicationContext());
+                                } catch (Exception ex) {
+                                    Log.e(TAG, "同步数据失败", ex);
                                 }
-                            });
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                    finish();
+                                }, 1000);
+                            } else {
+                                Log.e(TAG, "登录失败", e);
+                                Toast.makeText(LoginActivity.this, "登录失败：" + (e != null ? e.getMessage() : "未知错误"), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+
                 } catch (Exception e) {
                     Log.e(TAG, "登录操作失败", e);
                     Toast.makeText(LoginActivity.this, "登录失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -140,20 +111,23 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 
                 try {
-                    auth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    // 注册成功，自动登录并进入主界面
-                                    Toast.makeText(LoginActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                    finish();
-                                } else {
-                                    // 注册失败
-                                    Exception e = task.getException();
-                                    Log.e(TAG, "注册失败", e);
-                                    Toast.makeText(LoginActivity.this, "注册失败：" + (e != null ? e.getMessage() : "未知错误"), Toast.LENGTH_LONG).show();
-                                }
-                            });
+                    ParseUser user = new ParseUser();
+                    user.setUsername(email);
+                    user.setPassword(password);
+                    user.signUpInBackground(new SignUpCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if (e == null) {
+                                Toast.makeText(LoginActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                finish();
+                            } else {
+                                Log.e(TAG, "注册失败", e);
+                                Toast.makeText(LoginActivity.this, "注册失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+
                 } catch (Exception e) {
                     Log.e(TAG, "注册操作失败", e);
                     Toast.makeText(LoginActivity.this, "注册失败：" + e.getMessage(), Toast.LENGTH_LONG).show();

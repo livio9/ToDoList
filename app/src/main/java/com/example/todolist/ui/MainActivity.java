@@ -25,6 +25,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.todolist.TodoList;
 import com.example.todolist.data.AppDatabase;
@@ -36,7 +38,6 @@ import com.example.todolist.utils.LoadingStateManager;
 import com.example.todolist.utils.NetworkStateMonitor;
 import com.parse.ParseUser;
 import android.view.View;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int THEME_BLACK = 8;     // 黑色系
     
     private TaskDao taskDao;
-    private BottomNavigationView bottomNavigation;
+    private LinearLayout navigation_tasks, navigation_task_groups, navigation_statistics, navigation_profile;
+    private View currentSelectedNav;
     private CardView userAvatarContainer;
     private ImageView userAvatar;
     private SharedPreferences preferences;
@@ -151,8 +153,10 @@ public class MainActivity extends AppCompatActivity {
                         // 添加点击动画效果
                         animateAvatarClick(userAvatarContainer);
                         
-                        // 直接跳转到个人中心页面
-                        bottomNavigation.setSelectedItemId(R.id.navigation_profile);
+                        // 切换到个人中心页面
+                        if (navigation_profile != null) {
+                            navigation_profile.performClick();
+                        }
                     });
                 }
             } catch (Exception e) {
@@ -301,32 +305,115 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void setupBottomNavigation() {
-        bottomNavigation = findViewById(R.id.bottomNavigation);
-        
-        // 添加点击动画效果
-        bottomNavigation.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
+        try {
+            // 找到底部导航的四个按钮
+            navigation_tasks = findViewById(R.id.navigation_tasks);
+            navigation_task_groups = findViewById(R.id.navigation_task_groups);
+            navigation_statistics = findViewById(R.id.navigation_statistics);
+            navigation_profile = findViewById(R.id.navigation_profile);
             
-            if (itemId == R.id.navigation_tasks) {
+            // 默认选中第一个按钮
+            updateNavSelection(navigation_tasks);
+            
+            // 为各个按钮设置点击事件
+            navigation_tasks.setOnClickListener(v -> {
+                updateNavSelection(v);
                 switchFragment(tasksFragment);
                 setTitle("待办事项");
-                return true;
-            } else if (itemId == R.id.navigation_task_groups) {
+            });
+            
+            navigation_task_groups.setOnClickListener(v -> {
+                updateNavSelection(v);
                 switchFragment(taskGroupsFragment);
                 setTitle("待办集");
-                return true;
-            } else if (itemId == R.id.navigation_statistics) {
+            });
+            
+            navigation_statistics.setOnClickListener(v -> {
+                updateNavSelection(v);
                 switchFragment(statisticsFragment);
                 setTitle("数据统计");
-                return true;
-            } else if (itemId == R.id.navigation_profile) {
+            });
+            
+            navigation_profile.setOnClickListener(v -> {
+                updateNavSelection(v);
                 switchFragment(profileFragment);
                 setTitle("个人中心");
-                return true;
-            }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "设置底部导航失败", e);
+        }
+    }
+    
+    // 更新底部导航选中状态
+    private void updateNavSelection(View selected) {
+        // 重置所有导航项的状态
+        for (View view : new View[]{navigation_tasks, navigation_task_groups, navigation_statistics, navigation_profile}) {
+            // 找到图标和文字
+            ImageView icon = (ImageView) ((LinearLayout) view).getChildAt(0);
+            TextView text = (TextView) ((LinearLayout) view).getChildAt(1);
             
-            return false;
-        });
+            // 获取主题色
+            int themeColor = getThemeColor();
+            
+            // 通过颜色深浅区分选中状态
+            if (view == selected) {
+                // 选中项使用100%的主题色
+                icon.setColorFilter(themeColor);
+                text.setTextColor(themeColor);
+                // 设置为选中状态，但不再使用背景变化
+                view.setSelected(true);
+            } else {
+                // 未选中项使用70%透明度的主题色
+                int alphaColor = (themeColor & 0x00FFFFFF) | 0xB0000000;
+                icon.setColorFilter(alphaColor);
+                text.setTextColor(alphaColor);
+                view.setSelected(false);
+            }
+        }
+        
+        // 记录当前选中的导航项
+        currentSelectedNav = selected;
+    }
+    
+    // 获取当前主题色
+    private int getThemeColor() {
+        int themeColor = getResources().getColor(R.color.theme1_primary); // 默认主题色
+        try {
+            // 根据当前主题获取主题色
+            int themeIndex = preferences.getInt(PREF_THEME, THEME_DEFAULT);
+            switch (themeIndex) {
+                case THEME_RED:
+                    themeColor = getResources().getColor(R.color.theme2_primary);
+                    break;
+                case THEME_GREEN:
+                    themeColor = getResources().getColor(R.color.theme3_primary);
+                    break;
+                case THEME_PURPLE:
+                    themeColor = getResources().getColor(R.color.theme4_primary);
+                    break;
+                case THEME_PINK:
+                    themeColor = getResources().getColor(R.color.theme5_primary);
+                    break;
+                case THEME_ORANGE:
+                    themeColor = getResources().getColor(R.color.theme6_primary);
+                    break;
+                case THEME_YELLOW:
+                    themeColor = getResources().getColor(R.color.theme7_primary);
+                    break;
+                case THEME_BROWN:
+                    themeColor = getResources().getColor(R.color.theme8_primary);
+                    break;
+                case THEME_BLACK:
+                    themeColor = getResources().getColor(R.color.theme9_primary);
+                    break;
+                default:
+                    themeColor = getResources().getColor(R.color.theme1_primary);
+                    break;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "获取主题色失败", e);
+        }
+        return themeColor;
     }
     
     private void switchFragment(Fragment fragment) {

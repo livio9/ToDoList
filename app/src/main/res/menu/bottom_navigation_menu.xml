@@ -7,11 +7,11 @@
     <item
         android:id="@+id/navigation_task_groups"
         android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="代办集" />
+        android:title="待办集" />
     <item
         android:id="@+id/navigation_statistics"
-        android:icon="@android:drawable/ic_menu_report_image"
-        android:title="统计" />
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:title="数据统计" />
     <item
         android:id="@+id/navigation_profile"
         android:icon="@android:drawable/ic_menu_myplaces"

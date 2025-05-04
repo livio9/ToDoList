@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="80dp"
+        android:paddingBottom="100dp"
         android:padding="12dp" />
 
     <LinearLayout
@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="72dp"
+        android:layout_marginBottom="90dp"
         android:contentDescription="添加待办集"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@color/white"

@@ -50,10 +50,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="90dp"
+        android:layout_marginBottom="100dp"
         android:contentDescription="添加待办集"
         app:srcCompat="@android:drawable/ic_input_add"
-        app:tint="@color/white"
+        app:tint="?attr/colorOnPrimary"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
-        app:backgroundTint="@color/accent"/>
+        app:backgroundTint="?attr/colorPrimary"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

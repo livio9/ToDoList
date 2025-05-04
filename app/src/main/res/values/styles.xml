@@ -17,13 +17,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme1_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme1_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 卡片样式 -->
@@ -75,8 +77,8 @@
     <!-- 底部导航栏样式 -->
     <style name="Widget.App.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
         <item name="backgroundTint">@color/white</item>
-        <item name="itemIconTint">@color/theme1_primary</item>
-        <item name="itemTextColor">@color/theme1_primary</item>
+        <item name="itemIconTint">?attr/colorPrimary</item>
+        <item name="itemTextColor">?attr/colorPrimary</item>
         <item name="elevation">8dp</item>
     </style>
     
@@ -90,9 +92,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme1_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme1_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -121,13 +123,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Red" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme2_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme2_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -159,9 +163,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Red" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme2_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme2_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -176,13 +180,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Green" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme3_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme3_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -214,9 +220,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Green" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme3_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme3_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -231,13 +237,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Purple" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme4_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme4_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -269,9 +277,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Purple" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme4_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme4_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -286,13 +294,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Pink" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme5_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme5_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -324,9 +334,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Pink" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme5_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme5_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -341,13 +351,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Orange" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme6_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme6_primary</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -379,9 +391,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Orange" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme6_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme6_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -396,13 +408,15 @@
     
     <!-- 文本输入框样式 -->
     <style name="Widget.App.TextInputLayout.Yellow" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/theme7_primary</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
         <item name="boxStrokeWidth">1.5dp</item>
-        <item name="hintTextColor">@color/theme7_primary_darkest</item>
+        <item name="hintTextColor">?attr/colorPrimary</item>
         <item name="boxCornerRadiusTopStart">10dp</item>
         <item name="boxCornerRadiusTopEnd">10dp</item>
         <item name="boxCornerRadiusBottomStart">10dp</item>
         <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="startIconTint">?attr/colorPrimary</item>
+        <item name="endIconTint">?attr/colorPrimary</item>
     </style>
     
     <!-- 自定义Chip样式 -->
@@ -440,9 +454,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Yellow" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme7_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme7_primary_dark</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -495,9 +509,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Brown" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme8_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme8_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
     
@@ -550,9 +564,9 @@
     
     <!-- 悬浮按钮样式 -->
     <style name="Widget.App.FloatingActionButton.Black" parent="Widget.MaterialComponents.FloatingActionButton">
-        <item name="backgroundTint">@color/theme9_accent</item>
-        <item name="tint">@color/white</item>
-        <item name="rippleColor">@color/theme9_primary_light</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="tint">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorPrimaryVariant</item>
         <item name="elevation">6dp</item>
     </style>
 </resources>

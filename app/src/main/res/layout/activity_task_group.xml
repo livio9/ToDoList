@@ -122,6 +122,7 @@
         android:layout_marginBottom="16dp"
         android:src="@android:drawable/ic_input_add"
         app:fabSize="normal"
-        app:tint="@android:color/white"
+        app:tint="?attr/colorOnPrimary"
+        app:backgroundTint="?attr/colorPrimary"
         android:contentDescription="添加子任务"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

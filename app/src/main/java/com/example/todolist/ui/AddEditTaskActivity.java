@@ -101,15 +101,20 @@ public class AddEditTaskActivity extends AppCompatActivity {
         
         // 设置类别下拉框选项
         String[] categories = {"工作", "个人", "学习", "健康", "其他"};
-        ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, categories);
+        ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown, categories);
         spinnerCategory.setAdapter(catAdapter);
+        spinnerCategory.setText(categories[0], false); // 默认为第一个类别
 
         // 设置优先级下拉框选项
         String[] priorities = {"高", "中", "低"};
-        ArrayAdapter<String> priorityAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, priorities);
+        ArrayAdapter<String> priorityAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown, priorities);
         spinnerPriorityInput.setAdapter(priorityAdapter);
-        spinnerPriorityInput.setText("中", false); // 默认优先级为中
+        spinnerPriorityInput.setText(priorities[1], false); // 默认优先级为中
 
+        // 确保下拉菜单可点击弹出
+        spinnerCategory.setOnClickListener(v -> spinnerCategory.showDropDown());
+        spinnerPriorityInput.setOnClickListener(v -> spinnerPriorityInput.showDropDown());
+        
         // 判断编辑还是新增
         currentTodo = (Todo) getIntent().getSerializableExtra("todo");
         if (currentTodo != null) {

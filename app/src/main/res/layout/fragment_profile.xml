@@ -269,13 +269,18 @@
                 <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:columnCount="3"
-                    android:useDefaultMargins="true">
+                    android:columnCount="4"
+                    android:useDefaultMargins="true"
+                    android:alignmentMode="alignMargins"
+                    android:rowOrderPreserved="true"
+                    android:layout_gravity="center">
 
                     <!-- 蓝色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeDefault"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -336,7 +341,9 @@
                     <!-- 红色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeRed"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -397,7 +404,9 @@
                     <!-- 绿色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeGreen"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -458,7 +467,9 @@
                     <!-- 紫色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themePurple"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -519,7 +530,9 @@
                     <!-- 粉色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themePink"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -580,7 +593,9 @@
                     <!-- 橙色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeOrange"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -641,7 +656,9 @@
                     <!-- 黄色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeYellow"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -702,7 +719,9 @@
                     <!-- 大地色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeBrown"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"
@@ -763,7 +782,9 @@
                     <!-- 黑色系主题 -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/themeBlack"
-                        android:layout_width="70dp"
+                        android:layout_width="0dp"
+                        android:layout_gravity="fill_horizontal"
+                        android:layout_columnWeight="1"
                         android:layout_height="50dp"
                         android:layout_margin="4dp"
                         app:cardCornerRadius="12dp"

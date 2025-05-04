@@ -126,18 +126,37 @@
             </LinearLayout>
 
             <!-- 任务类别 -->
-            <TextView
-                android:id="@+id/textViewCategory"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_category_chip"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="11sp"
-                android:paddingVertical="4dp"
-                android:paddingHorizontal="10dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="6dp"
-                tools:text="学习" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                
+                <!-- 番茄定时按钮 -->
+                <ImageView
+                    android:id="@+id/imagePomodoroTimer"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="6dp"
+                    android:padding="2dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    app:tint="?attr/colorPrimary"
+                    android:visibility="gone"
+                    android:contentDescription="番茄定时" />
+                
+                <TextView
+                    android:id="@+id/textViewCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_category_chip"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:textSize="11sp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="10dp"
+                    android:layout_gravity="center_vertical"
+                    tools:text="学习" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

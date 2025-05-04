@@ -47,6 +47,10 @@ public class AddEditTaskActivity extends AppCompatActivity {
     private Button buttonDelete;
     private Button buttonAiDecompose;
     private MaterialCardView pomodoroCard;
+    private Button buttonStartPomodoro;
+    private TextView textPomodoroStatus;
+    private TextView textPomodoroStatsTask;
+    private ImageView imagePomodoroIcon;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
     private Todo currentTodo;         // 编辑模式下传入的任务对象
@@ -95,6 +99,10 @@ public class AddEditTaskActivity extends AppCompatActivity {
         buttonAiDecompose = findViewById(R.id.buttonAiDecompose);
         switchPomodoro = findViewById(R.id.switchPomodoro);
         pomodoroCard = findViewById(R.id.pomodoroCard);
+        buttonStartPomodoro = findViewById(R.id.buttonStartPomodoro);
+        textPomodoroStatus = findViewById(R.id.textPomodoroStatus);
+        textPomodoroStatsTask = findViewById(R.id.textPomodoroStatsTask);
+        imagePomodoroIcon = findViewById(R.id.imagePomodoroIcon);
         
         // 设置按钮布局为横向
         LinearLayout buttonContainer = findViewById(R.id.buttonContainer);
@@ -156,6 +164,68 @@ public class AddEditTaskActivity extends AppCompatActivity {
         // 番茄时钟卡片只在非代办集模式下显示
         pomodoroCard.setVisibility(isTaskGroupMode ? View.GONE : View.VISIBLE);
 
+        // 添加番茄时钟开关监听事件
+        switchPomodoro.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                // 显示开始专注按钮
+                buttonStartPomodoro.setVisibility(View.VISIBLE);
+                // 更新状态文本和颜色
+                textPomodoroStatus.setText("当前状态：已启用");
+                textPomodoroStatus.setTextColor(getResources().getColor(R.color.primary));
+                imagePomodoroIcon.setImageAlpha(255); // 图标显示为不透明
+                
+                // 如果是已有的任务，显示专注时间统计
+                if (currentTodo != null) {
+                    updatePomodoroStats();
+                    textPomodoroStatsTask.setVisibility(View.VISIBLE);
+                    Toast.makeText(this, "已启用番茄时钟，可直接开始专注", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // 隐藏开始专注按钮和统计信息
+                buttonStartPomodoro.setVisibility(View.GONE);
+                textPomodoroStatsTask.setVisibility(View.GONE);
+                // 更新状态文本和颜色
+                textPomodoroStatus.setText("当前状态：未启用");
+                textPomodoroStatus.setTextColor(getResources().getColor(R.color.text_secondary));
+                imagePomodoroIcon.setImageAlpha(180); // 图标显示为半透明
+            }
+        });
+        
+        // 添加开始专注按钮点击事件
+        buttonStartPomodoro.setOnClickListener(v -> {
+            // 如果是新任务，先提示保存
+            if (currentTodo == null) {
+                new AlertDialog.Builder(this)
+                    .setTitle("保存任务")
+                    .setMessage("需要先保存任务才能开始专注，是否保存？")
+                    .setPositiveButton("保存并开始", (dialog, which) -> {
+                        // 触发保存按钮点击
+                        buttonSave.performClick();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+            } else {
+                // 如果是已有任务，直接启动番茄计时器
+                showPomodoroTimer(currentTodo);
+            }
+        });
+
+        // 根据当前任务的番茄时钟状态显示或隐藏开始专注按钮
+        if (currentTodo != null && currentTodo.pomodoroEnabled != null && currentTodo.pomodoroEnabled) {
+            buttonStartPomodoro.setVisibility(View.VISIBLE);
+            textPomodoroStatus.setText("当前状态：已启用");
+            textPomodoroStatus.setTextColor(getResources().getColor(R.color.primary));
+            imagePomodoroIcon.setImageAlpha(255);
+            updatePomodoroStats();
+            textPomodoroStatsTask.setVisibility(View.VISIBLE);
+        } else {
+            buttonStartPomodoro.setVisibility(View.GONE);
+            textPomodoroStatsTask.setVisibility(View.GONE);
+            textPomodoroStatus.setText("当前状态：未启用");
+            textPomodoroStatus.setTextColor(getResources().getColor(R.color.text_secondary));
+            imagePomodoroIcon.setImageAlpha(180);
+        }
+
         textDateTime.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
             if (selectedCalendar != null) {
@@ -199,59 +269,80 @@ public class AddEditTaskActivity extends AppCompatActivity {
             boolean pomodoroEnabled = switchPomodoro.isChecked();
             
             if (TextUtils.isEmpty(title)) {
-                Toast.makeText(AddEditTaskActivity.this, "标题不能为空", Toast.LENGTH_SHORT).show();
+                editTitle.setError("请输入任务标题");
                 return;
             }
-            long time = selectedCalendar.getTimeInMillis();
-            if (currentTodo == null) {
-                String newId = UUID.randomUUID().toString();
-                currentTodo = new Todo(newId, title, time, place, category, completed);
-                // 新创建的任务，根据是否有父代办集来设置标志
-                currentTodo.belongsToTaskGroup = (parentGroupId != null && !TextUtils.isEmpty(parentGroupId));
-            } else {
-                currentTodo.title = title;
-                currentTodo.place = place;
-                currentTodo.category = category;
-                currentTodo.time = time;
-                currentTodo.completed = completed;
-                // 确保编辑现有任务时不会丢失 belongsToTaskGroup 标志
-                // 如果有parentGroupId，则确保设置为true
-                if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
-                    currentTodo.belongsToTaskGroup = true;
-                }
-            }
             
-            // 保存优先级和番茄钟设置
-            currentTodo.priority = priority;
-            currentTodo.pomodoroEnabled = pomodoroEnabled;
-            
-            // 每次保存更新更新时间，并确保标记未删除
-            currentTodo.updatedAt = System.currentTimeMillis();
-            currentTodo.deleted = false;
-            
-            // 如果是子任务，关联到代办集
-            if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
-                // 标记为属于代办集的任务
-                currentTodo.belongsToTaskGroup = true;
-                
-                new Thread(() -> {
-                    TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
-                    if (group != null) {
-                        group.addSubTask(currentTodo.id);
-                        taskGroupDao.insertTaskGroup(group);
-                    }
-                }).start();
-            }
-            
-            // 异步保存任务到本地数据库
+            // 保存到本地数据库
             new Thread(() -> {
-                taskDao.insertTodo(currentTodo);
-                
-                runOnUiThread(() -> {
-                    Toast.makeText(AddEditTaskActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK);
-                    finish();
-                });
+                try {
+                    if (currentTodo != null) {
+                        // 编辑现有任务
+                        currentTodo.title = title;
+                        currentTodo.place = place;
+                        currentTodo.time = selectedCalendar.getTimeInMillis();
+                        currentTodo.category = category;
+                        currentTodo.priority = priority;
+                        currentTodo.completed = completed;
+                        currentTodo.pomodoroEnabled = pomodoroEnabled;
+                        currentTodo.updatedAt = System.currentTimeMillis();
+                        
+                        // 更新积分
+                        currentTodo.points = currentTodo.calculatePoints();
+                        
+                        // 保存到本地数据库
+                        taskDao.updateTodo(currentTodo);
+                    } else {
+                        // 新建任务
+                        String id = UUID.randomUUID().toString();
+                        Todo newTodo = new Todo(id, title, selectedCalendar.getTimeInMillis(), place, category, completed);
+                        
+                        // 设置优先级和番茄时钟
+                        newTodo.priority = priority;
+                        newTodo.pomodoroEnabled = pomodoroEnabled;
+                        
+                        // 如果是属于代办集的子任务
+                        if (parentGroupId != null) {
+                            newTodo.belongsToTaskGroup = true;
+                            // 添加到代办集
+                            TaskGroup parentGroup = taskGroupDao.getTaskGroupById(parentGroupId);
+                            if (parentGroup != null) {
+                                parentGroup.addSubTask(id);
+                                taskGroupDao.insertTaskGroup(parentGroup);
+                            }
+                        }
+                        
+                        // 保存到本地数据库
+                        taskDao.insertTodo(newTodo);
+                        
+                        // 更新内存中的引用
+                        currentTodo = newTodo;
+                    }
+                    
+                    // 如果启用了番茄时钟并且当前处于编辑模式，提醒用户可以使用番茄定时
+                    if (pomodoroEnabled && getIntent().hasExtra("todo")) {
+                        runOnUiThread(() -> {
+                            new AlertDialog.Builder(AddEditTaskActivity.this)
+                                .setTitle("番茄时钟已启用")
+                                .setMessage("是否立即开始专注时间？")
+                                .setPositiveButton("开始专注", (dialog, which) -> {
+                                    showPomodoroTimer(currentTodo);
+                                })
+                                .setNegativeButton("稍后", null)
+                                .show();
+                        });
+                    }
+                    
+                    runOnUiThread(() -> {
+                        Toast.makeText(AddEditTaskActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
+                        finish(); // 返回上一个界面
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "保存任务失败", e);
+                    runOnUiThread(() -> {
+                        Toast.makeText(AddEditTaskActivity.this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
             }).start();
         });
         
@@ -545,6 +636,22 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 
                 Log.e(TAG, "任务分解失败: " + (error != null ? error.toString() : "未知错误"), error);
             }
+        }
+    }
+
+    /**
+     * 更新番茄时钟统计信息显示
+     */
+    private void updatePomodoroStats() {
+        if (currentTodo != null) {
+            int hours = currentTodo.pomodoroMinutes / 60;
+            int mins = currentTodo.pomodoroMinutes % 60;
+            
+            String statsText = String.format("已完成番茄钟: %d 次 | 总专注时间: %d小时%d分钟", 
+                currentTodo.pomodoroCompletedCount,
+                hours,
+                mins);
+            textPomodoroStatsTask.setText(statsText);
         }
     }
 }

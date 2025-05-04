@@ -31,6 +31,7 @@ import android.widget.TextView;
 import com.example.todolist.TodoList;
 import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskDao;
+import com.example.todolist.data.Todo;
 import com.example.todolist.auth.LoginActivity;
 import com.example.todolist.R;
 import com.example.todolist.sync.SyncWorker;
@@ -39,6 +40,8 @@ import com.example.todolist.utils.NetworkStateMonitor;
 import com.parse.ParseUser;
 import android.view.View;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -165,17 +168,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // 初始化数据库
-            try {
-                taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
-                if (taskDao == null) {
-                    throw new Exception("taskDao is null");
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "数据库访问失败", e);
-                loadingStateManager.setErrorViewContent(0, "数据库访问失败: " + e.getMessage());
-                loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
-                return;
-            }
+            initData();
             
             try {
                 // 初始化Fragment
@@ -541,6 +534,113 @@ public class MainActivity extends AppCompatActivity {
      */
     public int getCompletedTasksCount() {
         return preferences.getInt(PREF_COMPLETED_TASKS, 0);
+    }
+
+    private void initData() {
+        // 初始化数据
+        try {
+            Log.d(TAG, "开始初始化数据...");
+            
+            // 初始化数据库组件
+            taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
+            if (taskDao == null) {
+                throw new Exception("taskDao is null");
+            }
+            
+            Log.d(TAG, "数据库初始化成功");
+            
+            // 数据加载异常处理
+            loadingStateManager.setRetryListener(new LoadingStateManager.RetryListener() {
+                @Override
+                public void onRetry() {
+                    Log.d(TAG, "用户触发重试加载数据");
+                    initData();
+                }
+            });
+
+            // 检查版本号，进行数据库升级后的修复操作
+            int currentDbVersion = 0;
+            try {
+                currentDbVersion = getSharedPreferences("app_preferences", MODE_PRIVATE).getInt("db_version", 0);
+            } catch (Exception e) {
+                Log.e(TAG, "获取保存的数据库版本号失败", e);
+            }
+            
+            // 数据库版本为6，但保存的版本低于6，说明可能刚刚进行过迁移
+            int latestDbVersion = 6; // 当前最新版本号
+            if (currentDbVersion < latestDbVersion) {
+                Log.d(TAG, "检测到数据库版本升级: " + currentDbVersion + " -> " + latestDbVersion);
+                
+                // 修复可能由版本升级导致的问题
+                try {
+                    new Thread(() -> {
+                        try {
+                            // 获取所有任务
+                            List<Todo> allTasks = taskDao.getAll();
+                            Log.d(TAG, "获取到 " + allTasks.size() + " 个任务进行迁移检查");
+                            
+                            int fixedCount = 0;
+                            // 检查并修复每个任务
+                            for (Todo task : allTasks) {
+                                boolean needUpdate = false;
+                                
+                                // 检查并修复新增字段的默认值
+                                if (task.pomodoroMinutes < 0) {
+                                    task.pomodoroMinutes = 0;
+                                    needUpdate = true;
+                                }
+                                
+                                if (task.pomodoroCompletedCount < 0) {
+                                    task.pomodoroCompletedCount = 0;
+                                    needUpdate = true;
+                                }
+                                
+                                // 如果需要更新，保存回数据库
+                                if (needUpdate) {
+                                    taskDao.updateTodo(task);
+                                    fixedCount++;
+                                }
+                            }
+                            
+                            Log.d(TAG, "修复了 " + fixedCount + " 个受数据库迁移影响的任务");
+                            
+                            // 保存当前版本号
+                            getSharedPreferences("app_preferences", MODE_PRIVATE)
+                                .edit()
+                                .putInt("db_version", latestDbVersion)
+                                .apply();
+                            
+                        } catch (Exception e) {
+                            Log.e(TAG, "版本迁移修复操作失败", e);
+                        }
+                    }).start();
+                } catch (Exception e) {
+                    Log.e(TAG, "创建版本修复线程失败", e);
+                }
+            }
+            
+            // 同步服务器数据
+            ParseUser currentUser = ParseUser.getCurrentUser();
+            if (currentUser != null) {
+                Log.d(TAG, "当前登录用户: " + currentUser.getUsername());
+                // 启动同步服务
+                SyncWorker.triggerSyncNow(this);
+            } else {
+                Log.d(TAG, "未登录，跳过同步");
+            }
+
+            // 底部导航栏处理
+            setupBottomNavigation();
+
+            // 标记加载为成功
+            loadingStateManager.showState(LoadingStateManager.STATE_SUCCESS);
+
+        } catch (Exception e) {
+            Log.e(TAG, "数据初始化失败: " + e.getMessage(), e);
+            
+            // 显示加载失败状态
+            loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
+        }
     }
 }
 

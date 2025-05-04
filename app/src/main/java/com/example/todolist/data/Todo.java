@@ -19,6 +19,8 @@ public class Todo implements Serializable {
     public boolean completed;
     public String priority;    // 任务优先级：高、中、低
     public Boolean pomodoroEnabled; // 是否启用番茄时钟
+    public int pomodoroMinutes = 0; // 该任务的总专注分钟数
+    public int pomodoroCompletedCount = 0; // 该任务已完成的番茄钟次数
 
     public long updatedAt;     // 上次修改时间戳
     public boolean deleted;    // 是否软删除

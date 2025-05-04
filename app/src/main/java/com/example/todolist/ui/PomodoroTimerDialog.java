@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.example.todolist.R;
+import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.Todo;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 
@@ -19,7 +20,7 @@ import java.util.Locale;
 
 public class PomodoroTimerDialog extends Dialog {
 
-    private static final long FOCUS_TIME_MILLIS = 25 * 60 * 1000; // 25分钟
+    private static final long FOCUS_TIME_MILLIS = 40 * 60 * 1000; // 40分钟
     private static final long BREAK_TIME_MILLIS = 5 * 60 * 1000;  // 5分钟
     private static final int MAX_PROGRESS = 100;
 
@@ -30,6 +31,7 @@ public class PomodoroTimerDialog extends Dialog {
     private Button buttonPause;
     private Button buttonStop;
     private TextView textTaskName;
+    private TextView textPomodoroStats;
 
     private CountDownTimer timer;
     private long timeLeftMillis;
@@ -37,6 +39,7 @@ public class PomodoroTimerDialog extends Dialog {
     private boolean isBreakTime = false;
     private Todo currentTask;
     private OnTimerCompletedListener listener;
+    private boolean wasInterrupted = false; // 用于跟踪用户是否中途停止了计时
 
     public interface OnTimerCompletedListener {
         void onTimerCompleted(boolean isBreakCompleted);
@@ -65,11 +68,15 @@ public class PomodoroTimerDialog extends Dialog {
         buttonPause = findViewById(R.id.buttonPause);
         buttonStop = findViewById(R.id.buttonStop);
         textTaskName = findViewById(R.id.textTaskName);
+        textPomodoroStats = findViewById(R.id.textPomodoroStats);
 
         // 设置任务标题
         if (currentTask != null && currentTask.title != null) {
             textTaskName.setText(currentTask.title);
         }
+        
+        // 显示专注统计信息
+        updatePomodoroStats();
 
         // 初始化为专注时间
         startFocusTimer();
@@ -85,11 +92,27 @@ public class PomodoroTimerDialog extends Dialog {
 
         buttonStop.setOnClickListener(v -> {
             stopTimer();
+            wasInterrupted = true; // 标记为被中断
             dismiss();
         });
 
         // 设置不可取消
         setCancelable(false);
+    }
+    
+    private void updatePomodoroStats() {
+        if (currentTask != null) {
+            int hours = currentTask.pomodoroMinutes / 60;
+            int mins = currentTask.pomodoroMinutes % 60;
+            
+            String statsText = String.format("已完成番茄钟: %d 次 | 总专注时间: %d小时%d分钟", 
+                currentTask.pomodoroCompletedCount,
+                hours,
+                mins);
+            textPomodoroStats.setText(statsText);
+        } else {
+            textPomodoroStats.setVisibility(View.GONE);
+        }
     }
 
     private void startFocusTimer() {
@@ -141,7 +164,10 @@ public class PomodoroTimerDialog extends Dialog {
                     }
                     startFocusTimer();
                 } else {
-                    // 专注时间结束，进入休息时间
+                    // 专注时间结束，更新番茄钟完成统计
+                    updatePomodoroCompletion();
+                    
+                    // 通知监听器并进入休息时间
                     if (listener != null) {
                         listener.onTimerCompleted(false);
                     }
@@ -152,6 +178,26 @@ public class PomodoroTimerDialog extends Dialog {
         
         buttonPause.setText("暂停");
         isPaused = false;
+    }
+    
+    private void updatePomodoroCompletion() {
+        if (currentTask != null) {
+            // 增加完成次数和总时间
+            currentTask.pomodoroCompletedCount++;
+            currentTask.pomodoroMinutes += FOCUS_TIME_MILLIS / 60000; // 毫秒转分钟
+            
+            // 更新UI
+            updatePomodoroStats();
+            
+            // 异步保存到数据库
+            new Thread(() -> {
+                try {
+                    AppDatabase.getInstance(getContext()).taskDao().updateTodo(currentTask);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
     }
 
     private void pauseTimer() {

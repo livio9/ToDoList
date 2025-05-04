@@ -179,17 +179,16 @@
                     android:textColor="@color/text_primary"/>
             </com.google.android.material.textfield.TextInputLayout>
             
-            <!-- 番茄时钟设置 -->
+            <!-- 番茄时钟专注模式卡片 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/pomodoroCard"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp"
                 android:layout_marginTop="20dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="3dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="?attr/colorPrimary"
-                app:cardBackgroundColor="@color/surface"
                 app:layout_constraintTop_toBottomOf="@id/priorityLayout"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
@@ -207,9 +206,10 @@
                         android:gravity="center_vertical">
                         
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/ic_lock_idle_alarm"
+                            android:id="@+id/imagePomodoroIcon"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@android:drawable/ic_menu_recent_history"
                             app:tint="?attr/colorPrimary"/>
                         
                         <TextView
@@ -219,7 +219,8 @@
                             android:text="番茄时钟专注模式"
                             android:textSize="16sp"
                             android:textColor="@color/text_primary"
-                            android:layout_marginStart="16dp"/>
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="sans-serif-medium"/>
                         
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/switchPomodoro"
@@ -230,14 +231,51 @@
                             android:checked="false"/>
                     </LinearLayout>
                     
+                    <!-- 专注时间统计 -->
                     <TextView
+                        android:id="@+id/textPomodoroStatsTask"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="开启后，可在任务执行时使用25分钟专注+5分钟休息的时间管理模式"
+                        android:text="已完成番茄钟: 0 次 | 总专注时间: 0小时0分钟"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="36dp"
+                        android:visibility="gone"/>
+                    
+                    <TextView
+                        android:id="@+id/textPomodoroDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="启用后将支持40分钟专注+5分钟休息的番茄工作法"
                         android:textSize="14sp"
                         android:textColor="@color/text_secondary"
                         android:layout_marginTop="8dp"
-                        android:layout_marginStart="40dp"/>
+                        android:layout_marginStart="36dp"/>
+                    
+                    <!-- 开关状态指示 -->
+                    <TextView
+                        android:id="@+id/textPomodoroStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="当前状态：未启用"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginStart="36dp"/>
+                    
+                    <Button
+                        android:id="@+id/buttonStartPomodoro"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="开始专注计时"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone"
+                        app:backgroundTint="?attr/colorPrimary"
+                        app:icon="@android:drawable/ic_media_play"
+                        app:iconTint="?attr/colorOnPrimary"
+                        android:textColor="?attr/colorOnPrimary"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             

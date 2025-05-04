@@ -26,6 +26,7 @@ import java.util.Calendar;
 import androidx.core.content.ContextCompat;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.widget.Toast;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private List<Todo> taskList;
@@ -102,6 +103,31 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             handleCategoryChip(holder.textCategory, todo.category);
         } else {
             holder.textCategory.setVisibility(View.GONE);
+        }
+        
+        // 设置番茄时钟图标
+        if (todo.pomodoroEnabled != null && todo.pomodoroEnabled) {
+            holder.imagePomodoroTimer.setVisibility(View.VISIBLE);
+            // 添加点击事件
+            holder.imagePomodoroTimer.setOnClickListener(v -> {
+                // 启动番茄定时器
+                if (context instanceof AddEditTaskActivity) {
+                    ((AddEditTaskActivity) context).showPomodoroTimer(todo);
+                } else if (context instanceof MainActivity) {
+                    // 如果在主界面启动，需要先创建对话框
+                    PomodoroTimerDialog dialog = new PomodoroTimerDialog(context, todo);
+                    dialog.setOnTimerCompletedListener(isBreakCompleted -> {
+                        if (isBreakCompleted) {
+                            Toast.makeText(context, "休息结束，开始新的专注", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(context, "专注完成，开始休息", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    dialog.show();
+                }
+            });
+        } else {
+            holder.imagePomodoroTimer.setVisibility(View.GONE);
         }
         
         holder.checkCompleted.setChecked(todo.completed);
@@ -221,6 +247,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         TextView textPlace;
         TextView textCategory;
         View layoutPlace;
+        View imagePomodoroTimer;
         
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -230,6 +257,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             textPlace = itemView.findViewById(R.id.textViewPlace);
             textCategory = itemView.findViewById(R.id.textViewCategory);
             layoutPlace = itemView.findViewById(R.id.layoutPlace);
+            imagePomodoroTimer = itemView.findViewById(R.id.imagePomodoroTimer);
         }
     }
 

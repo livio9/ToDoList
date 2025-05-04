@@ -14,7 +14,7 @@
         android:text="专注时间"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/text_primary"
+        android:textColor="?attr/colorPrimary"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -27,10 +27,24 @@
         android:layout_height="wrap_content"
         android:text="完成Android项目作业"
         android:textSize="16sp"
-        android:textColor="@color/primary"
+        android:textColor="@color/text_primary"
         android:gravity="center"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/textTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 专注统计 -->
+    <TextView
+        android:id="@+id/textPomodoroStats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="已完成番茄钟: 0 次 | 总专注时间: 0小时0分钟"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary"
+        android:gravity="center"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@id/textTaskName"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -40,7 +54,7 @@
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/textTaskName"
+        app:layout_constraintTop_toBottomOf="@id/textPomodoroStats"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -52,7 +66,7 @@
             android:progress="100"
             app:indicatorSize="200dp"
             app:trackColor="@color/primary_light"
-            app:indicatorColor="@color/primary"
+            app:indicatorColor="?attr/colorPrimary"
             app:trackThickness="10dp"
             app:indicatorDirectionCircular="counterclockwise" />
 
@@ -61,10 +75,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="25:00"
+            android:text="40:00"
             android:textSize="36sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary" />
+            android:textColor="?attr/colorPrimary" />
     </FrameLayout>
 
     <!-- 状态说明 -->
@@ -98,7 +112,9 @@
             android:layout_weight="1"
             android:text="暂停"
             android:layout_marginEnd="8dp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:textColor="?attr/colorPrimary"
+            app:strokeColor="?attr/colorPrimary" />
 
         <Button
             android:id="@+id/buttonStop"
@@ -107,6 +123,6 @@
             android:layout_weight="1"
             android:text="结束"
             android:layout_marginStart="8dp"
-            app:backgroundTint="@color/accent" />
+            app:backgroundTint="?attr/colorPrimary" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout> 

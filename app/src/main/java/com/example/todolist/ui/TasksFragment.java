@@ -139,26 +139,89 @@ public class TasksFragment extends Fragment {
             new Thread(() -> {
                 try {
                     Log.d(TAG, "正在加载所有非代办集任务...");
-                    List<Todo> dbTasks = taskDao != null ? taskDao.getVisibleTodos() : new ArrayList<>();
+                    
+                    if (taskDao == null) {
+                        Log.e(TAG, "TaskDao对象为空，可能是数据库初始化失败");
+                        // 尝试重新初始化数据库
+                        try {
+                            taskDao = AppDatabase.getInstance(requireContext()).taskDao();
+                            Log.d(TAG, "重新初始化TaskDao成功");
+                        } catch (Exception ex) {
+                            Log.e(TAG, "重新初始化TaskDao失败: " + ex.getMessage(), ex);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    Toast.makeText(requireContext(), "数据库访问失败，请重启应用", Toast.LENGTH_LONG).show();
+                                });
+                            }
+                            return;
+                        }
+                    }
+                    
+                    // 安全地查询数据
+                    List<Todo> dbTasks;
+                    try {
+                        dbTasks = taskDao.getVisibleTodos();
+                        Log.d(TAG, "数据库查询执行成功");
+                    } catch (Exception ex) {
+                        Log.e(TAG, "获取可见任务时出错: " + ex.getMessage(), ex);
+                        // 如果查询特定方法失败，尝试获取所有任务
+                        try {
+                            dbTasks = taskDao.getAll();
+                            Log.d(TAG, "回退到获取所有任务成功");
+                            // 手动过滤任务
+                            List<Todo> filteredTasks = new ArrayList<>();
+                            for (Todo todo : dbTasks) {
+                                if (!todo.deleted && !todo.belongsToTaskGroup) {
+                                    filteredTasks.add(todo);
+                                }
+                            }
+                            dbTasks = filteredTasks;
+                        } catch (Exception e) {
+                            Log.e(TAG, "获取所有任务也失败: " + e.getMessage(), e);
+                            dbTasks = new ArrayList<>();
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    Toast.makeText(requireContext(), "数据库查询失败", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }
+                    }
+                    
                     if (dbTasks == null) {
-                        Log.e(TAG, "数据库查询返回 null");
+                        Log.e(TAG, "数据库查询返回null");
                         dbTasks = new ArrayList<>();
                     }
-                    Log.d(TAG, "成功加载 " + dbTasks.size() + " 个非代办集任务");
-                    allTasks.clear();
-                    allTasks.addAll(dbTasks);
+                    
+                    final List<Todo> finalTasks = dbTasks;
+                    Log.d(TAG, "成功加载 " + finalTasks.size() + " 个非代办集任务");
+                    
                     if (getActivity() != null) {
-                        getActivity().runOnUiThread(this::applyFiltersAndRefresh);
+                        getActivity().runOnUiThread(() -> {
+                            try {
+                                allTasks.clear();
+                                allTasks.addAll(finalTasks);
+                                applyFiltersAndRefresh();
+                                Log.d(TAG, "UI更新成功");
+                            } catch (Exception e) {
+                                Log.e(TAG, "更新UI时出错: " + e.getMessage(), e);
+                                Toast.makeText(requireContext(), "更新界面失败", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        Log.e(TAG, "Activity已不存在，无法更新UI");
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "在加载任务中发生异常", e);
+                    Log.e(TAG, "在加载任务中发生异常: " + e.getMessage(), e);
                     if (getActivity() != null) {
-                        getActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "加载任务失败", Toast.LENGTH_SHORT).show());
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(), "加载任务失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
                     }
                 }
             }).start();
         } catch (Exception e) {
-            Log.e(TAG, "加载任务执行失败", e);
+            Log.e(TAG, "创建加载线程失败: " + e.getMessage(), e);
+            Toast.makeText(requireContext(), "系统资源不足，无法加载任务", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -10,7 +10,7 @@ import androidx.room.TypeConverters;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {Todo.class, TaskGroup.class}, version = 5, exportSchema = false)
+@Database(entities = {Todo.class, TaskGroup.class}, version = 6, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase instance;
@@ -62,6 +62,29 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    // 从版本5到版本6的迁移
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            try {
+                // 添加新的专注时间统计字段
+                try {
+                    database.execSQL("ALTER TABLE todos ADD COLUMN pomodoroMinutes INTEGER NOT NULL DEFAULT 0");
+                } catch (Exception e) {
+                    Log.w(TAG, "添加pomodoroMinutes列失败，可能已存在: " + e.getMessage());
+                }
+                
+                try {
+                    database.execSQL("ALTER TABLE todos ADD COLUMN pomodoroCompletedCount INTEGER NOT NULL DEFAULT 0");
+                } catch (Exception e) {
+                    Log.w(TAG, "添加pomodoroCompletedCount列失败，可能已存在: " + e.getMessage());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "迁移5到6失败", e);
+            }
+        }
+    };
+
     // 获取单例数据库实例
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
@@ -72,7 +95,7 @@ public abstract class AppDatabase extends RoomDatabase {
                         // 建立本地数据库 "todo_db"
                         instance = Room.databaseBuilder(context.getApplicationContext(),
                                         AppDatabase.class, "todo_db")
-                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5) // 添加所有迁移策略
+                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6) // 添加所有迁移策略
                                 .fallbackToDestructiveMigration() // 当迁移失败时允许重建数据库
                                 .build();
                         Log.d(TAG, "数据库创建成功");

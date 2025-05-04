@@ -29,9 +29,10 @@ import com.example.todolist.data.TaskDao;
 import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.TaskGroupDao;
 import com.example.todolist.data.Todo;
+import com.example.todolist.sync.SyncWorker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 
 import org.json.JSONException;
 
@@ -49,8 +50,6 @@ public class TaskGroupsFragment extends Fragment {
     private View emptyViewGroups;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
-    private FirebaseAuth auth;
-    private FirebaseFirestore firestore;
     private TaskGroupAdapter taskGroupAdapter;
     private List<TaskGroup> allTaskGroups = new ArrayList<>();
 
@@ -68,11 +67,9 @@ public class TaskGroupsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_task_groups, container, false);
         
         try {
-            // 初始化DAO和Firebase
+            // 初始化DAO
             taskDao = AppDatabase.getInstance(requireContext()).taskDao();
             taskGroupDao = AppDatabase.getInstance(requireContext()).taskGroupDao();
-            auth = FirebaseAuth.getInstance();
-            firestore = FirebaseFirestore.getInstance();
             
             // 初始化UI组件
             recyclerViewGroups = view.findViewById(R.id.recyclerViewGroups);
@@ -299,32 +296,41 @@ public class TaskGroupsFragment extends Fragment {
                 
                 // 添加到代办集
                 taskGroup.addSubTask(newTask.id);
-                
-                // 同步到云端
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(newTask.id)
-                            .set(newTask);
-                }
             }
             
             // 更新代办集
             taskGroupDao.insertTaskGroup(taskGroup);
             
-            // 同步代办集到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("taskgroups").document(taskGroup.id)
-                        .set(taskGroup);
+            // 同步到云端，添加异常捕获
+            try {
+                SyncWorker.pushTaskGroupsToCloud(requireContext());
+            } catch (Exception e) {
+                Log.e(TAG, "同步TaskGroup到云端失败", e);
+                // 同步失败不影响本地数据保存
+            }
+            
+            try {
+                SyncWorker.pushLocalToCloud(requireContext());
+            } catch (Exception e) {
+                Log.e(TAG, "同步任务到云端失败", e);
+                // 同步失败不影响本地数据保存
             }
             
             // 刷新界面
-            getActivity().runOnUiThread(() -> {
-                loadTaskGroups();
-                Toast.makeText(requireContext(), "已创建代办集：" + result.getMainTask(), Toast.LENGTH_SHORT).show();
-            });
+            try {
+                if (getActivity() != null && !getActivity().isFinishing()) {
+                    getActivity().runOnUiThread(() -> {
+                        try {
+                            loadTaskGroups();
+                            Toast.makeText(requireContext(), "已创建代办集：" + result.getMainTask(), Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            Log.e(TAG, "刷新界面出错", e);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "尝试刷新UI出错", e);
+            }
         }).start();
     }
     

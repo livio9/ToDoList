@@ -49,17 +49,25 @@
     
     <!-- 小型Chip样式 用于过滤栏 -->
     <style name="Widget.App.Chip.Small" parent="Widget.App.Chip">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">11sp</item>
         <item name="chipMinHeight">28dp</item>
-        <item name="chipStartPadding">6dp</item>
-        <item name="chipEndPadding">6dp</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="chipEndPadding">8dp</item>
         <item name="android:minHeight">28dp</item>
+        <item name="android:textAlignment">center</item>
         <item name="chipIconSize">14dp</item>
     </style>
 
     <!-- Chip文本样式 -->
     <style name="TextAppearance.App.Chip" parent="TextAppearance.MaterialComponents.Chip">
         <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <!-- 工具栏标题文本样式 -->
+    <style name="TextAppearance.App.ToolbarTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">18sp</item>
         <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>

@@ -5,75 +5,111 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="32dp"
+    android:padding="8dp"
     android:background="@drawable/login_gradient_background"
     tools:context=".auth.LoginActivity">
 
+    <!-- 顶部波浪装饰 -->
+    <ImageView
+        android:id="@+id/imgWaveTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_wave_top"
+        android:tint="#33FFFFFF"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 应用Logo -->
     <ImageView
         android:id="@+id/imgLogo"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@android:drawable/ic_menu_agenda"
-        app:tint="@color/white"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@mipmap/logo1"
+        android:padding="4dp"
+        android:background="@drawable/logo_background"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/textWelcome"
         app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintVertical_bias="0.2" />
+        app:layout_constraintVertical_bias="0.1" />
 
+    <!-- 欢迎文字 -->
     <TextView
         android:id="@+id/textWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="欢迎使用待办事项"
-        android:textSize="24sp"
+        android:text="欢迎使用待办清单"
+        android:textSize="20sp"
         android:textColor="@color/white"
         android:textStyle="bold"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="6dp"
+        android:fontFamily="sans-serif-light"
         app:layout_constraintTop_toBottomOf="@id/imgLogo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/textLoginPrompt" />
         
+    <!-- 登录提示 -->
     <TextView
         android:id="@+id/textLoginPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="请登录或注册账号"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="32dp"
+        android:text="高效管理，让生活更有条理"
+        android:textSize="12sp"
+        android:textColor="#EEFFFFFF"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="12dp"
         app:layout_constraintTop_toBottomOf="@id/textWelcome"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/cardLoginForm" />
 
+    <!-- 登录表单卡片 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLoginForm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
         app:layout_constraintTop_toBottomOf="@id/textLoginPrompt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/buttonFingerprintLogin">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.12">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="12dp">
 
+            <!-- 表单标题 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="账号登录"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- 邮箱输入框 -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputLayoutEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="电子邮箱"
-                style="@style/Widget.App.TextInputLayout"
-                app:startIconDrawable="@android:drawable/ic_dialog_email">
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                app:startIconDrawable="@android:drawable/ic_dialog_email"
+                app:startIconTint="@color/primary"
+                app:boxStrokeColor="@color/primary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editEmail"
@@ -82,15 +118,19 @@
                     android:inputType="textEmailAddress"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- 密码输入框 -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputLayoutPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="密码"
-                style="@style/Widget.App.TextInputLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                 app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                app:startIconTint="@color/primary"
                 app:passwordToggleEnabled="true"
-                android:layout_marginTop="16dp">
+                app:passwordToggleTint="@color/primary"
+                app:boxStrokeColor="@color/primary"
+                android:layout_marginTop="8dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editPassword"
@@ -98,66 +138,80 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
+            
+            <!-- 记住密码选项 -->
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/checkboxRememberMe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="记住密码"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp"
+                android:checked="true"/>
 
+            <!-- 登录按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonLogin"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="48dp"
                 android:text="登录"
-                android:textSize="16sp"
-                android:layout_marginTop="24dp"
-                app:backgroundTint="@color/primary"/>
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="12dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="#4568DC"/>
                 
+            <!-- 注册按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonRegister"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="注册"
-                android:textSize="16sp"
-                android:layout_marginTop="16dp"
+                android:layout_height="48dp"
+                android:text="注册新账号"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp"
+                app:cornerRadius="8dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="@color/primary"/>
+                app:strokeColor="#4568DC"
+                android:textColor="#4568DC"/>
+                
+            <!-- 其他登录选项 -->
+            <TextView
+                android:id="@+id/textForgotPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="忘记密码？点击重置"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:padding="4dp"/>
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
     
-    <!-- 指纹登录按钮 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/buttonFingerprintLogin"
+    <!-- 底部版权信息 -->
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="32dp"
-        app:cardElevation="8dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/cardLoginForm"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="© 2023 待办清单"
+        android:textColor="#80FFFFFF"
+        android:layout_marginBottom="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="16dp">
-            
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@android:drawable/ic_menu_recent_history"
-                app:tint="@color/primary"/>
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="指纹快速登录"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- 底部波浪装饰 -->
+    <ImageView
+        android:id="@+id/imgWaveBottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_wave_bottom"
+        android:tint="#33FFFFFF"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+        
 </androidx.constraintlayout.widget.ConstraintLayout>

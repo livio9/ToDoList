@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -15,6 +14,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // 添加资源配置
+        resConfigs("zh-rCN", "en")
     }
 
     buildTypes {
@@ -29,6 +31,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        encoding = "UTF-8"
     }
 
     testOptions {
@@ -47,10 +50,13 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation("androidx.room:room-runtime:2.5.0")
     annotationProcessor("androidx.room:room-compiler:2.5.0")  // Java 使用此方式
-    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth:21.1.0")
-    implementation("com.google.firebase:firebase-firestore:24.4.3")
+    
+    // Parse SDK依赖
+    implementation("com.github.parse-community:Parse-SDK-Android:4.3.0")
+    
+    // CircleImageView - 圆形头像库
+    implementation("de.hdodenhof:circleimageview:3.1.0")
+    
     implementation("androidx.work:work-runtime:2.9.0")
     implementation(libs.room.common.jvm)
     implementation(libs.room.runtime.android)

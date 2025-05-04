@@ -6,15 +6,15 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
+        android:name=".TodoList"
         android:allowBackup="true"
         android:icon="@mipmap/logo1"
         android:label="ToDoList"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ToDoList"
-        android:usesCleartextTraffic="true"
-        android:enableOnBackInvokedCallback="true">
-        <!-- 登录 Activity，设置为Launcher启动界面 -->
+        android:usesCleartextTraffic="true">
+        <!-- 登录Activity，设置为Launcher启动界面 -->
         <activity android:name=".auth.LoginActivity"
             android:exported="true">
             <intent-filter>
@@ -22,17 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- 主界面 Activity -->
-        <activity android:name=".ui.MainActivity" 
+        <!-- 主界面Activity -->
+        <activity android:name=".ui.MainActivity"
             android:exported="true" />
-        <!-- 添加/编辑任务 Activity -->
-        <activity android:name=".ui.AddEditTaskActivity" 
+        <!-- 添加/编辑任务Activity -->
+        <activity android:name=".ui.AddEditTaskActivity"
             android:exported="true" />
-        <!-- 统计分析 Activity -->
-        <activity android:name=".ui.StatisticsActivity" 
+        <!-- 统计分析Activity -->
+        <activity android:name=".ui.StatisticsActivity"
             android:exported="true" />
-        <!-- 代办集详情 Activity -->
-        <activity android:name=".ui.TaskGroupActivity" 
+        <!-- 代办集详情Activity -->
+        <activity android:name=".ui.TaskGroupActivity"
             android:exported="true" />
     </application>
 </manifest>

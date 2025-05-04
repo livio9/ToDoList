@@ -21,8 +21,8 @@ import com.example.todolist.data.TaskDao;
 import com.example.todolist.data.Todo;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,8 +39,6 @@ public class TasksFragment extends Fragment {
     private Chip spinnerCategory;
     private Chip spinnerStatus;
     private List<Todo> allTasks = new ArrayList<>();
-    private FirebaseAuth auth;
-    private FirebaseFirestore firestore;
     private static final String TAG = "TasksFragment";
 
     public TasksFragment() {
@@ -50,16 +48,6 @@ public class TasksFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
-        
-        try {
-            // 初始化Firebase
-            auth = FirebaseAuth.getInstance();
-            firestore = FirebaseFirestore.getInstance();
-        } catch (Exception e) {
-            Log.e(TAG, "Firebase初始化失败", e);
-            auth = null;
-            firestore = null;
-        }
 
         try {
             // 初始化数据库
@@ -110,17 +98,6 @@ public class TasksFragment extends Fragment {
                                         Log.e(TAG, "删除任务失败", e);
                                     }
                                 }).start();
-                                
-                                try {
-                                    if (auth != null && auth.getCurrentUser() != null) {
-                                        firestore.collection("users")
-                                                .document(auth.getCurrentUser().getUid())
-                                                .collection("tasks").document(todo.id)
-                                                .update("deleted", true, "updatedAt", todo.updatedAt);
-                                    }
-                                } catch (Exception e) {
-                                    Log.e(TAG, "更新Firebase失败", e);
-                                }
                                 
                                 allTasks.remove(todo);
                                 applyFiltersAndRefresh();

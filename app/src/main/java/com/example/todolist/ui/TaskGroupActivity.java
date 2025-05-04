@@ -17,6 +17,7 @@ import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.TaskGroupDao;
 import com.example.todolist.data.Todo;
+import com.example.todolist.sync.SyncWorker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.SimpleDateFormat;
@@ -93,6 +94,10 @@ public class TaskGroupActivity extends AppCompatActivity {
                 if (taskGroup != null) {
                     taskGroup.subTaskIds.remove(todo.id);
                     taskGroupDao.insertTaskGroup(taskGroup);
+                    
+                    // 同步到云端
+                    SyncWorker.pushTaskGroupsToCloud(TaskGroupActivity.this);
+                    SyncWorker.pushLocalToCloud(TaskGroupActivity.this);
                 }
                 
                 runOnUiThread(() -> {

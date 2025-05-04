@@ -26,8 +26,8 @@ import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.Todo;
 import com.example.todolist.R;
 import com.example.todolist.ai.TaskDecomposer;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.parse.ParseObject;
+import com.parse.ParseUser;
 import org.json.JSONException;
 import java.io.IOException;
 import java.util.Calendar;
@@ -49,8 +49,6 @@ public class AddEditTaskActivity extends AppCompatActivity {
     private MaterialCardView pomodoroCard;
     private TaskDao taskDao;
     private TaskGroupDao taskGroupDao;
-    private FirebaseFirestore firestore;
-    private FirebaseAuth auth;
     private Todo currentTodo;         // 编辑模式下传入的任务对象
     private Calendar selectedCalendar; // 选定的日期时间
     private boolean isTaskGroupMode = false; // 是否为代办集模式
@@ -81,11 +79,9 @@ public class AddEditTaskActivity extends AppCompatActivity {
             finish(); // 返回上一个界面
         });
         
-        // 初始化 DAO 和 Firebase 引用
+        // 初始化 DAO
         taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
         taskGroupDao = AppDatabase.getInstance(getApplicationContext()).taskGroupDao();
-        firestore = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
         
         // 获取界面控件引用
         editTitle = findViewById(R.id.editTitle);
@@ -246,15 +242,6 @@ public class AddEditTaskActivity extends AppCompatActivity {
             new Thread(() -> {
                 taskDao.insertTodo(currentTodo);
                 
-                // 如果用户已登录，同步到Firestore
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks")
-                            .document(currentTodo.id)
-                            .set(currentTodo);
-                }
-                
                 runOnUiThread(() -> {
                     Toast.makeText(AddEditTaskActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
@@ -281,15 +268,6 @@ public class AddEditTaskActivity extends AppCompatActivity {
                                         group.removeSubTask(currentTodo.id);
                                         taskGroupDao.insertTaskGroup(group);
                                     }
-                                }
-                                
-                                // 同步到Firestore
-                                if (auth.getCurrentUser() != null) {
-                                    firestore.collection("users")
-                                            .document(auth.getCurrentUser().getUid())
-                                            .collection("tasks")
-                                            .document(currentTodo.id)
-                                            .update("deleted", true);
                                 }
                                 
                                 runOnUiThread(() -> {
@@ -425,26 +403,10 @@ public class AddEditTaskActivity extends AppCompatActivity {
                 
                 // 添加到代办集
                 taskGroup.addSubTask(newTask.id);
-                
-                // 同步到云端
-                if (auth.getCurrentUser() != null) {
-                    firestore.collection("users")
-                            .document(auth.getCurrentUser().getUid())
-                            .collection("tasks").document(newTask.id)
-                            .set(newTask);
-                }
             }
             
             // 更新代办集
             taskGroupDao.insertTaskGroup(taskGroup);
-            
-            // 同步代办集到云端
-            if (auth.getCurrentUser() != null) {
-                firestore.collection("users")
-                        .document(auth.getCurrentUser().getUid())
-                        .collection("taskgroups").document(taskGroup.id)
-                        .set(taskGroup);
-            }
         }).start();
         
         Toast.makeText(this, "已创建代办集：" + result.getMainTask(), Toast.LENGTH_SHORT).show();

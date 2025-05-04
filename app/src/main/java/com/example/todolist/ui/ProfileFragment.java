@@ -1,21 +1,29 @@
 package com.example.todolist.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -28,9 +36,12 @@ import com.example.todolist.data.Todo;
 import com.example.todolist.sync.SyncWorker;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.parse.ParseFile;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
+import de.hdodenhof.circleimageview.CircleImageView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public class ProfileFragment extends Fragment {
@@ -71,9 +82,10 @@ public class ProfileFragment extends Fragment {
     private MaterialCardView themeBrown;
     private MaterialCardView themeBlack;
 
-    private FirebaseAuth auth;
     private TaskDao taskDao;
     private SharedPreferences preferences;
+
+    private CircleImageView profileImageLarge;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -87,9 +99,6 @@ public class ProfileFragment extends Fragment {
             // 初始化SharedPreferences
             preferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             
-            // 初始化Firebase
-            auth = FirebaseAuth.getInstance();
-            
             // 初始化数据库
             taskDao = AppDatabase.getInstance(requireContext()).taskDao();
             
@@ -100,6 +109,10 @@ public class ProfileFragment extends Fragment {
             textCompletedTasks = view.findViewById(R.id.textCompletedTasks);
             quickPointsIndicator = view.findViewById(R.id.quickPointsIndicator);
             buttonRewards = view.findViewById(R.id.buttonRewards);
+            
+            // 初始化大头像
+            profileImageLarge = view.findViewById(R.id.profileImageLarge);
+            profileImageLarge.setOnClickListener(v -> showAvatarOptions());
             
             // 设置用户信息
             setupUserInfo();
@@ -137,11 +150,25 @@ public class ProfileFragment extends Fragment {
             // 初始化主题卡片
             initThemeCards(view);
             
+            // 设置用户名点击修改事件
+            textUsername.setOnClickListener(v -> showChangeUsernameDialog());
+            
         } catch (Exception e) {
             Log.e(TAG, "初始化失败", e);
         }
         
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        // 确保头像点击事件正确设置
+        profileImageLarge = view.findViewById(R.id.profileImageLarge);
+        if (profileImageLarge != null) {
+            profileImageLarge.setOnClickListener(v -> showAvatarOptions());
+        }
     }
 
     @Override
@@ -399,13 +426,21 @@ public class ProfileFragment extends Fragment {
     
     private void setupUserInfo() {
         try {
-            FirebaseUser user = auth.getCurrentUser();
+            ParseUser user = ParseUser.getCurrentUser();
             if (user != null) {
-                // 设置用户名（使用邮箱前缀）
-                String email = user.getEmail();
-                String userName = email != null ? email.split("@")[0] : "用户";
-                textUsername.setText(userName);
-                textEmail.setText(email != null ? email : "未设置邮箱");
+                // 先直接显示当前用户信息
+                displayUserInfo(user);
+                
+                // 然后尝试从Parse服务器刷新用户信息
+                user.fetchInBackground((object, e) -> {
+                    if (e == null) {
+                        // 成功刷新后，获取最新用户信息并显示
+                        ParseUser refreshedUser = ParseUser.getCurrentUser();
+                        displayUserInfo(refreshedUser);
+                    } else {
+                        Log.e(TAG, "刷新用户信息失败", e);
+                    }
+                });
             } else {
                 textUsername.setText("未登录用户");
                 textEmail.setText("请登录账号");
@@ -414,6 +449,103 @@ public class ProfileFragment extends Fragment {
             Log.e(TAG, "设置用户信息失败", e);
             textUsername.setText("加载失败");
             textEmail.setText("请稍后重试");
+        }
+    }
+    
+    private void displayUserInfo(ParseUser user) {
+        try {
+            // 获取邮箱 - 尝试多种方式获取
+            String email = user.getEmail(); // 标准邮箱字段
+            
+            // 如果标准字段为空，尝试从userEmail字段获取
+            if (email == null || email.isEmpty()) {
+                String userEmail = user.getString("userEmail");
+                if (userEmail != null && !userEmail.isEmpty()) {
+                    email = userEmail;
+                    // 顺便更新标准邮箱字段
+                    user.setEmail(email);
+                    user.saveInBackground();
+                }
+            }
+            
+            // 如果仍然为空，尝试使用用户名（如果它看起来像邮箱）
+            if (email == null || email.isEmpty()) {
+                String username = user.getUsername();
+                if (username != null && username.contains("@")) {
+                    email = username;
+                }
+            }
+            
+            Log.d(TAG, "用户邮箱: " + (email != null ? email : "null"));
+            
+            // 获取用户名和自定义名称
+            final String username = user.getUsername();
+            final String customName = user.getString("displayName");
+            Log.d(TAG, "用户名: " + username + ", 自定义名称: " + customName);
+            
+            // 设置显示的用户名 - 优先使用自定义名称，否则提示可设置
+            final String userName = (customName != null && !customName.trim().isEmpty()) 
+                ? customName 
+                : "未设置用户名";
+            
+            // 存储最终要显示的邮箱
+            final String finalEmail = email;
+            
+            // 加载用户头像
+            loadUserAvatar(user);
+            
+            // 确保在主线程中更新UI
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    // 用户名和邮箱显示设置
+                    textUsername.setText(userName);
+                    textUsername.setSingleLine(true);
+                    textUsername.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    
+                    // 设置邮箱信息
+                    if (finalEmail != null && !finalEmail.isEmpty()) {
+                        textEmail.setText(finalEmail);
+                    } else {
+                        textEmail.setText("未设置邮箱");
+                    }
+                    textEmail.setSingleLine(true);
+                    textEmail.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    textEmail.setVisibility(View.VISIBLE);
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "解析用户信息失败", e);
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    textUsername.setText("未设置用户名");
+                    textEmail.setText("未设置邮箱");
+                });
+            }
+        }
+    }
+    
+    /**
+     * 加载用户头像
+     */
+    private void loadUserAvatar(ParseUser user) {
+        try {
+            // 尝试从Parse获取头像
+            ParseFile avatarFile = user.getParseFile("avatar");
+            if (avatarFile != null) {
+                avatarFile.getDataInBackground((data, e) -> {
+                    if (e == null && data != null) {
+                        // 转换为Bitmap并设置
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                        if (bitmap != null && getActivity() != null && profileImageLarge != null) {
+                            getActivity().runOnUiThread(() -> {
+                                profileImageLarge.setImageBitmap(bitmap);
+                            });
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "加载头像失败", e);
         }
     }
     
@@ -444,8 +576,8 @@ public class ProfileFragment extends Fragment {
                     .setTitle("退出登录")
                     .setMessage("确定要退出登录吗？")
                     .setPositiveButton("确定", (dialog, which) -> {
-                        // 登出Firebase
-                        FirebaseAuth.getInstance().signOut();
+                        // 登出Parse
+                        ParseUser.logOut();
                         
                         // 返回登录页
                         Intent intent = new Intent(requireContext(), LoginActivity.class);
@@ -460,4 +592,135 @@ public class ProfileFragment extends Fragment {
             Toast.makeText(requireContext(), "退出登录失败，请重试", Toast.LENGTH_SHORT).show();
         }
     }
+
+    // 显示头像选项对话框
+    private void showAvatarOptions() {
+        if (getContext() == null) return;
+        
+        String[] options = {"从相册选择", "取消"};
+        
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+            .setTitle("更换头像")
+            .setItems(options, (dialog, which) -> {
+                if (which == 0) {
+                    // 打开相册选择图片
+                    openGallery();
+                }
+            })
+            .show();
+    }
+
+    // 打开相册选择图片
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_GALLERY);
+    }
+
+    // 显示修改用户名对话框
+    private void showChangeUsernameDialog() {
+        if (getContext() == null) return;
+        
+        final EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("请输入新的用户名");
+        
+        // 设置当前用户名作为默认值
+        ParseUser user = ParseUser.getCurrentUser();
+        if (user != null) {
+            String currentName = user.getString("displayName");
+            if (currentName != null && !currentName.isEmpty()) {
+                input.setText(currentName);
+            }
+        }
+        
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+            .setTitle("修改用户名")
+            .setView(input)
+            .setPositiveButton("确定", (dialog, which) -> {
+                String newUsername = input.getText().toString().trim();
+                if (!newUsername.isEmpty()) {
+                    saveUsername(newUsername);
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    // 保存用户名到Parse
+    private void saveUsername(String newUsername) {
+        ParseUser user = ParseUser.getCurrentUser();
+        if (user != null) {
+            user.put("displayName", newUsername);
+            user.saveInBackground(e -> {
+                if (e == null) {
+                    // 更新UI显示
+                    textUsername.setText(newUsername);
+                    Toast.makeText(getContext(), "用户名已更新", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "更新失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    // 处理返回结果
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == REQUEST_GALLERY && resultCode == Activity.RESULT_OK && data != null) {
+            Uri selectedImage = data.getData();
+            if (selectedImage != null) {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                        getActivity().getContentResolver(), selectedImage);
+                    uploadAvatar(bitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error loading image", e);
+                    Toast.makeText(getContext(), "加载图片失败", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    // 上传头像到Parse
+    private void uploadAvatar(Bitmap bitmap) {
+        // 在上传前先显示在UI
+        if (bitmap != null && profileImageLarge != null) {
+            // 更新头像
+            profileImageLarge.setImageBitmap(bitmap);
+        }
+        
+        // 将Bitmap转换为Parse文件
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        byte[] imageData = stream.toByteArray();
+        
+        // 创建Parse文件
+        ParseFile imageFile = new ParseFile("avatar.jpg", imageData);
+        imageFile.saveInBackground((SaveCallback) e -> {
+            if (e == null) {
+                // 保存文件引用到用户资料
+                ParseUser user = ParseUser.getCurrentUser();
+                if (user != null) {
+                    user.put("avatar", imageFile);
+                    user.saveInBackground(e2 -> {
+                        if (e2 == null) {
+                            Toast.makeText(getContext(), "头像已更新", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.e(TAG, "Error saving user avatar reference", e2);
+                            Toast.makeText(getContext(), "更新失败", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            } else {
+                Log.e(TAG, "Error saving avatar file", e);
+                Toast.makeText(getContext(), "上传头像失败", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // 头像请求码
+    private static final int REQUEST_GALLERY = 1001;
 } 

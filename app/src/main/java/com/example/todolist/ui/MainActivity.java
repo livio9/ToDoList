@@ -22,17 +22,22 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
+import com.example.todolist.TodoList;
 import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskDao;
 import com.example.todolist.auth.LoginActivity;
 import com.example.todolist.R;
 import com.example.todolist.sync.SyncWorker;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.todolist.utils.LoadingStateManager;
+import com.example.todolist.utils.NetworkStateMonitor;
+import com.parse.ParseUser;
 import android.view.View;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.snackbar.Snackbar;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -50,8 +55,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int THEME_BLACK = 8;     // 黑色系
     
     private TaskDao taskDao;
-    private FirebaseAuth auth;
-    private FirebaseFirestore firestore;
     private BottomNavigationView bottomNavigation;
     private CardView userAvatarContainer;
     private ImageView userAvatar;
@@ -66,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
     // 积分系统常量
     private static final String PREF_USER_POINTS = "user_points";
     private static final String PREF_COMPLETED_TASKS = "completed_tasks";
+    
+    // 状态管理相关
+    private LoadingStateManager loadingStateManager;
+    private NetworkStateMonitor networkMonitor;
+    private ConstraintLayout mainContainer;
+    private boolean isDataSyncScheduled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +97,46 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             
+            // 初始化网络监听器
+            networkMonitor = ((TodoList) getApplication()).getNetworkMonitor();
+            
+            // 初始化主容器和加载状态管理器
+            mainContainer = findViewById(R.id.mainContainer);
+            loadingStateManager = LoadingStateManager.wrap(this, mainContainer);
+            loadingStateManager.setRetryListener(() -> {
+                // 重试加载
+                loadingStateManager.showState(LoadingStateManager.STATE_LOADING);
+                initializeApp();
+            });
+            
+            // 设置加载状态
+            loadingStateManager.showState(LoadingStateManager.STATE_LOADING);
+            
+            // 注册网络状态变化监听
+            setupNetworkListener();
+            
+            // 初始化应用
+            initializeApp();
+            
+        } catch (Exception e) {
+            Log.e(TAG, "onCreate 过程异常", e);
+            Toast.makeText(this, "应用启动失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+    
+    /**
+     * 初始化应用
+     */
+    private void initializeApp() {
+        try {
+            // 检查网络状态
+            if (!networkMonitor.isNetworkAvailable()) {
+                loadingStateManager.showState(LoadingStateManager.STATE_NETWORK_ERROR);
+                return;
+            }
+            
+            // 初始化工具栏
             try {
                 toolbar = findViewById(R.id.toolbar);
                 setSupportActionBar(toolbar);
@@ -110,17 +159,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "设置工具栏失败", e);
                 // 工具栏失败不影响主要功能
             }
-            
-            try {
-                auth = FirebaseAuth.getInstance();
-                firestore = FirebaseFirestore.getInstance();
-            } catch (Exception e) {
-                Log.e(TAG, "Firebase初始化失败", e);
-                auth = null;
-                firestore = null;
-                Toast.makeText(this, "云同步功能不可用", Toast.LENGTH_SHORT).show();
-            }
 
+            // 初始化数据库
             try {
                 taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
                 if (taskDao == null) {
@@ -128,8 +168,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "数据库访问失败", e);
-                Toast.makeText(this, "数据库访问失败，应用可能无法正常工作", Toast.LENGTH_LONG).show();
-                finish();
+                loadingStateManager.setErrorViewContent(0, "数据库访问失败: " + e.getMessage());
+                loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
                 return;
             }
             
@@ -141,56 +181,86 @@ public class MainActivity extends AppCompatActivity {
                 setupBottomNavigation();
             } catch (Exception e) {
                 Log.e(TAG, "UI初始化失败", e);
+                loadingStateManager.setErrorViewContent(0, "界面初始化失败: " + e.getMessage());
+                loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
+                return;
             }
             
             // 登录后立即拉取云端数据，恢复本地数据
-            try {
-                if (auth != null && auth.getCurrentUser() != null) {
-                    SyncWorker.schedulePeriodicSync(getApplicationContext());
-                    SyncWorker.triggerSyncNow(getApplicationContext());
-                    // 增加拉云操作，避免本地为空造成的问题
-                    SyncWorker.pullCloudToLocal(getApplicationContext());
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "同步操作失败", e);
+            if (!isDataSyncScheduled && ParseUser.getCurrentUser() != null) {
+                isDataSyncScheduled = true;
+                syncDataWithDelay();
             }
             
-            Log.d(TAG, "onCreate 结束");
+            // 显示内容
+            loadingStateManager.showState(LoadingStateManager.STATE_SUCCESS);
+            
         } catch (Exception e) {
-            Log.e(TAG, "onCreate总体执行失败", e);
-            // 如果整个onCreate失败，显示一个提示并重新启动应用
-            Toast.makeText(this, "应用初始化失败，请稍后重试", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "应用初始化失败", e);
+            loadingStateManager.setErrorViewContent(0, "应用初始化失败: " + e.getMessage());
+            loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
+        }
+    }
+    
+    /**
+     * 设置网络状态监听器
+     */
+    private void setupNetworkListener() {
+        try {
+            networkMonitor.addListener(new NetworkStateMonitor.NetworkStateListener() {
+                @Override
+                public void onNetworkAvailable() {
+                    // 网络恢复，重新加载数据
+                    if (loadingStateManager.getCurrentState() == LoadingStateManager.STATE_NETWORK_ERROR) {
+                        runOnUiThread(() -> {
+                            loadingStateManager.showState(LoadingStateManager.STATE_LOADING);
+                            initializeApp();
+                        });
+                    } else {
+                        // 如果已经加载完成，只同步数据
+                        runOnUiThread(() -> {
+                            Snackbar.make(mainContainer, "网络已恢复", Snackbar.LENGTH_SHORT).show();
+                            if (ParseUser.getCurrentUser() != null && !isDataSyncScheduled) {
+                                syncDataWithDelay();
+                            }
+                        });
+                    }
+                }
+                
+                @Override
+                public void onNetworkLost() {
+                    // 网络断开，显示提示
+                    runOnUiThread(() -> 
+                        Snackbar.make(mainContainer, "网络连接已断开，部分功能可能不可用", Snackbar.LENGTH_LONG).show()
+                    );
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "设置网络监听失败", e);
         }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        // Fragment now handles the task loading
+    protected void onDestroy() {
+        try {
+            // 取消注册广播接收器
+            unregisterReceiver(dataUpdateReceiver);
+        } catch (Exception e) {
+            Log.e(TAG, "注销广播接收器失败", e);
+        }
+        super.onDestroy();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // 移除原有菜单，因为功能已移至底部导航栏和个人页面
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(dataUpdateReceiver, new IntentFilter("com.example.todolist.ACTION_DATA_UPDATED"));
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unregisterReceiver(dataUpdateReceiver);
+        try {
+            // 注册广播接收器，用于监听数据更新
+            IntentFilter filter = new IntentFilter("com.example.todolist.ACTION_DATA_UPDATED");
+            registerReceiver(dataUpdateReceiver, filter);
+        } catch (Exception e) {
+            Log.e(TAG, "注册广播接收器失败", e);
+        }
     }
 
     private final BroadcastReceiver dataUpdateReceiver = new BroadcastReceiver() {
@@ -268,118 +338,125 @@ public class MainActivity extends AppCompatActivity {
     
     // 用户头像点击动画
     private void animateAvatarClick(View view) {
-        ObjectAnimator scaleDownX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0.9f);
-        ObjectAnimator scaleDownY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0.9f);
-        ObjectAnimator scaleUpX = ObjectAnimator.ofFloat(view, "scaleX", 0.9f, 1f);
-        ObjectAnimator scaleUpY = ObjectAnimator.ofFloat(view, "scaleY", 0.9f, 1f);
-        
-        scaleDownX.setDuration(100);
-        scaleDownY.setDuration(100);
-        scaleUpX.setDuration(100);
-        scaleUpY.setDuration(100);
-        
-        AnimatorSet scaleDown = new AnimatorSet();
-        scaleDown.play(scaleDownX).with(scaleDownY);
-        scaleDown.setInterpolator(new AccelerateDecelerateInterpolator());
-        
-        AnimatorSet scaleUp = new AnimatorSet();
-        scaleUp.play(scaleUpX).with(scaleUpY);
-        scaleUp.setInterpolator(new AccelerateDecelerateInterpolator());
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0.9f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0.9f, 1f);
         
         AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.play(scaleDown).before(scaleUp);
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.setDuration(300);
+        animatorSet.setInterpolator(new AccelerateDecelerateInterpolator());
         animatorSet.start();
     }
     
-    // 积分系统方法
-    public int getUserPoints() {
-        return preferences.getInt(PREF_USER_POINTS, 0);
+    private void syncDataWithDelay() {
+        // 延迟一小段时间再同步，避免应用启动时过多的操作
+        new Handler().postDelayed(() -> {
+            if (!networkMonitor.isNetworkAvailable()) {
+                isDataSyncScheduled = false;
+                return;
+            }
+            
+            // 从云端拉取数据
+            SyncWorker.pullCloudToLocal(getApplicationContext());
+            SyncWorker.pullTaskGroupsToLocal(getApplicationContext());
+            
+            // 上传本地修改
+            SyncWorker.pushLocalToCloud(getApplicationContext());
+            SyncWorker.pushTaskGroupsToCloud(getApplicationContext());
+            
+            // 同步完成，重置标记
+            isDataSyncScheduled = false;
+        }, 1000);
     }
     
-    public void addUserPoints(int points) {
-        int currentPoints = getUserPoints();
-        int newPoints = currentPoints + points;
-        
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt(PREF_USER_POINTS, newPoints);
-        
-        // 增加已完成任务数量
+    // 增加用户积分
+    private void addUserPoints(int points) {
+        int currentPoints = preferences.getInt(PREF_USER_POINTS, 0);
         int completedTasks = preferences.getInt(PREF_COMPLETED_TASKS, 0);
-        editor.putInt(PREF_COMPLETED_TASKS, completedTasks + 1);
         
-        editor.apply();
-        
-        // 通知个人中心页面更新积分
-        Intent intent = new Intent("com.example.todolist.ACTION_POINTS_UPDATED");
-        intent.putExtra("new_points", newPoints);
-        sendBroadcast(intent);
+        preferences.edit()
+            .putInt(PREF_USER_POINTS, currentPoints + points)
+            .putInt(PREF_COMPLETED_TASKS, completedTasks + 1)
+            .apply();
     }
     
-    public int getCompletedTasksCount() {
-        return preferences.getInt(PREF_COMPLETED_TASKS, 0);
+    // 应用主题
+    private void applyTheme() {
+        try {
+            int themeIndex = preferences.getInt(PREF_THEME, THEME_DEFAULT);
+            
+            switch (themeIndex) {
+                case THEME_RED:
+                    setTheme(R.style.Theme_ToDoList_Red);
+                    break;
+                case THEME_GREEN:
+                    setTheme(R.style.Theme_ToDoList_Green);
+                    break;
+                case THEME_PURPLE:
+                    setTheme(R.style.Theme_ToDoList_Purple);
+                    break;
+                case THEME_PINK:
+                    setTheme(R.style.Theme_ToDoList_Pink);
+                    break;
+                case THEME_ORANGE:
+                    setTheme(R.style.Theme_ToDoList_Orange);
+                    break;
+                case THEME_YELLOW:
+                    setTheme(R.style.Theme_ToDoList_Yellow);
+                    break;
+                case THEME_BROWN:
+                    setTheme(R.style.Theme_ToDoList_Brown);
+                    break;
+                case THEME_BLACK:
+                    setTheme(R.style.Theme_ToDoList_Black);
+                    break;
+                default:
+                    setTheme(R.style.Theme_ToDoList);
+                    break;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "应用主题失败", e);
+            // 使用默认主题
+            setTheme(R.style.Theme_ToDoList);
+        }
     }
-
+    
     /**
-     * 设置应用主题颜色
+     * 设置应用主题并立即应用（供ProfileFragment调用）
      * @param themeId 主题ID
      */
     public void setApplicationTheme(int themeId) {
         try {
-            // 保存主题设置到SharedPreferences
+            // 保存主题设置
             preferences.edit().putInt(PREF_THEME, themeId).apply();
             
-            // 通知用户需要重新启动应用以完全应用主题
-            Toast.makeText(this, "主题已更改，即将重启应用以应用新主题", Toast.LENGTH_SHORT).show();
-            
-            // 延迟500毫秒后重新启动应用
-            new Handler().postDelayed(() -> {
-                Intent intent = getIntent();
-                finish();
-                startActivity(intent);
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-            }, 500);
+            // 重新创建Activity以应用新主题
+            Intent intent = getIntent();
+            finish();
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         } catch (Exception e) {
-            Log.e(TAG, "应用主题失败", e);
+            Log.e(TAG, "设置应用主题失败", e);
         }
     }
     
     /**
-     * 根据保存的主题ID设置应用主题
+     * 获取用户积分（供ProfileFragment调用）
+     * @return 用户积分
      */
-    private void applyTheme() {
-        int themeId = preferences.getInt(PREF_THEME, THEME_DEFAULT);
-        
-        switch (themeId) {
-            case THEME_RED:
-                setTheme(R.style.Theme_ToDoList_Red);
-                break;
-            case THEME_GREEN:
-                setTheme(R.style.Theme_ToDoList_Green);
-                break;
-            case THEME_PURPLE:
-                setTheme(R.style.Theme_ToDoList_Purple);
-                break;
-            case THEME_PINK:
-                setTheme(R.style.Theme_ToDoList_Pink);
-                break;
-            case THEME_ORANGE:
-                setTheme(R.style.Theme_ToDoList_Orange);
-                break;
-            case THEME_YELLOW:
-                setTheme(R.style.Theme_ToDoList_Yellow);
-                break;
-            case THEME_BROWN:
-                setTheme(R.style.Theme_ToDoList_Brown);
-                break;
-            case THEME_BLACK:
-                setTheme(R.style.Theme_ToDoList_Black);
-                break;
-            case THEME_DEFAULT:
-            default:
-                setTheme(R.style.Theme_ToDoList);
-                break;
-        }
+    public int getUserPoints() {
+        return preferences.getInt(PREF_USER_POINTS, 0);
+    }
+    
+    /**
+     * 获取已完成任务数量（供ProfileFragment调用）
+     * @return 已完成任务数量
+     */
+    public int getCompletedTasksCount() {
+        return preferences.getInt(PREF_COMPLETED_TASKS, 0);
     }
 }
+
+
 
 

@@ -198,30 +198,24 @@ public class TasksFragment extends Fragment {
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             try {
+                                // 更新任务列表
                                 allTasks.clear();
                                 allTasks.addAll(finalTasks);
+                                
+                                // 应用筛选器并刷新列表
                                 applyFiltersAndRefresh();
-                                Log.d(TAG, "UI更新成功");
+                                
                             } catch (Exception e) {
-                                Log.e(TAG, "更新UI时出错: " + e.getMessage(), e);
-                                Toast.makeText(requireContext(), "更新界面失败", Toast.LENGTH_SHORT).show();
+                                Log.e(TAG, "UI更新异常", e);
                             }
                         });
-                    } else {
-                        Log.e(TAG, "Activity已不存在，无法更新UI");
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "在加载任务中发生异常: " + e.getMessage(), e);
-                    if (getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            Toast.makeText(requireContext(), "加载任务失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
-                    }
+                    Log.e(TAG, "加载任务异常", e);
                 }
             }).start();
         } catch (Exception e) {
-            Log.e(TAG, "创建加载线程失败: " + e.getMessage(), e);
-            Toast.makeText(requireContext(), "系统资源不足，无法加载任务", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "创建任务加载线程失败", e);
         }
     }
 

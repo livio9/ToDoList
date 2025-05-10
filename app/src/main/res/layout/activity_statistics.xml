@@ -15,7 +15,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
+            android:background="?attr/colorPrimary"
             app:title="任务统计"
             app:titleTextColor="@color/white"
             app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"/>

@@ -25,11 +25,13 @@ public class TaskGroup implements Serializable {
     public int estimatedDays;    // 预计完成天数
     public long createdAt;       // 创建时间
     public List<String> subTaskIds; // 子任务ID列表
+    public boolean deleted;      // 是否已删除
 
     // 无参数构造函数，Room使用这个构造函数创建对象
     public TaskGroup() {
         this.id = "";
         subTaskIds = new ArrayList<>();
+        this.deleted = false;
     }
 
     // 使用@Ignore标记，告诉Room不要使用这个构造函数
@@ -41,6 +43,7 @@ public class TaskGroup implements Serializable {
         this.estimatedDays = estimatedDays;
         this.createdAt = System.currentTimeMillis();
         this.subTaskIds = new ArrayList<>();
+        this.deleted = false;
     }
 
     public void addSubTask(String taskId) {

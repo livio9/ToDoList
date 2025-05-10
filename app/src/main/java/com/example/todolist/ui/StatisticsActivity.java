@@ -3,7 +3,6 @@ package com.example.todolist.ui;
 import android.os.Bundle;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import com.example.todolist.R;
 import com.example.todolist.data.AppDatabase;
@@ -13,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StatisticsActivity extends AppCompatActivity {
+public class StatisticsActivity extends BaseActivity {
     private TextView textTotalTasks;
     private TextView textCompletedTasks;
     private TextView textPendingTasks;

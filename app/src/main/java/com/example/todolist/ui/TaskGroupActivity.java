@@ -1,13 +1,15 @@
 package com.example.todolist.ui;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,7 +30,7 @@ import java.util.concurrent.Executors;
 
 import androidx.core.content.ContextCompat;
 
-public class TaskGroupActivity extends AppCompatActivity {
+public class TaskGroupActivity extends BaseActivity {
     private TaskGroup taskGroup;
     private RecyclerView recyclerSubTasks;
     private TaskAdapter adapter;
@@ -38,6 +40,8 @@ public class TaskGroupActivity extends AppCompatActivity {
     private TextView textEstimatedDays;
     private TextView textCreatedAt;
     private FloatingActionButton fabAddTask;
+    private Button buttonSaveTaskGroup;
+    private Button buttonDeleteTaskGroup;
     private TaskGroupDao taskGroupDao;
 
     @Override
@@ -68,6 +72,10 @@ public class TaskGroupActivity extends AppCompatActivity {
         textCreatedAt = findViewById(R.id.textCreatedAt);
         recyclerSubTasks = findViewById(R.id.recyclerSubTasks);
         fabAddTask = findViewById(R.id.fabAddTask);
+        
+        // 初始化保存和删除按钮
+        buttonSaveTaskGroup = findViewById(R.id.buttonSaveTaskGroup);
+        buttonDeleteTaskGroup = findViewById(R.id.buttonDeleteTaskGroup);
 
         // 设置RecyclerView
         recyclerSubTasks.setLayoutManager(new LinearLayoutManager(this));
@@ -119,9 +127,104 @@ public class TaskGroupActivity extends AppCompatActivity {
             intent.putExtra("parent_group_id", groupId);
             startActivity(intent);
         });
+        
+        // 设置保存按钮点击事件
+        buttonSaveTaskGroup.setOnClickListener(v -> {
+            saveTaskGroup();
+        });
+        
+        // 设置删除按钮点击事件
+        buttonDeleteTaskGroup.setOnClickListener(v -> {
+            showDeleteConfirmationDialog();
+        });
 
         // 加载代办集和子任务
         loadTaskGroup(groupId);
+    }
+    
+    /**
+     * 保存代办集
+     */
+    private void saveTaskGroup() {
+        if (taskGroup == null) {
+            Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // 可以在这里添加对表单的验证和更新逻辑
+        // 目前简单地保存现有的taskGroup对象
+        
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // 保存到本地数据库
+                taskGroupDao.insertTaskGroup(taskGroup);
+                
+                // 同步到云端
+                SyncWorker.pushTaskGroupsToCloud(this);
+                
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "代办集已保存", Toast.LENGTH_SHORT).show();
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+    
+    /**
+     * 显示删除确认对话框
+     */
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("删除确认")
+            .setMessage("确定要删除此代办集吗？该操作将同时删除所有子任务且不可恢复。")
+            .setPositiveButton("删除", (dialog, which) -> {
+                deleteTaskGroup();
+            })
+            .setNegativeButton("取消", null)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show();
+    }
+    
+    /**
+     * 删除代办集
+     */
+    private void deleteTaskGroup() {
+        if (taskGroup == null) {
+            Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // 先删除所有子任务
+                if (taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
+                    for (String taskId : taskGroup.subTaskIds) {
+                        AppDatabase.getInstance(this).taskDao().logicalDeleteTodo(taskId);
+                    }
+                }
+                
+                // 设置删除标记
+                taskGroup.deleted = true;
+                taskGroupDao.insertTaskGroup(taskGroup);
+                
+                // 同步到云端
+                SyncWorker.pushTaskGroupsToCloud(this);
+                SyncWorker.pushLocalToCloud(this);
+                
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "代办集已删除", Toast.LENGTH_SHORT).show();
+                    // 关闭当前页面
+                    finish();
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "删除失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     @Override
@@ -199,24 +302,25 @@ public class TaskGroupActivity extends AppCompatActivity {
                 
                 if (subTaskIds != null && !subTaskIds.isEmpty()) {
                     for (String taskId : subTaskIds) {
-                        Todo todo = AppDatabase.getInstance(this).taskDao().getTodoById(taskId);
-                        if (todo != null && !todo.deleted) {
-                            tasks.add(todo);
+                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoById(taskId);
+                        if (task != null && !task.deleted) {
+                            tasks.add(task);
                         }
                     }
                 }
                 
-                // 在UI线程更新列表
-                List<Todo> finalTasks = tasks;
+                final List<Todo> finalTasks = tasks;
+                
                 runOnUiThread(() -> {
+                    // 更新任务列表
                     subTasks.clear();
                     subTasks.addAll(finalTasks);
                     adapter.notifyDataSetChanged();
                 });
-                
             } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "加载代办集失败: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "加载失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
             }
         });
     }

@@ -34,7 +34,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
-public class AddEditTaskActivity extends AppCompatActivity {
+public class AddEditTaskActivity extends BaseActivity {
     private static final String TAG = "AddEditTaskActivity";
     private TextInputEditText editTitle;
     private EditText editPlace;

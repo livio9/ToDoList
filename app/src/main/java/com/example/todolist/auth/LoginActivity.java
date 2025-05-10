@@ -12,9 +12,9 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.todolist.sync.SyncWorker;
+import com.example.todolist.ui.BaseActivity;
 import com.example.todolist.ui.MainActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
@@ -26,7 +26,7 @@ import com.parse.SignUpCallback;
 import com.parse.ParseException;
 import com.example.todolist.R;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
     private TextInputEditText editEmail;
     private TextInputEditText editPassword;
     private TextInputLayout inputLayoutEmail;

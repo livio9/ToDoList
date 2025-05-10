@@ -404,9 +404,33 @@ public class TaskGroupsFragment extends Fragment {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             holder.textCreatedAt.setText(sdf.format(taskGroup.createdAt));
             
-            int completedTasks = 0;
-            int totalTasks = taskGroup.subTaskIds.size();
-            holder.textProgress.setText(String.format("%d/%d 已完成", completedTasks, totalTasks));
+            // 计算已完成的子任务数量
+            new Thread(() -> {
+                int totalTasks = taskGroup.subTaskIds != null ? taskGroup.subTaskIds.size() : 0;
+                int completedTasks = 0;
+                
+                if (totalTasks > 0 && taskDao != null) {
+                    // 遍历子任务ID，统计已完成的任务数量
+                    for (String taskId : taskGroup.subTaskIds) {
+                        try {
+                            Todo task = taskDao.getTodoById(taskId);
+                            if (task != null && task.completed && !task.deleted) {
+                                completedTasks++;
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "获取子任务状态出错: " + e.getMessage());
+                        }
+                    }
+                }
+                
+                // 在UI线程更新进度显示
+                int finalCompletedTasks = completedTasks;
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        holder.textProgress.setText(String.format("%d/%d 已完成", finalCompletedTasks, totalTasks));
+                    });
+                }
+            }).start();
             
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {

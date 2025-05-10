@@ -19,14 +19,12 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.cardview.widget.CardView;
 
 import com.example.todolist.TodoList;
 import com.example.todolist.data.AppDatabase;
@@ -43,7 +41,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     // 主题相关常量
     private static final String PREFS_NAME = "todo_prefs";
@@ -85,9 +83,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // 初始化SharedPreferences
         preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        
-        // 应用保存的主题
-        applyTheme();
         
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate 开始");
@@ -458,66 +453,6 @@ public class MainActivity extends AppCompatActivity {
             .putInt(PREF_USER_POINTS, currentPoints + points)
             .putInt(PREF_COMPLETED_TASKS, completedTasks + 1)
             .apply();
-    }
-    
-    // 应用主题
-    private void applyTheme() {
-        try {
-            int themeIndex = preferences.getInt(PREF_THEME, THEME_DEFAULT);
-            
-            switch (themeIndex) {
-                case THEME_RED:
-                    setTheme(R.style.Theme_ToDoList_Red);
-                    break;
-                case THEME_GREEN:
-                    setTheme(R.style.Theme_ToDoList_Green);
-                    break;
-                case THEME_PURPLE:
-                    setTheme(R.style.Theme_ToDoList_Purple);
-                    break;
-                case THEME_PINK:
-                    setTheme(R.style.Theme_ToDoList_Pink);
-                    break;
-                case THEME_ORANGE:
-                    setTheme(R.style.Theme_ToDoList_Orange);
-                    break;
-                case THEME_YELLOW:
-                    setTheme(R.style.Theme_ToDoList_Yellow);
-                    break;
-                case THEME_BROWN:
-                    setTheme(R.style.Theme_ToDoList_Brown);
-                    break;
-                case THEME_BLACK:
-                    setTheme(R.style.Theme_ToDoList_Black);
-                    break;
-                default:
-                    setTheme(R.style.Theme_ToDoList);
-                    break;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "应用主题失败", e);
-            // 使用默认主题
-            setTheme(R.style.Theme_ToDoList);
-        }
-    }
-    
-    /**
-     * 设置应用主题并立即应用（供ProfileFragment调用）
-     * @param themeId 主题ID
-     */
-    public void setApplicationTheme(int themeId) {
-        try {
-            // 保存主题设置
-            preferences.edit().putInt(PREF_THEME, themeId).apply();
-            
-            // 重新创建Activity以应用新主题
-            Intent intent = getIntent();
-            finish();
-            startActivity(intent);
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-        } catch (Exception e) {
-            Log.e(TAG, "设置应用主题失败", e);
-        }
     }
     
     /**

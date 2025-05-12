@@ -119,6 +119,18 @@
                             android:textColor="?attr/colorError"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             app:strokeColor="?attr/colorError"/>
+                        <Button
+                            android:id="@+id/buttonShareTaskGroup"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="共享"
+                            android:textSize="12sp"
+                            android:layout_marginStart="6dp"
+                            app:icon="@android:drawable/ic_menu_share"
+                            app:iconSize="16dp"
+                            app:iconGravity="textStart"
+                            style="@style/Widget.MaterialComponents.Button.TextButton" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

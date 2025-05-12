@@ -26,13 +26,16 @@ import com.example.todolist.data.TaskGroup;
 import com.example.todolist.data.Todo;
 import com.example.todolist.R;
 import com.example.todolist.ai.TaskDecomposer;
+import com.parse.ParseACL;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import org.json.JSONException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import com.example.todolist.sync.SyncWorker;
 
 public class AddEditTaskActivity extends BaseActivity {
     private static final String TAG = "AddEditTaskActivity";
@@ -304,19 +307,53 @@ public class AddEditTaskActivity extends BaseActivity {
                         // 如果是属于代办集的子任务
                         if (parentGroupId != null) {
                             newTodo.belongsToTaskGroup = true;
-                            // 添加到代办集
-                            TaskGroup parentGroup = taskGroupDao.getTaskGroupById(parentGroupId);
-                            if (parentGroup != null) {
-                                parentGroup.addSubTask(id);
-                                taskGroupDao.insertTaskGroup(parentGroup);
-                            }
+
+                            // --- 新增：为新子任务设置从父 TaskGroup 继承的 ACL ---
+                            final String finalParentGroupId = parentGroupId;
+                            final Todo finalNewTodo = newTodo; // 需要 final 才能在 lambda 中使用
+
+                            ParseQuery<ParseObject> parentGroupQuery = ParseQuery.getQuery("TaskGroup");
+                            parentGroupQuery.whereEqualTo("uuid", finalParentGroupId);
+                            parentGroupQuery.include("ACL"); // 非常重要，确保ACL被获取
+                            parentGroupQuery.getFirstInBackground((parentParseGroup, e) -> {
+                                if (e == null && parentParseGroup != null) {
+                                    ParseACL parentACL = parentParseGroup.getACL();
+                                    if (parentACL != null) {
+                                        ParseObject todoParseObject = SyncWorker.toParse(finalNewTodo); // 使用 SyncWorker 中的转换方法
+                                        todoParseObject.setACL(parentACL); // 应用父ACL
+                                        todoParseObject.saveInBackground(eSave -> { // 保存带ACL的Todo到Parse
+                                            if (eSave == null) {
+                                                Log.d(TAG, "Nuevo sub-Todo guardado en Parse con ACL heredada.");
+                                            } else {
+                                                Log.e(TAG, "Error al guardar sub-Todo en Parse con ACL: " + eSave.getMessage());
+                                            }
+                                        });
+                                    } else {
+                                        Log.w(TAG, "El TaskGroup padre no tiene ACL o no se pudo obtener.");
+                                        // 此时新子任务会使用 SyncWorker.toParse 中设置的默认ACL（仅创建者）
+                                        // 可以选择是否要强制同步一次父TaskGroup的ACL
+                                        ParseObject todoParseObject = SyncWorker.toParse(finalNewTodo);
+                                        todoParseObject.saveInBackground(); // 保存，使用默认ACL
+                                    }
+                                } else {
+                                    Log.e(TAG, "No se pudo obtener el TaskGroup padre para heredar ACL: " + (e != null ? e.getMessage() : "Not found"));
+                                    ParseObject todoParseObject = SyncWorker.toParse(finalNewTodo);
+                                    todoParseObject.saveInBackground(); // 保存，使用默认ACL
+                                }
+                            });
+                            taskDao.insertTodo(newTodo); // 保存到本地
+                            currentTodo = newTodo;
+
+
+                        }else { // 编辑现有任务
+                            // ... (现有编辑逻辑) ...
+                            // 对于编辑，ACL通常在共享时已经设置好了，这里主要是保存字段更改
+                            // 如果需要，也可以在这里重新获取云端对象的ACL，合并，再保存，但这会更复杂
+                            ParseObject todoParseObject = SyncWorker.toParse(currentTodo);
+                            // 如果要确保ACL不丢失，应该先 fetch 对象，再 putAll，再 save
+                            // 简化：直接保存，依赖共享时ACL的正确设置
+                            todoParseObject.saveInBackground();
                         }
-                        
-                        // 保存到本地数据库
-                        taskDao.insertTodo(newTodo);
-                        
-                        // 更新内存中的引用
-                        currentTodo = newTodo;
                     }
                     
                     // 如果启用了番茄时钟并且当前处于编辑模式，提醒用户可以使用番茄定时

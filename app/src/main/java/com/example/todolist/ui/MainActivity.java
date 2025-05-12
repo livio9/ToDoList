@@ -243,6 +243,7 @@ public class MainActivity extends BaseActivity {
         super.onDestroy();
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onStart() {
         super.onStart();

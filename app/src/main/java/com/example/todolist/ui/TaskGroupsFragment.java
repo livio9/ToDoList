@@ -83,7 +83,7 @@ public class TaskGroupsFragment extends Fragment {
             // 设置代办集点击事件
             taskGroupAdapter.setOnItemClickListener(taskGroup -> {
                 Intent intent = new Intent(requireContext(), TaskGroupActivity.class);
-                intent.putExtra("group_id", taskGroup.id);
+                intent.putExtra("group_id", taskGroup.uuid);
                 startActivity(intent);
             });
             

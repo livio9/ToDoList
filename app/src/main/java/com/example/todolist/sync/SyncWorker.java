@@ -240,8 +240,6 @@ public class SyncWorker extends Worker {
             // --- 修改点：移除 .whereEqualTo("user", user) ---
             // query.whereEqualTo("user", user); // <--- 删除或注释掉此行
 
-            query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
-            query.setMaxCacheAge(TimeUnit.HOURS.toMillis(1));
 
             final TaskDao finalTaskDao = taskDao;
             new Thread(() -> {
@@ -507,9 +505,7 @@ public class SyncWorker extends Worker {
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
 //            query.whereEqualTo("user", user); // 只获取当前用户的数据
-            // query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ONLY); // 强制网络请求以进行测试
-            query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE); // 或 NETWORK_ONLY 用于测试
-            query.setMaxCacheAge(TimeUnit.HOURS.toMillis(1)); // 例如1小时缓存
+
 
 
             final TaskGroupDao finalTaskGroupDao = taskGroupDao; // DAO 必须是 final 才能在内部类中使用

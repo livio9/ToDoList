@@ -3,75 +3,85 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="6dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:layout_height="160dp"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeColor="@android:color/transparent"
+    app:strokeWidth="0dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/textGroupTitle"
+        <!-- 背景图片 -->
+        <ImageView
+            android:id="@+id/task_group_bg_img"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:text="代办集标题"/>
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/background_1"
+            android:contentDescription="任务背景" />
 
+        <!-- 半透明遮罩+内容 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom"
+            android:background="#50000000"
+            android:padding="18dp">
 
             <TextView
-                android:id="@+id/textGroupCategory"
-                android:layout_width="wrap_content"
+                android:id="@+id/textGroupTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_category_chip"
-                android:backgroundTint="@color/primary"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:textSize="11sp"
-                android:textColor="@color/white"
+                android:textSize="21sp"
                 android:textStyle="bold"
-                android:text="工作"/>
+                android:textColor="@android:color/white"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="代办集标题" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp">
+
+                <TextView
+                    android:id="@+id/textGroupCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_category_chip"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:text="类别" />
+
+                <TextView
+                    android:id="@+id/textGroupCreatedAt"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:textSize="13sp"
+                    android:textColor="@android:color/white"
+                    android:text="创建日期" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/textGroupCreatedAt"
-                android:layout_width="wrap_content"
+                android:id="@+id/textGroupProgress"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:textSize="11sp"
-                android:text="2023-05-01"/>
+                android:layout_marginTop="10dp"
+                android:textSize="15sp"
+                android:textColor="@android:color/white"
+                android:text="进度信息" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/textGroupProgress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="13sp"
-            android:text="0/5 已完成"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider"
-            android:layout_marginTop="4dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="点击查看详情"
-            android:textSize="11sp"
-            android:textAlignment="center"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/primary"/>
-    </LinearLayout>
+    </FrameLayout>
 </com.google.android.material.card.MaterialCardView> 

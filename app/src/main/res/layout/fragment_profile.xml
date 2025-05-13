@@ -987,17 +987,25 @@
         <!-- 退出登录按钮 - 优化设计 -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonLogout"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="退出登录"
             android:layout_marginTop="16dp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="@color/accent"
-            app:strokeWidth="1.5dp"
-            app:cornerRadius="12dp"
-            android:textColor="@color/accent"
-            android:paddingVertical="10dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            style="@style/Widget.App.Button.Red"
+            app:cornerRadius="16dp"
+            android:textColor="@color/white"
+            android:paddingVertical="12dp"
             app:layout_constraintTop_toBottomOf="@id/cardSettings"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            app:layout_constraintTop_toBottomOf="@id/buttonLogout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

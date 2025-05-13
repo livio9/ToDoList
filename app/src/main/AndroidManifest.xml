@@ -34,5 +34,8 @@
         <!-- 代办集详情Activity -->
         <activity android:name=".ui.TaskGroupActivity"
             android:exported="true" />
+        <!-- 测试背景Activity -->
+        <activity android:name=".ui.TestBackgroundActivity"
+            android:exported="true" />
     </application>
 </manifest>

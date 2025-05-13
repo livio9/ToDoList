@@ -13,10 +13,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -355,7 +358,6 @@ public class TaskGroupsFragment extends Fragment {
         private List<TaskGroup> taskGroups;
         private OnItemClickListener listener;
 
-        // 接口定义在外部，避免内部类嵌套导致的编译问题
         public void setOnItemClickListener(OnItemClickListener listener) {
             this.listener = listener;
         }
@@ -375,34 +377,46 @@ public class TaskGroupsFragment extends Fragment {
         public void onBindViewHolder(ViewHolder holder, int position) {
             TaskGroup taskGroup = taskGroups.get(position);
             holder.textTitle.setText(taskGroup.title);
-            holder.textCategory.setText(taskGroup.category);
             
-            // 根据类别设置不同颜色
-            int backgroundColor;
-            switch (taskGroup.category) {
-                case "工作":
-                    backgroundColor = ContextCompat.getColor(context, R.color.category_work);
-                    break;
-                case "学习":
-                    backgroundColor = ContextCompat.getColor(context, R.color.category_study);
-                    break;
-                case "个人":
-                    backgroundColor = ContextCompat.getColor(context, R.color.category_personal);
-                    break;
-                case "健康":
-                    backgroundColor = ContextCompat.getColor(context, R.color.category_health);
-                    break;
-                default:
-                    backgroundColor = ContextCompat.getColor(context, R.color.category_other);
-                    break;
+            int categoryColorRes;
+            switch (taskGroup.category != null ? taskGroup.category : "") {
+                case "工作": categoryColorRes = R.color.category_work; break;
+                case "学习": categoryColorRes = R.color.category_study; break;
+                case "个人": categoryColorRes = R.color.category_personal; break;
+                case "健康": categoryColorRes = R.color.category_health; break;
+                default: categoryColorRes = R.color.category_other; break;
             }
-            
-            // 设置类别标签背景颜色
-            holder.textCategory.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
-            holder.textCategory.setTextColor(ContextCompat.getColor(context, R.color.white));
-            
+            int resolvedCategoryColor = ContextCompat.getColor(context, categoryColorRes);
+            holder.textCategory.setBackgroundTintList(ColorStateList.valueOf(resolvedCategoryColor));
+
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            holder.textCreatedAt.setText(sdf.format(taskGroup.createdAt));
+            if (taskGroup.createdAt > 0) {
+                holder.textCreatedAt.setText(sdf.format(new Date(taskGroup.createdAt)));
+            } else {
+                holder.textCreatedAt.setText("N/A");
+            }
+            holder.textCategory.setText(taskGroup.category != null ? taskGroup.category : "其他");
+
+            try {
+                int[] backgroundResources = {
+                    R.drawable.background_1, R.drawable.background_3, R.drawable.background_4,
+                    R.drawable.background_5, R.drawable.background_6, R.drawable.background_7,
+                    R.drawable.background_8, R.drawable.background_9, R.drawable.background_10,
+                    R.drawable.background_11, R.drawable.background_12, R.drawable.background_13
+                };
+                int index = position % backgroundResources.length;
+                if (holder.backgroundImage != null) {
+                    holder.backgroundImage.setImageResource(backgroundResources[index]);
+                    Log.d(TAG, "成功为任务 '" + taskGroup.title + "' 设置背景图片, 资源索引: " + index);
+                } else {
+                    Log.e(TAG, "ViewHolder中的backgroundImage为null，无法设置图片！任务：" + taskGroup.title );
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "为任务 '" + taskGroup.title + "' 设置背景图片失败", e);
+                if (holder.backgroundImage != null) {
+                    holder.backgroundImage.setBackgroundColor(Color.LTGRAY); 
+                }
+            }
             
             // 计算已完成的子任务数量
             new Thread(() -> {
@@ -410,7 +424,6 @@ public class TaskGroupsFragment extends Fragment {
                 int completedTasks = 0;
                 
                 if (totalTasks > 0 && taskDao != null) {
-                    // 遍历子任务ID，统计已完成的任务数量
                     for (String taskId : taskGroup.subTaskIds) {
                         try {
                             Todo task = taskDao.getTodoById(taskId);
@@ -418,16 +431,15 @@ public class TaskGroupsFragment extends Fragment {
                                 completedTasks++;
                             }
                         } catch (Exception e) {
-                            Log.e(TAG, "获取子任务状态出错: " + e.getMessage());
+                            // Log.e(TAG, "获取子任务状态出错: " + e.getMessage());
                         }
                     }
                 }
                 
-                // 在UI线程更新进度显示
-                int finalCompletedTasks = completedTasks;
+                final String progressText = String.format(Locale.getDefault(), "%d/%d 已完成", completedTasks, totalTasks);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        holder.textProgress.setText(String.format("%d/%d 已完成", finalCompletedTasks, totalTasks));
+                        holder.textProgress.setText(progressText);
                     });
                 }
             }).start();
@@ -449,6 +461,7 @@ public class TaskGroupsFragment extends Fragment {
             TextView textCategory;
             TextView textCreatedAt;
             TextView textProgress;
+            ImageView backgroundImage; 
 
             ViewHolder(View itemView) {
                 super(itemView);
@@ -456,6 +469,14 @@ public class TaskGroupsFragment extends Fragment {
                 textCategory = itemView.findViewById(R.id.textGroupCategory);
                 textCreatedAt = itemView.findViewById(R.id.textGroupCreatedAt);
                 textProgress = itemView.findViewById(R.id.textGroupProgress);
+                try {
+                    backgroundImage = itemView.findViewById(R.id.task_group_bg_img); 
+                    if (backgroundImage == null) {
+                        Log.e(TAG, "ViewHolder: task_group_bg_img 未找到!");
+                    }
+                } catch (Exception e) {
+                     Log.e(TAG, "ViewHolder: findViewById(R.id.task_group_bg_img) 失败", e);
+                }
             }
         }
     }

@@ -110,11 +110,11 @@ public class TaskGroupActivity extends BaseActivity {
         adapter.setOnItemLongClickListener(todo -> {
             // 长按删除任务
             Executors.newSingleThreadExecutor().execute(() -> {
-                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().markAsDeleted(todo.id, System.currentTimeMillis());
+                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().markAsDeleted(todo.uuid, System.currentTimeMillis());
                 
                 // 从代办集中移除
                 if (taskGroup != null) {
-                    taskGroup.subTaskIds.remove(todo.id);
+                    taskGroup.subTaskIds.remove(todo.uuid);
                     taskGroupDao.insertTaskGroup(taskGroup);
                     
                     // 同步到云端

@@ -21,10 +21,10 @@ public interface TaskDao {
     List<Todo> getVisibleTodos();
     
     // 根据ID查询单个任务
-    @Query("SELECT * FROM todos WHERE id = :id")
-    Todo getTodoById(String id);
+    @Query("SELECT * FROM todos WHERE uuid = :uuid")
+    Todo getTodoById(String uuid);
 
-    @Query("SELECT * FROM todos WHERE id IN (:ids) AND deleted = 0")
+    @Query("SELECT * FROM todos WHERE uuid IN (:ids) AND deleted = 0")
     List<Todo> getTodosByIds(List<String> ids);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -60,7 +60,7 @@ public interface TaskDao {
     List<Todo> getTodosBetweenTime(long startTime, long endTime);
     
     // 标记一个任务为已删除
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :todoId")
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :todoId")
     void markAsDeleted(String todoId, long timestamp);
     
     // 查找包含关键词的任务

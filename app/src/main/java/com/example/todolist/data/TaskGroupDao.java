@@ -14,8 +14,8 @@ public interface TaskGroupDao {
     @Query("SELECT * FROM taskgroups WHERE deleted = 0 ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroups();
 
-    @Query("SELECT * FROM taskgroups WHERE uuid = :id")
-    TaskGroup getTaskGroupById(String id);
+    @Query("SELECT * FROM taskgroups WHERE uuid = :uuid")
+    TaskGroup getTaskGroupById(String uuid);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTaskGroup(TaskGroup taskGroup);
@@ -26,8 +26,8 @@ public interface TaskGroupDao {
     @Delete
     void delete(TaskGroup taskGroup);
 
-    @Query("UPDATE taskgroups SET deleted = 1 WHERE uuid = :id")
-    void markAsDeleted(String id);
+    @Query("UPDATE taskgroups SET deleted = 1 WHERE uuid = :uuid")
+    void markAsDeleted(String uuid);
     
     // 根据分类获取待办集
     @Query("SELECT * FROM taskgroups WHERE category = :category AND deleted = 0 ORDER BY createdAt DESC")

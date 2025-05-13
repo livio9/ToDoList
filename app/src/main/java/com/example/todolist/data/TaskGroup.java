@@ -36,8 +36,8 @@ public class TaskGroup implements Serializable {
 
     // 使用@Ignore标记，告诉Room不要使用这个构造函数
     @Ignore
-    public TaskGroup(@NonNull String id, String title, String category, int estimatedDays) {
-        this.uuid = id;
+    public TaskGroup(@NonNull String uuid, String title, String category, int estimatedDays) {
+        this.uuid = uuid;
         this.title = title;
         this.category = category;
         this.estimatedDays = estimatedDays;

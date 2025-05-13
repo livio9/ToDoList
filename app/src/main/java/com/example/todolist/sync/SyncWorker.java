@@ -32,7 +32,7 @@ import java.util.*;
 public class SyncWorker extends Worker {
     private static Todo toTodo(ParseObject o) {
         Todo todo = new Todo();
-        todo.id = o.getString("uuid");
+        todo.uuid = o.getString("uuid");
         todo.title = o.getString("title");
         todo.time = o.getLong("time");
         todo.place = o.getString("place");
@@ -58,7 +58,7 @@ public class SyncWorker extends Worker {
 
     public static ParseObject toParse(Todo t) {
         ParseObject o = new ParseObject("Todo"); // 类名 "Todo"
-        o.put("uuid", t.id);
+        o.put("uuid", t.uuid);
         o.put("title", t.title);
         o.put("time", t.time);
         o.put("place", t.place != null ? t.place : "");
@@ -87,7 +87,7 @@ public class SyncWorker extends Worker {
             // 为了最小改动，暂时先这样。后续可以在 AddEditTaskActivity 创建 Todo 时，如果知道父 TaskGroup ID，
             // 获取父 TaskGroup 的 ACL 并设置给新 Todo 的 ParseObject。
         } else {
-            Log.w("SyncWorker_toParse", "CurrentUser es null al crear ParseObject para Todo uuid: " + t.id);
+            Log.w("SyncWorker_toParse", "CurrentUser es null al crear ParseObject para Todo uuid: " + t.uuid);
         }
         return o;
     }
@@ -253,7 +253,7 @@ public class SyncWorker extends Worker {
                     List<Todo> localTodos = finalTaskDao.getAll(); // 假设getAll获取所有，包括已删除的
                     Map<String, Todo> localTodoMap = new HashMap<>();
                     for(Todo lt : localTodos) {
-                        if(lt.id != null) localTodoMap.put(lt.id, lt);
+                        if(lt.uuid != null) localTodoMap.put(lt.uuid, lt);
                     }
                     Set<String> cloudTodoIds = new HashSet<>();
 
@@ -270,13 +270,13 @@ public class SyncWorker extends Worker {
 
                         if (cloudTodo != null) {
                             // 简单的覆盖策略，可以根据 clientUpdatedAt 优化
-                            Todo localTodo = localTodoMap.get(cloudTodo.id);
+                            Todo localTodo = localTodoMap.get(cloudTodo.uuid);
                             if (localTodo == null || cloudTodo.updatedAt >= localTodo.updatedAt) {
-                                Log.d(TAG_PULL_TODO, "Insertando/Actualizando Todo localmente (uuid: " + cloudTodo.id + ", title: " + cloudTodo.title +", deleted: " + cloudTodo.deleted + ")");
+                                Log.d(TAG_PULL_TODO, "Insertando/Actualizando Todo localmente (uuid: " + cloudTodo.uuid + ", title: " + cloudTodo.title +", deleted: " + cloudTodo.deleted + ")");
                                 finalTaskDao.insertTodo(cloudTodo); // 保存到本地数据库
                                 successCount++;
                             } else {
-                                Log.d(TAG_PULL_TODO, "Todo local (uuid: " + cloudTodo.id + ") es más reciente. No actualizando desde la nube.");
+                                Log.d(TAG_PULL_TODO, "Todo local (uuid: " + cloudTodo.uuid + ") es más reciente. No actualizando desde la nube.");
                                 // Potentially push local changes back if there's a conflict and local is newer.
                                 // For now, we just skip updating local from cloud.
                             }
@@ -362,16 +362,16 @@ public class SyncWorker extends Worker {
             List<Todo> localTasks = taskDao.getAll();
             List<ParseObject> cloudDocs = query.find();
 
-            // 构建映射: id -> Todo
+            // 构建映射: uuid -> Todo
             Map<String, Todo> localMap = new HashMap<>();
             for (Todo t : localTasks) {
-                localMap.put(t.id, t);
+                localMap.put(t.uuid, t);
             }
             Map<String, Todo> cloudMap = new HashMap<>();
             for (ParseObject obj : cloudDocs) {
                 Todo cloudTodo = toTodo(obj);
                 if (cloudTodo != null) {
-                    cloudMap.put(cloudTodo.id, cloudTodo);
+                    cloudMap.put(cloudTodo.uuid, cloudTodo);
                 }
             }
             // 构建所有任务ID的集合

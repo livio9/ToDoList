@@ -297,8 +297,8 @@ public class AddEditTaskActivity extends BaseActivity {
                         taskDao.updateTodo(currentTodo);
                     } else {
                         // 新建任务
-                        String id = UUID.randomUUID().toString();
-                        Todo newTodo = new Todo(id, title, selectedCalendar.getTimeInMillis(), place, category, completed);
+                        String uuid = UUID.randomUUID().toString();
+                        Todo newTodo = new Todo(uuid, title, selectedCalendar.getTimeInMillis(), place, category, completed);
                         
                         // 设置优先级和番茄时钟
                         newTodo.priority = priority;
@@ -396,7 +396,7 @@ public class AddEditTaskActivity extends BaseActivity {
                                 if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
                                     TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
                                     if (group != null) {
-                                        group.removeSubTask(currentTodo.id);
+                                        group.removeSubTask(currentTodo.uuid);
                                         taskGroupDao.insertTaskGroup(group);
                                     }
                                 }
@@ -533,7 +533,7 @@ public class AddEditTaskActivity extends BaseActivity {
                 taskDao.insertTodo(newTask);
                 
                 // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                taskGroup.addSubTask(newTask.uuid);
             }
             
             // 更新代办集

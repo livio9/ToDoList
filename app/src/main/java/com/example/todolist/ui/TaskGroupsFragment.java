@@ -295,7 +295,7 @@ public class TaskGroupsFragment extends Fragment {
                 taskDao.insertTodo(newTask);
                 
                 // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                taskGroup.addSubTask(newTask.uuid);
             }
             
             // 更新代办集

@@ -26,12 +26,14 @@ public class TaskGroup implements Serializable {
     public long createdAt;       // 创建时间
     public List<String> subTaskIds; // 子任务ID列表
     public boolean deleted;      // 是否已删除
+    public String ownerId;       // 创建者objectId
 
     // 无参数构造函数，Room使用这个构造函数创建对象
     public TaskGroup() {
         this.id = "";
         subTaskIds = new ArrayList<>();
         this.deleted = false;
+        this.ownerId = com.parse.ParseUser.getCurrentUser() != null ? com.parse.ParseUser.getCurrentUser().getObjectId() : null;
     }
 
     // 使用@Ignore标记，告诉Room不要使用这个构造函数
@@ -44,6 +46,7 @@ public class TaskGroup implements Serializable {
         this.createdAt = System.currentTimeMillis();
         this.subTaskIds = new ArrayList<>();
         this.deleted = false;
+        this.ownerId = com.parse.ParseUser.getCurrentUser() != null ? com.parse.ParseUser.getCurrentUser().getObjectId() : null;
     }
 
     public void addSubTask(String taskId) {

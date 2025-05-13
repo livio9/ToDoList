@@ -353,7 +353,10 @@ public class TaskGroupsFragment extends Fragment {
     /**
      * 代办集适配器
      */
-    private class TaskGroupAdapter extends RecyclerView.Adapter<TaskGroupAdapter.ViewHolder> {
+    private class TaskGroupAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private static final int TYPE_TASK_GROUP = 0;
+        private static final int TYPE_FOOTER = 1;
+        
         private Context context;
         private List<TaskGroup> taskGroups;
         private OnItemClickListener listener;
@@ -368,115 +371,81 @@ public class TaskGroupsFragment extends Fragment {
         }
 
         @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_task_group, parent, false);
-            return new ViewHolder(view);
+        public int getItemViewType(int position) {
+            return position == taskGroups.size() ? TYPE_FOOTER : TYPE_TASK_GROUP;
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
-            TaskGroup taskGroup = taskGroups.get(position);
-            holder.textTitle.setText(taskGroup.title);
-            
-            int categoryColorRes;
-            switch (taskGroup.category != null ? taskGroup.category : "") {
-                case "工作": categoryColorRes = R.color.category_work; break;
-                case "学习": categoryColorRes = R.color.category_study; break;
-                case "个人": categoryColorRes = R.color.category_personal; break;
-                case "健康": categoryColorRes = R.color.category_health; break;
-                default: categoryColorRes = R.color.category_other; break;
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            if (viewType == TYPE_FOOTER) {
+                View view = new View(context);
+                view.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    200)); // 设置底部空白高度
+                return new FooterViewHolder(view);
             }
-            int resolvedCategoryColor = ContextCompat.getColor(context, categoryColorRes);
-            holder.textCategory.setBackgroundTintList(ColorStateList.valueOf(resolvedCategoryColor));
+            View view = LayoutInflater.from(context).inflate(R.layout.item_task_group, parent, false);
+            return new TaskGroupViewHolder(view);
+        }
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            if (taskGroup.createdAt > 0) {
-                holder.textCreatedAt.setText(sdf.format(new Date(taskGroup.createdAt)));
-            } else {
-                holder.textCreatedAt.setText("N/A");
-            }
-            holder.textCategory.setText(taskGroup.category != null ? taskGroup.category : "其他");
-
-            try {
-                int[] backgroundResources = {
-                    R.drawable.background_1, R.drawable.background_3, R.drawable.background_4,
-                    R.drawable.background_5, R.drawable.background_6, R.drawable.background_7,
-                    R.drawable.background_8, R.drawable.background_9, R.drawable.background_10,
-                    R.drawable.background_11, R.drawable.background_12, R.drawable.background_13
-                };
-                int index = position % backgroundResources.length;
-                if (holder.backgroundImage != null) {
-                    holder.backgroundImage.setImageResource(backgroundResources[index]);
-                    Log.d(TAG, "成功为任务 '" + taskGroup.title + "' 设置背景图片, 资源索引: " + index);
-                } else {
-                    Log.e(TAG, "ViewHolder中的backgroundImage为null，无法设置图片！任务：" + taskGroup.title );
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "为任务 '" + taskGroup.title + "' 设置背景图片失败", e);
-                if (holder.backgroundImage != null) {
-                    holder.backgroundImage.setBackgroundColor(Color.LTGRAY); 
-                }
-            }
-            
-            // 计算已完成的子任务数量
-            new Thread(() -> {
-                int totalTasks = taskGroup.subTaskIds != null ? taskGroup.subTaskIds.size() : 0;
-                int completedTasks = 0;
+        @Override
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            if (holder instanceof TaskGroupViewHolder) {
+                TaskGroup taskGroup = taskGroups.get(position);
+                TaskGroupViewHolder taskGroupHolder = (TaskGroupViewHolder) holder;
                 
-                if (totalTasks > 0 && taskDao != null) {
-                    for (String taskId : taskGroup.subTaskIds) {
-                        try {
-                            Todo task = taskDao.getTodoById(taskId);
-                            if (task != null && task.completed && !task.deleted) {
-                                completedTasks++;
-                            }
-                        } catch (Exception e) {
-                            // Log.e(TAG, "获取子任务状态出错: " + e.getMessage());
-                        }
+                taskGroupHolder.textTitle.setText(taskGroup.title);
+                taskGroupHolder.textCategory.setText(taskGroup.category);
+                
+                // 设置创建时间
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                String dateStr = sdf.format(new Date(taskGroup.createdAt));
+                taskGroupHolder.textCreatedAt.setText("创建于 " + dateStr);
+                
+                // 计算进度
+                int totalTasks = taskGroup.subTaskIds.size();
+                int completedTasks = 0;
+                for (String taskId : taskGroup.subTaskIds) {
+                    Todo todo = taskDao.getTodoById(taskId);
+                    if (todo != null && todo.completed) {
+                        completedTasks++;
                     }
                 }
+                String progressText = String.format("进度: %d/%d", completedTasks, totalTasks);
+                taskGroupHolder.textProgress.setText(progressText);
                 
-                final String progressText = String.format(Locale.getDefault(), "%d/%d 已完成", completedTasks, totalTasks);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        holder.textProgress.setText(progressText);
-                    });
-                }
-            }).start();
-            
-            holder.itemView.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onItemClick(taskGroup);
-                }
-            });
+                // 设置点击事件
+                holder.itemView.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onItemClick(taskGroup);
+                    }
+                });
+            }
         }
 
         @Override
         public int getItemCount() {
-            return taskGroups.size();
+            return taskGroups.size() + 1; // +1 for footer
         }
 
-        class ViewHolder extends RecyclerView.ViewHolder {
+        class TaskGroupViewHolder extends RecyclerView.ViewHolder {
             TextView textTitle;
             TextView textCategory;
             TextView textCreatedAt;
             TextView textProgress;
-            ImageView backgroundImage; 
 
-            ViewHolder(View itemView) {
+            TaskGroupViewHolder(View itemView) {
                 super(itemView);
                 textTitle = itemView.findViewById(R.id.textGroupTitle);
                 textCategory = itemView.findViewById(R.id.textGroupCategory);
                 textCreatedAt = itemView.findViewById(R.id.textGroupCreatedAt);
                 textProgress = itemView.findViewById(R.id.textGroupProgress);
-                try {
-                    backgroundImage = itemView.findViewById(R.id.task_group_bg_img); 
-                    if (backgroundImage == null) {
-                        Log.e(TAG, "ViewHolder: task_group_bg_img 未找到!");
-                    }
-                } catch (Exception e) {
-                     Log.e(TAG, "ViewHolder: findViewById(R.id.task_group_bg_img) 失败", e);
-                }
+            }
+        }
+
+        class FooterViewHolder extends RecyclerView.ViewHolder {
+            FooterViewHolder(View itemView) {
+                super(itemView);
             }
         }
     }

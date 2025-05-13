@@ -17,9 +17,9 @@ import okhttp3.Response;
 
 public class TaskDecomposer {
     private static final String TAG = "TaskDecomposer";
-    private static final String MODEL = "qwen/qwen3-32b:free";
+    private static final String MODEL = "openai/gpt-4o-mini";
     private static final String BASE_URL = "https://openrouter.ai/api/v1";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "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";
     
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()

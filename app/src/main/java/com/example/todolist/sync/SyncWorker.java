@@ -2,6 +2,8 @@ package com.example.todolist.sync;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -18,6 +20,7 @@ import com.example.todolist.data.TaskDao;
 import com.example.todolist.data.Todo;
 import com.example.todolist.data.TaskGroupDao;
 import com.example.todolist.data.TaskGroup;
+import com.parse.ParseACL;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -29,47 +32,91 @@ import java.util.concurrent.TimeUnit;
 import java.util.*;
 
 public class SyncWorker extends Worker {
+    private static final String TAG = "SyncWorker";
+    
     private static Todo toTodo(ParseObject o) {
-        Todo todo = new Todo();
-        todo.id = o.getString("uuid");
-        todo.title = o.getString("title");
-        todo.time = o.getLong("time");
-        todo.place = o.getString("place");
-        todo.category = o.getString("category");
-        todo.completed = o.getBoolean("completed");
-        todo.updatedAt = o.getLong("clientUpdatedAt");
-        todo.deleted = o.getBoolean("deleted");
-        todo.belongsToTaskGroup = o.getBoolean("belongsToTaskGroup");
-        
-        // 处理可选字段
-        if (o.has("priority")) {
-            todo.priority = o.getString("priority");
+        try {
+            if (o == null) return null;
+            
+            Todo todo = new Todo();
+            todo.id = o.getString("uuid");
+            
+            // 确保UUID不为空
+            if (todo.id == null) {
+                Log.e(TAG, "Todo 解析失败: 缺少uuid字段");
+                return null;
+            }
+            
+            todo.title = o.getString("title") != null ? o.getString("title") : "";
+            todo.time = o.getLong("time");
+            todo.place = o.getString("place") != null ? o.getString("place") : "";
+            todo.category = o.getString("category") != null ? o.getString("category") : "其他";
+            todo.completed = o.has("completed") ? o.getBoolean("completed") : false;
+            todo.updatedAt = o.has("clientUpdatedAt") ? o.getLong("clientUpdatedAt") : System.currentTimeMillis();
+            todo.deleted = o.has("deleted") ? o.getBoolean("deleted") : false;
+            todo.belongsToTaskGroup = o.has("belongsToTaskGroup") ? o.getBoolean("belongsToTaskGroup") : false;
+            
+            // 处理可选字段
+            if (o.has("priority")) {
+                todo.priority = o.getString("priority");
+            }
+            if (o.has("pomodoroEnabled")) {
+                todo.pomodoroEnabled = o.getBoolean("pomodoroEnabled");
+            }
+            if (o.has("points")) {
+                todo.points = o.getInt("points");
+            }
+            if (o.has("pomodoroMinutes")) {
+                todo.pomodoroMinutes = o.getInt("pomodoroMinutes");
+            }
+            if (o.has("pomodoroCompletedCount")) {
+                todo.pomodoroCompletedCount = o.getInt("pomodoroCompletedCount");
+            }
+            
+            return todo;
+        } catch (Exception e) {
+            Log.e(TAG, "解析Todo异常: " + e.getMessage(), e);
+            return null;
         }
-        if (o.has("pomodoroEnabled")) {
-            todo.pomodoroEnabled = o.getBoolean("pomodoroEnabled");
-        }
-        if (o.has("points")) {
-            todo.points = o.getInt("points");
-        }
-        
-        return todo;
     }
     
     private static ParseObject toParse(Todo t) {
         ParseObject o = new ParseObject("Todo");
+        
+        // 确保必要字段不为空
         o.put("uuid", t.id);
-        o.put("title", t.title);
+        o.put("title", t.title != null ? t.title : "");
         o.put("time", t.time);
-        o.put("place", t.place);
-        o.put("category", t.category);
+        o.put("place", t.place != null ? t.place : "");
+        o.put("category", t.category != null ? t.category : "其他");
         o.put("completed", t.completed);
         o.put("clientUpdatedAt", t.updatedAt);
         o.put("deleted", t.deleted);
         o.put("belongsToTaskGroup", t.belongsToTaskGroup);
-        o.put("priority", t.priority);
-        o.put("pomodoroEnabled", t.pomodoroEnabled);
+        
+        // 可选字段
+        o.put("priority", t.priority != null ? t.priority : "中");
+        o.put("pomodoroEnabled", t.pomodoroEnabled != null ? t.pomodoroEnabled : false);
         o.put("points", t.points);
-        o.put("user", ParseUser.getCurrentUser());
+        o.put("pomodoroMinutes", t.pomodoroMinutes);
+        o.put("pomodoroCompletedCount", t.pomodoroCompletedCount);
+        
+        // 关联用户
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            o.put("user", currentUser);
+            
+            // 重要：设置ACL权限
+            ParseACL acl = new ParseACL(currentUser);
+            acl.setReadAccess(currentUser, true);
+            acl.setWriteAccess(currentUser, true);
+            o.setACL(acl);
+            
+            Log.d(TAG, "设置Todo ACL: uuid=" + t.id + ", title=" + t.title);
+        } else {
+            Log.e(TAG, "无法设置ACL：当前用户为空");
+        }
+        
         return o;
     }
     
@@ -82,7 +129,7 @@ public class SyncWorker extends Worker {
             
             // 确保必要字段不为null
             if (taskGroup.id == null) {
-                Log.e("SyncWorker", "TaskGroup 解析失败: 缺少uuid字段");
+                Log.e(TAG, "TaskGroup 解析失败: 缺少uuid字段");
                 return null;
             }
             
@@ -103,22 +150,59 @@ public class SyncWorker extends Worker {
                 taskGroup.subTaskIds = new ArrayList<>();
             }
             
+            // 获取删除状态，默认为false
+            taskGroup.deleted = o.has("deleted") ? o.getBoolean("deleted") : false;
+            
+            // 获取ownerId
+            if (o.has("ownerId")) {
+                taskGroup.ownerId = o.getString("ownerId");
+            } else if (o.has("user")) {
+                ParseUser user = o.getParseUser("user");
+                if (user != null) {
+                    taskGroup.ownerId = user.getObjectId();
+                }
+            }
+            
             return taskGroup;
         } catch (Exception e) {
-            Log.e("SyncWorker", "解析TaskGroup异常: " + e.getMessage());
+            Log.e(TAG, "解析TaskGroup异常: " + e.getMessage(), e);
             return null;
         }
     }
     
     private static ParseObject toParseTaskGroup(TaskGroup taskGroup) {
         ParseObject o = new ParseObject("TaskGroup");
+        
+        // 确保必要字段不为空
         o.put("uuid", taskGroup.id);
-        o.put("title", taskGroup.title);
-        o.put("category", taskGroup.category);
+        o.put("title", taskGroup.title != null ? taskGroup.title : "");
+        o.put("category", taskGroup.category != null ? taskGroup.category : "其他");
         o.put("estimatedDays", taskGroup.estimatedDays);
         o.put("createdAt", taskGroup.createdAt);
-        o.put("subTaskIds", taskGroup.subTaskIds);
-        o.put("user", ParseUser.getCurrentUser());
+        o.put("subTaskIds", taskGroup.subTaskIds != null ? taskGroup.subTaskIds : new ArrayList<String>());
+        o.put("deleted", taskGroup.deleted);
+        
+        // 存储ownerId，保证相同用户ID
+        if (taskGroup.ownerId != null) {
+            o.put("ownerId", taskGroup.ownerId);
+        }
+        
+        // 关联用户
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            o.put("user", currentUser);
+            
+            // 重要：设置ACL权限
+            ParseACL acl = new ParseACL(currentUser);
+            acl.setReadAccess(currentUser, true);
+            acl.setWriteAccess(currentUser, true);
+            o.setACL(acl);
+            
+            Log.d(TAG, "设置TaskGroup ACL: uuid=" + taskGroup.id + ", title=" + taskGroup.title);
+        } else {
+            Log.e(TAG, "无法设置ACL：当前用户为空");
+        }
+        
         return o;
     }
     
@@ -131,7 +215,7 @@ public class SyncWorker extends Worker {
             // 检查Parse用户是否登录
             ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
-                Log.d("SyncWorker", "用户未登录，跳过云同步");
+                Log.d(TAG, "用户未登录，跳过云同步");
                 return;
             }
             
@@ -140,11 +224,11 @@ public class SyncWorker extends Worker {
             try {
                 taskDao = AppDatabase.getInstance(applicationContext).taskDao();
                 if (taskDao == null) {
-                    Log.e("SyncWorker", "数据库访问失败，无法同步");
+                    Log.e(TAG, "数据库访问失败，无法同步");
                     return;
                 }
             } catch (Exception e) {
-                Log.e("SyncWorker", "获取TaskDao失败", e);
+                Log.e(TAG, "获取TaskDao失败", e);
                 return;
             }
             
@@ -156,6 +240,7 @@ public class SyncWorker extends Worker {
             query.setMaxCacheAge(60 * 60 * 24); // 1天的缓存
             query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE); // 网络优先，本地缓存备用
 
+            final TaskDao finalTaskDao = taskDao;
             new Thread(() -> {
                 try {
                     // 获取云端所有任务
@@ -163,23 +248,25 @@ public class SyncWorker extends Worker {
                     try {
                         cloudDocs = query.find();
                         if (cloudDocs == null) {
-                            Log.w("SyncWorker", "云端返回null，可能是网络问题");
+                            Log.w(TAG, "云端返回null，可能是网络问题");
                             return;
                         }
+                        Log.d(TAG, "从云端获取到 " + cloudDocs.size() + " 个任务");
                     } catch (ParseException e) {
-                        Log.e("SyncWorker", "查询云端数据失败: " + e.getMessage(), e);
+                        Log.e(TAG, "查询云端数据失败: " + e.getMessage(), e);
                         return;
                     }
                     
                     // 获取本地所有任务
                     List<Todo> localTasks;
                     try {
-                        localTasks = taskDao.getAll();
+                        localTasks = finalTaskDao.getAll();
                         if (localTasks == null) {
                             localTasks = new ArrayList<>();
                         }
+                        Log.d(TAG, "本地有 " + localTasks.size() + " 个任务");
                     } catch (Exception e) {
-                        Log.e("SyncWorker", "获取本地任务失败", e);
+                        Log.e(TAG, "获取本地任务失败", e);
                         return;
                     }
 
@@ -191,45 +278,84 @@ public class SyncWorker extends Worker {
                             localMap.put(t.id, t);
                         }
                     }
+                    
+                    int updatedCount = 0;
+                    int skippedCount = 0;
 
-                    // 遍历云端任务, 仅执行"云 -> 本地"更新
+                    // 遍历云端任务, 仅执行"云 -> 本地"更新，且只在云端更新更晚时才覆盖本地
                     for (ParseObject obj : cloudDocs) {
                         try {
                             Todo cloudTodo = toTodo(obj);
-                            if (cloudTodo == null || cloudTodo.id == null) continue;
+                            if (cloudTodo == null || cloudTodo.id == null) {
+                                Log.w(TAG, "云端任务解析失败或ID为空，跳过");
+                                continue;
+                            }
                             
                             Todo localTodo = localMap.get(cloudTodo.id);
-                            // 如果本地为空, 或云端的更新更晚, 则覆盖本地
-                            if (localTodo == null || cloudTodo.updatedAt > localTodo.updatedAt) {
-                                taskDao.insertTodo(cloudTodo);
+                            
+                            // 如果本地为空，或者云端更新时间更晚，则更新本地
+                            if (localTodo == null) {
+                                Log.d(TAG, "本地不存在任务 " + cloudTodo.id + "，从云端导入");
+                                finalTaskDao.insertTodo(cloudTodo);
+                                updatedCount++;
+                            } else if (cloudTodo.updatedAt > localTodo.updatedAt) {
+                                Log.d(TAG, "云端任务 " + cloudTodo.id + " 更新时间(" + cloudTodo.updatedAt + 
+                                       ")晚于本地(" + localTodo.updatedAt + ")，更新本地");
+                                finalTaskDao.insertTodo(cloudTodo);
+                                updatedCount++;
+                            } else {
+                                Log.d(TAG, "本地任务 " + localTodo.id + " 更新时间(" + localTodo.updatedAt + 
+                                       ")不早于云端(" + cloudTodo.updatedAt + ")，保留本地");
+                                skippedCount++;
                             }
                         } catch (Exception e) {
-                            Log.e("SyncWorker", "处理单个Todo失败，继续下一个: " + e.getMessage());
+                            Log.e(TAG, "处理单个Todo失败，继续下一个: " + e.getMessage());
                             // 单个失败不影响整体
                             continue;
                         }
                     }
+                    
+                    Log.d(TAG, "同步结果：更新 " + updatedCount + " 个任务，跳过 " + skippedCount + " 个任务");
                     
                     // 通知数据更新
                     try {
                         Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
                         applicationContext.sendBroadcast(intent);
                     } catch (Exception e) {
-                        Log.e("SyncWorker", "发送广播失败: " + e.getMessage());
+                        Log.e(TAG, "发送广播失败: " + e.getMessage());
                     }
                 } catch (Exception e) {
-                    Log.e("SyncWorker", "同步过程出现未捕获异常: " + e.getMessage(), e);
+                    Log.e(TAG, "同步过程出现未捕获异常: " + e.getMessage(), e);
                 }
             }).start();
         } catch (Exception e) {
-            Log.e("SyncWorker", "启动同步失败: " + e.getMessage(), e);
+            Log.e(TAG, "启动同步失败: " + e.getMessage(), e);
         }
+    }
+
+    private static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+        return false;
     }
 
     public static void pushLocalToCloud(Context applicationContext) {
         try {
+            if (!isNetworkAvailable(applicationContext)) {
+                Log.e(TAG, "网络不可用，无法同步到云端");
+                // 发送网络不可用广播
+                Intent intent = new Intent("com.example.todolist.ACTION_SYNC_FAILED");
+                intent.putExtra("reason", "network_unavailable");
+                applicationContext.sendBroadcast(intent);
+                return;
+            }
+
             ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
+                Log.e(TAG, "用户未登录，无法上传到云端");
                 return;
             }
 
@@ -239,86 +365,76 @@ public class SyncWorker extends Worker {
                 try {
                     // 获取所有本地任务
                     List<Todo> localTasks = taskDao.getAll();
+                    if (localTasks == null || localTasks.isEmpty()) {
+                        Log.d(TAG, "本地无任务，跳过上传");
+                        return;
+                    }
+                    
+                    Log.d(TAG, "准备上传 " + localTasks.size() + " 个任务到云端");
+                    int successCount = 0;
+                    int failureCount = 0;
                     
                     // 批量上传到Parse
                     for (Todo todo : localTasks) {
-                        toParse(todo).save();
+                        try {
+                            if (todo == null || todo.id == null) {
+                                Log.w(TAG, "任务为空或ID为空，跳过");
+                                continue;
+                            }
+                            
+                            ParseObject parseObject = toParse(todo);
+                            
+                            // 使用同步方法确保上传完成
+                            parseObject.save();
+                            
+                            Log.d(TAG, "成功上传任务: id=" + todo.id + ", title=" + todo.title);
+                            successCount++;
+                        } catch (ParseException e) {
+                            Log.e(TAG, "上传任务失败: id=" + todo.id + ", 错误: " + e.getMessage(), e);
+                            failureCount++;
+                        }
                     }
+                    
+                    Log.d(TAG, "任务上传完成: 成功=" + successCount + ", 失败=" + failureCount);
                     
                     // 通知数据已更新
                     try {
                         Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
+                        intent.putExtra("sync_success", successCount);
+                        intent.putExtra("sync_failure", failureCount);
                         applicationContext.sendBroadcast(intent);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发送广播失败: " + e.getMessage());
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "任务上传过程异常: " + e.getMessage(), e);
                 }
             }).start();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "启动上传失败: " + e.getMessage(), e);
         }
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        if (ParseUser.getCurrentUser() == null) return Result.success();
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-        TaskDao taskDao = AppDatabase.getInstance(getApplicationContext()).taskDao();
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
-        try {
-            // 获取本地和云端任务列表
-            List<Todo> localTasks = taskDao.getAll();
-            List<ParseObject> cloudDocs = query.find();
-
-            // 构建映射: id -> Todo
-            Map<String, Todo> localMap = new HashMap<>();
-            for (Todo t : localTasks) {
-                localMap.put(t.id, t);
-            }
-            Map<String, Todo> cloudMap = new HashMap<>();
-            for (ParseObject obj : cloudDocs) {
-                Todo cloudTodo = toTodo(obj);
-                if (cloudTodo != null) {
-                    cloudMap.put(cloudTodo.id, cloudTodo);
-                }
-            }
-            // 构建所有任务ID的集合
-            Set<String> allIds = new HashSet<>();
-            allIds.addAll(localMap.keySet());
-            allIds.addAll(cloudMap.keySet());
-
-            // 合并逻辑：对于每个 id，选用更新时间较新的版本
-            for (String id : allIds) {
-                Todo localTodo = localMap.get(id);
-                Todo cloudTodo = cloudMap.get(id);
-                Todo mergedTodo = null;
-                if (localTodo == null && cloudTodo != null) {
-                    // 本地不存在，云端有：下载云端任务到本地
-                    mergedTodo = cloudTodo;
-                } else if (cloudTodo == null && localTodo != null) {
-                    // 云端不存在，上传本地任务
-                    mergedTodo = localTodo;
-                } else if (localTodo != null && cloudTodo != null) {
-                    // 双方都有：比较更新时间
-                    if (localTodo.updatedAt >= cloudTodo.updatedAt) {
-                        mergedTodo = localTodo;
-                    } else {
-                        mergedTodo = cloudTodo;
-                    }
-                }
-                if (mergedTodo != null) {
-                    // 更新本地数据库
-                    taskDao.insertTodo(mergedTodo);
-                    // 更新云端
-                    toParse(mergedTodo).saveInBackground();
-                }
-            }
+        if (ParseUser.getCurrentUser() == null) {
+            Log.d(TAG, "用户未登录，跳过同步");
             return Result.success();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        }
+        
+        Log.d(TAG, "开始执行周期性同步工作...");
+        
+        // 确保两个方向的同步都执行
+        try {
+            pullCloudToLocal(getApplicationContext());
+            pushLocalToCloud(getApplicationContext());
+            pullTaskGroupsToLocal(getApplicationContext());
+            pushTaskGroupsToCloud(getApplicationContext());
+            
+            return Result.success();
+        } catch (Exception e) {
+            Log.e(TAG, "同步工作异常: " + e.getMessage(), e);
             return Result.retry();
         }
     }
@@ -333,6 +449,8 @@ public class SyncWorker extends Worker {
                 .build();
         WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork("SyncWork", ExistingPeriodicWorkPolicy.REPLACE, request);
+        
+        Log.d(TAG, "已安排15分钟周期性同步任务");
     }
 
     // 立即执行一次同步
@@ -344,10 +462,13 @@ public class SyncWorker extends Worker {
                 .setConstraints(constraints)
                 .build();
         WorkManager.getInstance(context).enqueue(request);
+        
+        Log.d(TAG, "已触发即时同步任务");
     }
 
     public static void cancelPeriodicSync(Context context) {
         WorkManager.getInstance(context).cancelUniqueWork("SyncWork");
+        Log.d(TAG, "已取消周期性同步任务");
     }
 
     // 推送本地TaskGroup到云端
@@ -355,6 +476,7 @@ public class SyncWorker extends Worker {
         try {
             ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
+                Log.e(TAG, "用户未登录，无法上传TaskGroup到云端");
                 return;
             }
 
@@ -364,25 +486,57 @@ public class SyncWorker extends Worker {
                 try {
                     // 获取所有本地任务组
                     List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroups();
+                    if (localTaskGroups == null || localTaskGroups.isEmpty()) {
+                        Log.d(TAG, "本地无TaskGroup，跳过上传");
+                        return;
+                    }
+                    
+                    Log.d(TAG, "准备上传 " + localTaskGroups.size() + " 个TaskGroup到云端");
+                    int successCount = 0;
+                    int failureCount = 0;
                     
                     // 批量上传到Parse
                     for (TaskGroup taskGroup : localTaskGroups) {
-                        toParseTaskGroup(taskGroup).save();
+                        try {
+                            if (taskGroup == null || taskGroup.id == null) {
+                                Log.w(TAG, "TaskGroup为空或ID为空，跳过");
+                                continue;
+                            }
+                            
+                            // 确保ownerId设置正确
+                            if (taskGroup.ownerId == null && user != null) {
+                                Log.d(TAG, "TaskGroup缺少ownerId，设置为当前用户");
+                                taskGroup.ownerId = user.getObjectId();
+                            }
+                            
+                            ParseObject parseObject = toParseTaskGroup(taskGroup);
+                            
+                            // 使用同步方法确保上传完成
+                            parseObject.save();
+                            
+                            Log.d(TAG, "成功上传TaskGroup: id=" + taskGroup.id + ", title=" + taskGroup.title);
+                            successCount++;
+                        } catch (ParseException e) {
+                            Log.e(TAG, "上传TaskGroup失败: id=" + taskGroup.id + ", 错误: " + e.getMessage(), e);
+                            failureCount++;
+                        }
                     }
+                    
+                    Log.d(TAG, "TaskGroup上传完成: 成功=" + successCount + ", 失败=" + failureCount);
                     
                     // 通知数据已更新
                     try {
                         Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
                         applicationContext.sendBroadcast(intent);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发送广播失败: " + e.getMessage());
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "TaskGroup上传过程异常: " + e.getMessage(), e);
                 }
             }).start();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "启动TaskGroup上传失败: " + e.getMessage(), e);
         }
     }
 
@@ -392,7 +546,7 @@ public class SyncWorker extends Worker {
             // 检查用户是否登录
             ParseUser user = ParseUser.getCurrentUser();
             if (user == null) {
-                Log.d("SyncWorker", "用户未登录，跳过TaskGroup同步");
+                Log.d(TAG, "用户未登录，跳过TaskGroup同步");
                 return;
             }
             
@@ -401,11 +555,11 @@ public class SyncWorker extends Worker {
             try {
                 taskGroupDao = AppDatabase.getInstance(applicationContext).taskGroupDao();
                 if (taskGroupDao == null) {
-                    Log.e("SyncWorker", "数据库访问失败，无法同步TaskGroup");
+                    Log.e(TAG, "数据库访问失败，无法同步TaskGroup");
                     return;
                 }
             } catch (Exception e) {
-                Log.e("SyncWorker", "获取TaskGroupDao失败", e);
+                Log.e(TAG, "获取TaskGroupDao失败", e);
                 return;
             }
             
@@ -415,6 +569,7 @@ public class SyncWorker extends Worker {
             query.setMaxCacheAge(60 * 60 * 24); // 1天的缓存
             query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
 
+            final TaskGroupDao finalTaskGroupDao = taskGroupDao;
             new Thread(() -> {
                 try {
                     // 获取云端所有任务组
@@ -422,27 +577,26 @@ public class SyncWorker extends Worker {
                     try {
                         cloudDocs = query.find();
                         if (cloudDocs == null) {
-                            Log.w("SyncWorker", "云端TaskGroup查询返回null，可能是网络问题");
+                            Log.w(TAG, "云端TaskGroup查询返回null，可能是网络问题");
                             return;
                         }
                         
-                        if (cloudDocs.isEmpty()) {
-                            Log.d("SyncWorker", "云端无TaskGroup数据");
-                        }
+                        Log.d(TAG, "从云端获取到 " + cloudDocs.size() + " 个TaskGroup");
                     } catch (ParseException e) {
-                        Log.e("SyncWorker", "查询云端TaskGroup失败: " + e.getMessage(), e);
+                        Log.e(TAG, "查询云端TaskGroup失败: " + e.getMessage(), e);
                         return;
                     }
                     
                     // 获取本地所有任务组
                     List<TaskGroup> localTaskGroups;
                     try {
-                        localTaskGroups = taskGroupDao.getAllTaskGroups();
+                        localTaskGroups = finalTaskGroupDao.getAllTaskGroups();
                         if (localTaskGroups == null) {
                             localTaskGroups = new ArrayList<>();
                         }
+                        Log.d(TAG, "本地有 " + localTaskGroups.size() + " 个TaskGroup");
                     } catch (Exception e) {
-                        Log.e("SyncWorker", "获取本地TaskGroup失败", e);
+                        Log.e(TAG, "获取本地TaskGroup失败", e);
                         return;
                     }
 
@@ -453,36 +607,60 @@ public class SyncWorker extends Worker {
                             localMap.put(t.id, t);
                         }
                     }
+                    
+                    int updatedCount = 0;
+                    int skippedCount = 0;
 
-                    // 遍历云端任务组, 仅执行"云 -> 本地"更新
+                    // 遍历云端任务组，只在以下情况更新本地：
+                    // 1. 本地不存在该TaskGroup
+                    // 2. 本地存在，但云端创建时间更晚（简化判断，一般云端同一TaskGroup不会有多个版本）
                     for (ParseObject obj : cloudDocs) {
                         try {
                             TaskGroup cloudTaskGroup = toTaskGroup(obj);
-                            if (cloudTaskGroup == null) continue;
+                            if (cloudTaskGroup == null || cloudTaskGroup.id == null) {
+                                Log.w(TAG, "云端TaskGroup解析失败或ID为空，跳过");
+                                continue;
+                            }
                             
-                            // 直接保存到本地
-                            taskGroupDao.insertTaskGroup(cloudTaskGroup);
+                            TaskGroup localTaskGroup = localMap.get(cloudTaskGroup.id);
+                            
+                            // 如果本地不存在，或者云端创建时间更晚，则更新本地
+                            if (localTaskGroup == null) {
+                                Log.d(TAG, "本地不存在TaskGroup " + cloudTaskGroup.id + "，从云端导入");
+                                finalTaskGroupDao.insertTaskGroup(cloudTaskGroup);
+                                updatedCount++;
+                            } else if (cloudTaskGroup.createdAt > localTaskGroup.createdAt) {
+                                // 通常情况下不会出现，但如有两个人同时创建同UUID的TaskGroup，会以晚创建的为准
+                                Log.d(TAG, "云端TaskGroup " + cloudTaskGroup.id + " 创建时间晚于本地，更新");
+                                finalTaskGroupDao.insertTaskGroup(cloudTaskGroup);
+                                updatedCount++;
+                            } else {
+                                Log.d(TAG, "保留本地TaskGroup " + localTaskGroup.id);
+                                skippedCount++;
+                            }
                         } catch (Exception e) {
-                            Log.e("SyncWorker", "处理单个TaskGroup失败: " + e.getMessage());
+                            Log.e(TAG, "处理单个TaskGroup失败: " + e.getMessage());
                             // 继续处理下一个，不中断整个同步
                             continue;
                         }
                     }
+                    
+                    Log.d(TAG, "TaskGroup同步结果：更新 " + updatedCount + " 个，跳过 " + skippedCount + " 个");
                     
                     // 通知数据更新
                     try {
                         Intent intent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
                         applicationContext.sendBroadcast(intent);
                     } catch (Exception e) {
-                        Log.e("SyncWorker", "发送广播失败: " + e.getMessage());
+                        Log.e(TAG, "发送广播失败: " + e.getMessage());
                     }
                 } catch (Exception e) {
-                    Log.e("SyncWorker", "TaskGroup同步失败: " + e.getMessage());
+                    Log.e(TAG, "TaskGroup同步失败: " + e.getMessage());
                     e.printStackTrace();
                 }
             }).start();
         } catch (Exception e) {
-            Log.e("SyncWorker", "启动TaskGroup同步失败: " + e.getMessage());
+            Log.e(TAG, "启动TaskGroup同步失败: " + e.getMessage());
             e.printStackTrace();
         }
     }

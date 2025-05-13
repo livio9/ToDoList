@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:layout_marginBottom="100dp">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewGroups"
@@ -56,4 +57,10 @@
         app:tint="?attr/colorOnPrimary"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
         app:backgroundTint="?attr/colorPrimary"/>
+        
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_gravity="bottom" />
+    
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

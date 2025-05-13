@@ -3,6 +3,10 @@ package com.example.todolist.ui;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -33,6 +37,8 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
+import com.example.todolist.sync.SyncWorker;
 
 public class AddEditTaskActivity extends BaseActivity {
     private static final String TAG = "AddEditTaskActivity";
@@ -57,6 +63,36 @@ public class AddEditTaskActivity extends BaseActivity {
     private Calendar selectedCalendar; // 选定的日期时间
     private boolean isTaskGroupMode = false; // 是否为代办集模式
     private String parentGroupId = null; // 父代办集ID
+
+    private BroadcastReceiver syncReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.todolist.ACTION_DATA_UPDATED".equals(intent.getAction())) {
+                int successCount = intent.getIntExtra("sync_success", 0);
+                int failureCount = intent.getIntExtra("sync_failure", 0);
+                runOnUiThread(() -> {
+                    if (failureCount > 0) {
+                        Toast.makeText(AddEditTaskActivity.this, 
+                            "同步完成，但" + failureCount + "个任务同步失败", 
+                            Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(AddEditTaskActivity.this, 
+                            "同步成功", 
+                            Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else if ("com.example.todolist.ACTION_SYNC_FAILED".equals(intent.getAction())) {
+                String reason = intent.getStringExtra("reason");
+                runOnUiThread(() -> {
+                    if ("network_unavailable".equals(reason)) {
+                        Toast.makeText(AddEditTaskActivity.this, 
+                            "网络不可用，无法同步到云端", 
+                            Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -312,35 +348,38 @@ public class AddEditTaskActivity extends BaseActivity {
                             }
                         }
                         
-                        // 保存到本地数据库
+                        // 先保存到本地数据库并设置为当前任务
                         taskDao.insertTodo(newTodo);
-                        
-                        // 更新内存中的引用
                         currentTodo = newTodo;
-                    }
-                    
-                    // 如果启用了番茄时钟并且当前处于编辑模式，提醒用户可以使用番茄定时
-                    if (pomodoroEnabled && getIntent().hasExtra("todo")) {
+                        
+                        // 如果是属于代办集的子任务，处理ACL
+                        if (parentGroupId != null) {
+                            // 更新父代办集的子任务列表
+                            TaskGroup parentGroup = taskGroupDao.getTaskGroupById(parentGroupId);
+                            if (parentGroup != null) {
+                                if (parentGroup.subTaskIds == null) {
+                                    parentGroup.subTaskIds = new ArrayList<>();
+                                }
+                                parentGroup.subTaskIds.add(newTodo.id);
+                                taskGroupDao.insertTaskGroup(parentGroup);
+                            }
+                        }
+                        
+                        // 立即同步到云端
+                        SyncWorker.pushLocalToCloud(this);
+                        if (parentGroupId != null) {
+                            SyncWorker.pushTaskGroupsToCloud(this);
+                        }
+                        
                         runOnUiThread(() -> {
-                            new AlertDialog.Builder(AddEditTaskActivity.this)
-                                .setTitle("番茄时钟已启用")
-                                .setMessage("是否立即开始专注时间？")
-                                .setPositiveButton("开始专注", (dialog, which) -> {
-                                    showPomodoroTimer(currentTodo);
-                                })
-                                .setNegativeButton("稍后", null)
-                                .show();
+                            Toast.makeText(this, "任务已保存", Toast.LENGTH_SHORT).show();
+                            finish();
                         });
                     }
-                    
-                    runOnUiThread(() -> {
-                        Toast.makeText(AddEditTaskActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
-                        finish(); // 返回上一个界面
-                    });
                 } catch (Exception e) {
-                    Log.e(TAG, "保存任务失败", e);
+                    e.printStackTrace();
                     runOnUiThread(() -> {
-                        Toast.makeText(AddEditTaskActivity.this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
             }).start();
@@ -438,7 +477,7 @@ public class AddEditTaskActivity extends BaseActivity {
             .setTitle("任务分解结果")
             .setView(dialogView)
             .setPositiveButton("保存为代办集", (dialog, which) -> {
-                // 创建代办集和子任务
+                // 创建代办集
                 saveAsTaskGroup(result);
             })
             .setNegativeButton("取消", null)
@@ -477,36 +516,29 @@ public class AddEditTaskActivity extends BaseActivity {
             
             // 为每个子任务创建新的Todo对象并保存
             final String finalCategory = category;
+            List<String> subTaskIds = new ArrayList<>();
+            
             for (TaskDecomposer.SubTask subTask : result.getSubTasks()) {
-                String subTaskId = UUID.randomUUID().toString();
-                Todo newTask = new Todo(
-                    subTaskId,
-                    subTask.getTitle(),
-                    taskCalendar.getTimeInMillis(),
-                    place,
-                    finalCategory,
-                    false
-                );
-                // 重要：标记这个任务属于代办集，不应显示在主页面
-                newTask.updatedAt = System.currentTimeMillis();
-                newTask.belongsToTaskGroup = true;  // 标记为属于代办集
-                
-                // 将任务时间递增3小时，让子任务时间有序排列
-                taskCalendar.add(Calendar.HOUR_OF_DAY, 3);
-                
-                // 保存到本地数据库
-                taskDao.insertTodo(newTask);
-                
-                // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                String uuid = UUID.randomUUID().toString();
+                Todo newTodo = new Todo(uuid, subTask.getTitle(), taskCalendar.getTimeInMillis(), place, finalCategory, false);
+                newTodo.belongsToTaskGroup = true;
+                taskDao.insertTodo(newTodo);
+                subTaskIds.add(uuid);
             }
             
-            // 更新代办集
+            // 更新代办集的子任务列表
+            taskGroup.subTaskIds = subTaskIds;
             taskGroupDao.insertTaskGroup(taskGroup);
+            
+            // 立即同步到云端
+            SyncWorker.pushLocalToCloud(this);
+            SyncWorker.pushTaskGroupsToCloud(this);
+            
+            runOnUiThread(() -> {
+                Toast.makeText(this, "代办集已创建", Toast.LENGTH_SHORT).show();
+                finish();
+            });
         }).start();
-        
-        Toast.makeText(this, "已创建代办集：" + result.getMainTask(), Toast.LENGTH_SHORT).show();
-        finish(); // 关闭当前页面返回列表
     }
     
     /**
@@ -653,5 +685,20 @@ public class AddEditTaskActivity extends BaseActivity {
                 mins);
             textPomodoroStatsTask.setText(statsText);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.example.todolist.ACTION_DATA_UPDATED");
+        filter.addAction("com.example.todolist.ACTION_SYNC_FAILED");
+        registerReceiver(syncReceiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(syncReceiver);
     }
 }

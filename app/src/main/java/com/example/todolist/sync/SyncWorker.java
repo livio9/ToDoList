@@ -237,7 +237,6 @@ public class SyncWorker extends Worker {
             Log.d(TAG_PULL_TODO, "Iniciando pull de Todos desde Parse para el usuario: " + user.getUsername());
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-            query.whereEqualTo("user", ParseUser.getCurrentUser()); // 只获取当前用户的数据
 
             final TaskDao finalTaskDao = taskDao;
             new Thread(() -> {
@@ -502,9 +501,6 @@ public class SyncWorker extends Worker {
             Log.d(TAG_PULL, "Iniciando pull de TaskGroups desde Parse para el usuario: " + user.getUsername());
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
-            query.whereEqualTo("user", user); // 只获取当前用户的数据
-
-
 
             final TaskGroupDao finalTaskGroupDao = taskGroupDao; // DAO 必须是 final 才能在内部类中使用
             new Thread(() -> {

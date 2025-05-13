@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,12 +30,16 @@ import com.parse.ParseACL;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.ParseCloud;
+import com.parse.ParseException;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
+import java.util.HashMap;
+import java.util.Map;
 
 import androidx.core.content.ContextCompat;
 
@@ -203,62 +208,156 @@ public class TaskGroupActivity extends BaseActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("共享代办集: " + parseTaskGroupObject.getString("title"));
 
+        // 创建包含输入框和提示的布局
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 30, 50, 30);
+        
+        // 添加输入框
         final EditText input = new EditText(this);
-        input.setHint("输入对方的用户名 (邮箱)");
+        input.setHint("请输入用户名或邮箱");
         input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        builder.setView(input);
+        layout.addView(input);
+        
+        // 添加提示文本
+        TextView extraInfo = new TextView(this);
+        extraInfo.setText("提示:\n• 可以使用对方的邮箱或用户名\n• 对方必须已经注册并激活账号");
+        extraInfo.setTextSize(12);
+        extraInfo.setPadding(0, 16, 0, 0);
+        layout.addView(extraInfo);
+        
+        builder.setView(layout);
 
         builder.setPositiveButton("共享", (dialog, which) -> {
-            String usernameToShareWith = input.getText().toString().trim();
-            if (!TextUtils.isEmpty(usernameToShareWith)) {
-                shareTaskGroupWithUsername(parseTaskGroupObject, usernameToShareWith);
+            String emailToShareWith = input.getText().toString().trim();
+            if (!TextUtils.isEmpty(emailToShareWith)) {
+                shareTaskGroupWithUsername(parseTaskGroupObject, emailToShareWith);
             } else {
-                Toast.makeText(this, "请输入用户名", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "请输入用户名或邮箱", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("取消", (dialog, which) -> dialog.cancel());
         builder.show();
     }
 
-    // 新增方法：根据用户名共享
-    private void shareTaskGroupWithUsername(ParseObject parseTaskGroupObject, String usernameToShareWith) {
+    // 根据输入的email或username共享代办集
+    private void shareTaskGroupWithUsername(ParseObject parseTaskGroupObject, String emailToShareWith) {
         ProgressDialog progressDialog = ProgressDialog.show(this, "", "正在共享...", true);
 
-        ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
-        userQuery.whereEqualTo("username", usernameToShareWith); // Parse 默认 username 是邮箱
-        userQuery.getFirstInBackground((sharedUser, eUser) -> {
-            if (eUser == null && sharedUser != null) {
-                ParseACL acl = parseTaskGroupObject.getACL();
-                if (acl == null) { // 如果对象没有ACL (理论上创建时应该已设置)
-                    Log.w("TaskGroupActivity_Share", "TaskGroup objectId " + parseTaskGroupObject.getObjectId() + " 没有ACL，将创建一个新的。");
-                    acl = new ParseACL(ParseUser.getCurrentUser()); // 创建者始终有权
-                }
-
-                // 授予读写权限
-                acl.setReadAccess(sharedUser, true);
-                acl.setWriteAccess(sharedUser, true); // 协作者可编辑
-
-                parseTaskGroupObject.setACL(acl);
-                parseTaskGroupObject.saveInBackground(eSave -> {
-                    progressDialog.dismiss();
-                    if (eSave == null) {
-                        Toast.makeText(TaskGroupActivity.this, "成功共享给 " + usernameToShareWith, Toast.LENGTH_SHORT).show();
-                        // （可选）可以考虑通知被共享用户
-                    } else {
-                        Log.e("TaskGroupActivity_Share", "保存ACL失败: " + eSave.getMessage());
-                        Toast.makeText(TaskGroupActivity.this, "共享失败: " + eSave.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-                // --- 关键：共享子任务 ---
-                // 获取此 TaskGroup 的所有子任务，并为它们设置相同的 ACL
-                shareSubTasksACL(taskGroup.subTaskIds, acl);
-
-
-            } else {
+        // 检查是否尝试共享给自己
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            String currentUserEmail = currentUser.getEmail();
+            String currentUsername = currentUser.getUsername();
+            String currentUserEmail2 = currentUser.getString("userEmail");
+            
+            Log.d("TaskGroupActivity_Share", "当前用户: username=" + currentUsername + 
+                  ", email=" + currentUserEmail + ", userEmail=" + currentUserEmail2);
+            
+            if ((currentUserEmail != null && currentUserEmail.equalsIgnoreCase(emailToShareWith)) ||
+                (currentUsername != null && currentUsername.equalsIgnoreCase(emailToShareWith)) ||
+                (currentUserEmail2 != null && currentUserEmail2.equalsIgnoreCase(emailToShareWith))) {
                 progressDialog.dismiss();
-                Log.e("TaskGroupActivity_Share", "找不到用户 '" + usernameToShareWith + "': " + (eUser != null ? eUser.getMessage() : ""));
-                Toast.makeText(TaskGroupActivity.this, "找不到用户: " + usernameToShareWith, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "不能共享给自己", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // 记录查询信息
+        Log.d("TaskGroupActivity_Share", "尝试查找用户，输入: " + emailToShareWith);
+        
+        // 使用云函数查找用户
+        HashMap<String, String> params = new HashMap<>();
+        params.put("usernameToFind", emailToShareWith); // 与云函数中参数名保持一致
+        
+        ParseCloud.callFunctionInBackground("findUserToShareWith", params, (result, e) -> {
+            if (e == null) {
+                if (result != null) {
+                    // 将result转换为Map类型
+                    Map<String, Object> resultMap = (Map<String, Object>) result;
+                    
+                    // 检查是否尝试共享给自己(云函数返回的特殊标记)
+                    if (resultMap.containsKey("selfShare") && (Boolean) resultMap.get("selfShare")) {
+                        progressDialog.dismiss();
+                        String message = (String) resultMap.get("message");
+                        Toast.makeText(TaskGroupActivity.this, message, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    
+                    // 获取用户信息
+                    String userId = (String) resultMap.get("objectId");
+                    String username = (String) resultMap.get("username");
+                    String displayName = (String) resultMap.get("displayName");
+                    
+                    if (displayName == null || displayName.isEmpty()) {
+                        displayName = username;
+                    }
+                    
+                    Log.d("TaskGroupActivity_Share", "云函数找到用户: objectId=" + userId + 
+                         ", username=" + username + ", displayName=" + displayName);
+                    
+                    // 使用ParseUser.createWithoutData创建一个引用
+                    ParseUser userToShareWith = ParseUser.createWithoutData(ParseUser.class, userId);
+                    
+                    // 设置ACL权限
+                    ParseACL acl = parseTaskGroupObject.getACL();
+                    if (acl == null) {
+                        Log.w("TaskGroupActivity_Share", "TaskGroup objectId " + parseTaskGroupObject.getObjectId() + " 没有ACL，将创建一个新的");
+                        acl = new ParseACL(ParseUser.getCurrentUser());
+                    }
+                    
+                    // 授予读写权限
+                    acl.setReadAccess(userToShareWith, true);
+                    acl.setWriteAccess(userToShareWith, true);
+                    
+                    final ParseACL finalAcl = acl;
+                    final String finalDisplayName = displayName;
+                    
+                    parseTaskGroupObject.setACL(acl);
+                    parseTaskGroupObject.saveInBackground(eSave -> {
+                        progressDialog.dismiss();
+                        if (eSave == null) {
+                            Toast.makeText(TaskGroupActivity.this, "成功共享给 " + finalDisplayName, Toast.LENGTH_SHORT).show();
+                            
+                            // 共享子任务
+                            shareSubTasksACL(taskGroup.subTaskIds, finalAcl);
+                        } else {
+                            Log.e("TaskGroupActivity_Share", "保存ACL失败: " + eSave.getMessage(), eSave);
+                            Toast.makeText(TaskGroupActivity.this, "共享失败: " + eSave.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // 云函数没有找到用户
+                    progressDialog.dismiss();
+                    Log.e("TaskGroupActivity_Share", "云函数未找到匹配用户, 输入:" + emailToShareWith);
+                    
+                    // 显示错误对话框
+                    new AlertDialog.Builder(TaskGroupActivity.this)
+                        .setTitle("找不到用户")
+                        .setMessage("无法找到用户: '" + emailToShareWith + "'\n\n请确保:\n\n" +
+                                   "1. 输入的用户名或邮箱准确无误\n" +
+                                   "2. 该用户已注册并激活账号\n" +
+                                   "3. 您输入的是用户的注册邮箱")
+                        .setPositiveButton("重试", (dialog, which) -> {
+                            showShareDialog(parseTaskGroupObject);
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+                }
+            } else {
+                // 调用云函数出错
+                progressDialog.dismiss();
+                String errorMsg = e.getMessage();
+                int errorCode = e.getCode();
+                
+                Log.e("TaskGroupActivity_Share", "调用云函数findUserToShareWith错误: " + errorMsg + ", 代码: " + errorCode, e);
+                
+                String userMessage = "查找用户失败: " + errorMsg;
+                if (errorCode == ParseException.OBJECT_NOT_FOUND) {
+                    userMessage = "找不到用户：" + emailToShareWith + "。请检查输入是否正确。";
+                }
+                
+                Toast.makeText(TaskGroupActivity.this, userMessage, Toast.LENGTH_SHORT).show();
             }
         });
     }

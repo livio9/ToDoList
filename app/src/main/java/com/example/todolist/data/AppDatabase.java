@@ -10,7 +10,7 @@ import androidx.room.TypeConverters;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {Todo.class, TaskGroup.class}, version = 7, exportSchema = false)
+@Database(entities = {Todo.class, TaskGroup.class}, version = 8, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase instance;
@@ -102,6 +102,15 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    // 从版本7到版本8的迁移
+    static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            Log.d(TAG, "执行版本7到版本8的迁移");
+            // 此处不需要更改表结构，只是更新数据库版本号以匹配新的哈希值
+        }
+    };
+
     // 获取单例数据库实例
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
@@ -112,7 +121,7 @@ public abstract class AppDatabase extends RoomDatabase {
                         // 建立本地数据库 "todo_db"
                         instance = Room.databaseBuilder(context.getApplicationContext(),
                                         AppDatabase.class, "todo_db")
-                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7) // 添加所有迁移策略
+                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8) // 添加所有迁移策略
                                 .fallbackToDestructiveMigration() // 当迁移失败时允许重建数据库
                                 .build();
                         Log.d(TAG, "数据库创建成功");
@@ -138,5 +147,34 @@ public abstract class AppDatabase extends RoomDatabase {
             }
         }
         return instance;
+    }
+
+    /**
+     * 清除数据库中的所有数据
+     * 用于登录切换时确保数据隔离
+     */
+    public static void clearAllData(Context context) {
+        try {
+            Log.d(TAG, "开始清除数据库数据");
+            AppDatabase db = getInstance(context);
+            if (db != null) {
+                // 在后台线程中执行数据库操作
+                new Thread(() -> {
+                    try {
+                        // 清除所有待办事项
+                        db.taskDao().deleteAllTodos();
+                        // 清除所有待办集
+                        db.taskGroupDao().deleteAllTaskGroups();
+                        Log.d(TAG, "数据库数据清除成功");
+                    } catch (Exception e) {
+                        Log.e(TAG, "清除数据库数据失败", e);
+                    }
+                }).start();
+            } else {
+                Log.e(TAG, "无法获取数据库实例，清除数据失败");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "清除数据时发生异常", e);
+        }
     }
 }

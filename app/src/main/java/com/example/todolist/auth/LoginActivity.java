@@ -25,6 +25,7 @@ import com.parse.LogInCallback;
 import com.parse.SignUpCallback;
 import com.parse.ParseException;
 import com.example.todolist.R;
+import com.example.todolist.data.AppDatabase;
 
 public class LoginActivity extends BaseActivity {
     private TextInputEditText editEmail;
@@ -212,8 +213,21 @@ public class LoginActivity extends BaseActivity {
                                 
                                 Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                                 
-                                // 直接进入主界面
-                                startMainActivity();
+                                // 清除本地数据库中的所有数据，确保不出现数据混淆
+                                AppDatabase.clearAllData(LoginActivity.this);
+                                
+                                // 保存登录凭证
+                                String sessionToken = user.getSessionToken();
+                                SessionManager.getInstance(LoginActivity.this).updateSessionToken(sessionToken);
+                                
+                                // 跳转到主页
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                finish();
+                                
+                                // 触发一次立即同步，下载当前用户的数据
+                                SyncWorker.triggerSyncNow(LoginActivity.this);
                             } else {
                                 // 登录失败
                                 btnLogin.setEnabled(true);

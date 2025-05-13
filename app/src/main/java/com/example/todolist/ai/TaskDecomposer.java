@@ -19,7 +19,7 @@ public class TaskDecomposer {
     private static final String TAG = "TaskDecomposer";
     private static final String MODEL = "google/gemma-3-27b-it:free";
     private static final String BASE_URL = "https://openrouter.ai/api/v1";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "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";
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()

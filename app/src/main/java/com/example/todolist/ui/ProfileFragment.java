@@ -571,25 +571,27 @@ public class ProfileFragment extends Fragment {
     
     private void logoutUser() {
         try {
-            // 弹出确认对话框
-            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("退出登录")
-                    .setMessage("确定要退出登录吗？")
-                    .setPositiveButton("确定", (dialog, which) -> {
-                        // 登出Parse
-                        ParseUser.logOut();
-                        
-                        // 返回登录页
-                        Intent intent = new Intent(requireContext(), LoginActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        requireActivity().finish();
-                    })
-                    .setNegativeButton("取消", null)
-                    .show();
+            // 清除本地数据库中的所有数据
+            Log.d(TAG, "清除本地数据库数据");
+            AppDatabase.clearAllData(requireContext());
+            
+            // 取消同步任务
+            SyncWorker.cancelPeriodicSync(requireContext());
+            
+            // 执行用户登出
+            ParseUser.logOut();
+            
+            // 跳转到登录页面
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            
+            if (getActivity() != null) {
+                getActivity().finish();
+            }
         } catch (Exception e) {
             Log.e(TAG, "退出登录失败", e);
-            Toast.makeText(requireContext(), "退出登录失败，请重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "退出登录失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

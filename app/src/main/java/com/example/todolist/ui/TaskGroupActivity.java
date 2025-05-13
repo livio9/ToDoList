@@ -105,7 +105,7 @@ public class TaskGroupActivity extends BaseActivity {
         adapter.setOnItemLongClickListener(todo -> {
             // 长按删除任务
             Executors.newSingleThreadExecutor().execute(() -> {
-                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodo(todo.id);
+                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().markAsDeleted(todo.id, System.currentTimeMillis());
                 
                 // 从代办集中移除
                 if (taskGroup != null) {
@@ -358,7 +358,7 @@ public class TaskGroupActivity extends BaseActivity {
                 // 先删除所有子任务
                 if (taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
                     for (String taskId : taskGroup.subTaskIds) {
-                        AppDatabase.getInstance(this).taskDao().logicalDeleteTodo(taskId);
+                        AppDatabase.getInstance(this).taskDao().markAsDeleted(taskId, System.currentTimeMillis());
                     }
                 }
                 

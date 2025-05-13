@@ -307,8 +307,14 @@ public class AddEditTaskActivity extends BaseActivity {
                         // 如果是属于代办集的子任务
                         if (parentGroupId != null) {
                             newTodo.belongsToTaskGroup = true;
-
-                            // --- 新增：为新子任务设置从父 TaskGroup 继承的 ACL ---
+                        }
+                        
+                        // 先保存到本地数据库并设置为当前任务
+                        taskDao.insertTodo(newTodo);
+                        currentTodo = newTodo;
+                        
+                        // 如果是属于代办集的子任务，处理ACL
+                        if (parentGroupId != null) {
                             final String finalParentGroupId = parentGroupId;
                             final Todo finalNewTodo = newTodo; // 需要 final 才能在 lambda 中使用
 
@@ -341,17 +347,9 @@ public class AddEditTaskActivity extends BaseActivity {
                                     todoParseObject.saveInBackground(); // 保存，使用默认ACL
                                 }
                             });
-                            taskDao.insertTodo(newTodo); // 保存到本地
-                            currentTodo = newTodo;
-
-
-                        }else { // 编辑现有任务
-                            // ... (现有编辑逻辑) ...
-                            // 对于编辑，ACL通常在共享时已经设置好了，这里主要是保存字段更改
-                            // 如果需要，也可以在这里重新获取云端对象的ACL，合并，再保存，但这会更复杂
-                            ParseObject todoParseObject = SyncWorker.toParse(currentTodo);
-                            // 如果要确保ACL不丢失，应该先 fetch 对象，再 putAll，再 save
-                            // 简化：直接保存，依赖共享时ACL的正确设置
+                        } else { // 普通任务，不属于代办集
+                            // 同步到云端
+                            ParseObject todoParseObject = SyncWorker.toParse(newTodo);
                             todoParseObject.saveInBackground();
                         }
                     }

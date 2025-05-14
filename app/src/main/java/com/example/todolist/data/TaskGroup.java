@@ -27,6 +27,12 @@ public class TaskGroup implements Serializable {
     public List<String> subTaskIds; // 子任务ID列表
     public boolean deleted;      // 是否已删除
     public String ownerId;       // 创建者objectId
+    
+    // 进度统计字段 - 不存储在数据库中
+    @Ignore
+    public int completedCount;   // 已完成子任务数量
+    @Ignore
+    public int totalCount;       // 总子任务数量
 
     // 无参数构造函数，Room使用这个构造函数创建对象
     public TaskGroup() {
@@ -34,6 +40,8 @@ public class TaskGroup implements Serializable {
         subTaskIds = new ArrayList<>();
         this.deleted = false;
         this.ownerId = com.parse.ParseUser.getCurrentUser() != null ? com.parse.ParseUser.getCurrentUser().getObjectId() : null;
+        this.completedCount = 0;
+        this.totalCount = 0;
     }
 
     // 使用@Ignore标记，告诉Room不要使用这个构造函数
@@ -47,6 +55,8 @@ public class TaskGroup implements Serializable {
         this.subTaskIds = new ArrayList<>();
         this.deleted = false;
         this.ownerId = com.parse.ParseUser.getCurrentUser() != null ? com.parse.ParseUser.getCurrentUser().getObjectId() : null;
+        this.completedCount = 0;
+        this.totalCount = 0;
     }
 
     public void addSubTask(String taskId) {

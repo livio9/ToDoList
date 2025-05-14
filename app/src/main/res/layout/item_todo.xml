@@ -1,162 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="3dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginBottom="3dp"
-    android:foreground="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
-    app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="4dp">
+    android:layout_height="100dp"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeColor="@android:color/transparent"
+    app:strokeWidth="0dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_height="match_parent">
 
+        <!-- 背景图片 -->
+        <ImageView
+            android:id="@+id/todoBackgroundImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:alpha="0.67"
+            android:src="@drawable/background_1"
+            android:contentDescription="任务背景" />
+
+        <!-- 半透明遮罩+内容 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/checkBoxCompleted"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="10dp"
-                app:buttonTint="?attr/colorPrimary"
-                android:buttonTint="?attr/colorPrimary" />
-
-            <TextView
-                android:id="@+id/textViewTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="?attr/android:textColorPrimary"
-                android:textSize="16sp"
-                android:fontFamily="sans-serif-medium"
-                android:maxLines="2"
-                android:ellipsize="end"
-                tools:text="完成Android项目作业" />
-
-            <ImageView
-                android:id="@+id/imageViewOptions"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="6dp"
-                android:padding="6dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_more"
-                app:tint="?attr/android:textColorSecondary"
-                android:contentDescription="更多选项" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="6dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom"
+            android:background="#50000000"
+            android:padding="18dp">
 
             <LinearLayout
-                android:id="@+id/layoutTaskInfo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:visibility="visible">
-
-                <!-- 任务时间 -->
-                <LinearLayout
-                    android:id="@+id/layoutTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@android:drawable/ic_menu_my_calendar"
-                        app:tint="?attr/colorPrimary"
-                        android:contentDescription="任务时间" />
-
-                    <TextView
-                        android:id="@+id/textViewTime"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:textColor="?attr/android:textColorSecondary"
-                        android:textSize="12sp"
-                        tools:text="2023年5月30日 15:30" />
-                </LinearLayout>
-
-                <!-- 任务地点 -->
-                <LinearLayout
-                    android:id="@+id/layoutPlace"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginStart="10dp"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@android:drawable/ic_menu_mylocation"
-                        app:tint="?attr/colorPrimary"
-                        android:contentDescription="任务地点" />
-
-                    <TextView
-                        android:id="@+id/textViewPlace"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:textColor="?attr/android:textColorSecondary"
-                        android:textSize="12sp"
-                        tools:text="图书馆" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 任务类别 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
-                
-                <!-- 番茄定时按钮 -->
-                <ImageView
-                    android:id="@+id/imagePomodoroTimer"
+
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/checkBoxCompleted"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:layout_marginEnd="6dp"
-                    android:padding="2dp"
+                    android:layout_marginEnd="10dp"
+                    app:buttonTint="@android:color/white"
+                    android:buttonTint="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/textViewTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    tools:text="完成Android项目作业" />
+
+                <ImageView
+                    android:id="@+id/imageViewOptions"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="6dp"
+                    android:padding="6dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_recent_history"
-                    app:tint="?attr/colorPrimary"
-                    android:visibility="gone"
-                    android:contentDescription="番茄定时" />
-                
+                    android:src="@android:drawable/ic_menu_more"
+                    app:tint="@android:color/white"
+                    android:contentDescription="更多选项" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/textViewTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="2023年5月30日 15:30" />
+
+                <TextView
+                    android:id="@+id/textViewPlace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="图书馆" />
+
                 <TextView
                     android:id="@+id/textViewCategory"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_category_chip"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:textSize="11sp"
-                    android:paddingVertical="4dp"
-                    android:paddingHorizontal="10dp"
-                    android:layout_gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginStart="10dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     tools:text="学习" />
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+    </FrameLayout>
+</com.google.android.material.card.MaterialCardView>

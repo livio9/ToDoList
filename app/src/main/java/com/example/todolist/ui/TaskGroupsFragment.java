@@ -138,6 +138,25 @@ public class TaskGroupsFragment extends Fragment {
                         groups = new ArrayList<>();
                     }
                     Log.d(TAG, "成功加载 " + groups.size() + " 个代办集");
+                    
+                    // 预先统计每个代办集的完成进度
+                    for (TaskGroup group : groups) {
+                        group.totalCount = group.subTaskIds.size();
+                        group.completedCount = 0;
+                        
+                        // 遍历子任务ID，统计已完成数量
+                        for (String taskId : group.subTaskIds) {
+                            try {
+                                Todo todo = taskDao.getTodoById(taskId);
+                                if (todo != null && todo.completed && !todo.deleted) {
+                                    group.completedCount++;
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "获取子任务状态出错: " + e.getMessage());
+                            }
+                        }
+                    }
+                    
                     allTaskGroups.clear();
                     allTaskGroups.addAll(groups);
                     if (getActivity() != null) {
@@ -402,17 +421,25 @@ public class TaskGroupsFragment extends Fragment {
                 String dateStr = sdf.format(new Date(taskGroup.createdAt));
                 taskGroupHolder.textCreatedAt.setText("创建于 " + dateStr);
                 
-                // 计算进度
-                int totalTasks = taskGroup.subTaskIds.size();
-                int completedTasks = 0;
-                for (String taskId : taskGroup.subTaskIds) {
-                    Todo todo = taskDao.getTodoById(taskId);
-                    if (todo != null && todo.completed) {
-                        completedTasks++;
-                    }
-                }
-                String progressText = String.format("进度: %d/%d", completedTasks, totalTasks);
+                // 直接使用预统计的进度信息
+                String progressText = String.format("进度: %d/%d", taskGroup.completedCount, taskGroup.totalCount);
                 taskGroupHolder.textProgress.setText(progressText);
+                
+                // 设置随机背景图片
+                int[] backgroundResources = {
+                    R.drawable.background_1, R.drawable.background_2, R.drawable.background_3,
+                    R.drawable.background_4, R.drawable.background_5, R.drawable.background_6,
+                    R.drawable.background_7, R.drawable.background_8, R.drawable.background_9,
+                    R.drawable.background_10, R.drawable.background_11, R.drawable.background_12, 
+                    R.drawable.background_13, R.drawable.background_14, R.drawable.background_15
+                };
+                
+                // 使用taskGroup.id的hashCode来选择背景，确保相同ID的代办集保持相同背景
+                int index = Math.abs(taskGroup.id.hashCode()) % backgroundResources.length;
+                ImageView backgroundImage = taskGroupHolder.itemView.findViewById(R.id.task_group_bg_img);
+                if (backgroundImage != null) {
+                    backgroundImage.setImageResource(backgroundResources[index]);
+                }
                 
                 // 设置点击事件
                 holder.itemView.setOnClickListener(v -> {

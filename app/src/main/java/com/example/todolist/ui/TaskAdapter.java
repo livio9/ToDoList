@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.widget.Toast;
+import android.widget.ImageView;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private List<Todo> taskList;
@@ -92,9 +93,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         
         if (todo.place != null && !todo.place.isEmpty()) {
             holder.textPlace.setText(todo.place);
-            holder.layoutPlace.setVisibility(View.VISIBLE);
+            holder.textPlace.setVisibility(View.VISIBLE);
         } else {
-            holder.layoutPlace.setVisibility(View.GONE);
+            holder.textPlace.setVisibility(View.GONE);
         }
         
         // 设置分类标签
@@ -105,29 +106,20 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.textCategory.setVisibility(View.GONE);
         }
         
-        // 设置番茄时钟图标
-        if (todo.pomodoroEnabled != null && todo.pomodoroEnabled) {
-            holder.imagePomodoroTimer.setVisibility(View.VISIBLE);
-            // 添加点击事件
-            holder.imagePomodoroTimer.setOnClickListener(v -> {
-                // 启动番茄定时器
-                if (context instanceof AddEditTaskActivity) {
-                    ((AddEditTaskActivity) context).showPomodoroTimer(todo);
-                } else if (context instanceof MainActivity) {
-                    // 如果在主界面启动，需要先创建对话框
-                    PomodoroTimerDialog dialog = new PomodoroTimerDialog(context, todo);
-                    dialog.setOnTimerCompletedListener(isBreakCompleted -> {
-                        if (isBreakCompleted) {
-                            Toast.makeText(context, "休息结束，开始新的专注", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context, "专注完成，开始休息", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    dialog.show();
-                }
-            });
-        } else {
-            holder.imagePomodoroTimer.setVisibility(View.GONE);
+        // 设置随机背景图片
+        int[] backgroundResources = {
+            R.drawable.background_1, R.drawable.background_2, R.drawable.background_3,
+            R.drawable.background_4, R.drawable.background_5, R.drawable.background_6,
+            R.drawable.background_7, R.drawable.background_8, R.drawable.background_9,
+            R.drawable.background_10, R.drawable.background_11, R.drawable.background_12, 
+            R.drawable.background_13, R.drawable.background_14, R.drawable.background_15
+        };
+        
+        // 使用todo.id的hashCode来选择背景，确保相同ID的任务保持相同背景
+        int index = Math.abs(todo.id.hashCode()) % backgroundResources.length;
+        ImageView backgroundImage = holder.itemView.findViewById(R.id.todoBackgroundImage);
+        if (backgroundImage != null) {
+            backgroundImage.setImageResource(backgroundResources[index]);
         }
         
         holder.checkCompleted.setChecked(todo.completed);
@@ -173,14 +165,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         if (completed) {
             holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
             holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_completed));
+            holder.textTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         } else {
             holder.textTitle.setPaintFlags(holder.textTitle.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-            // 判断是否已过期，过期任务显示红色
             long now = System.currentTimeMillis();
             if (taskTime < now) {
-                holder.textTitle.setTextColor(context.getResources().getColor(R.color.task_overdue));
+                // 过期/紧急任务用亮红色加粗
+                holder.textTitle.setTextColor(android.graphics.Color.parseColor("#FFFF6666"));
+                holder.textTitle.setTypeface(null, android.graphics.Typeface.BOLD);
             } else {
-                holder.textTitle.setTextColor(context.getResources().getColor(R.color.text_primary));
+                // 其它任务用白色加粗
+                holder.textTitle.setTextColor(android.graphics.Color.WHITE);
+                holder.textTitle.setTypeface(null, android.graphics.Typeface.BOLD);
             }
         }
     }
@@ -246,8 +242,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         TextView textTime;
         TextView textPlace;
         TextView textCategory;
-        View layoutPlace;
-        View imagePomodoroTimer;
         
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -256,8 +250,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             textTime = itemView.findViewById(R.id.textViewTime);
             textPlace = itemView.findViewById(R.id.textViewPlace);
             textCategory = itemView.findViewById(R.id.textViewCategory);
-            layoutPlace = itemView.findViewById(R.id.layoutPlace);
-            imagePomodoroTimer = itemView.findViewById(R.id.imagePomodoroTimer);
         }
     }
 

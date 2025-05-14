@@ -59,19 +59,18 @@ public class TaskGroupActivity extends BaseActivity {
     private Button buttonDeleteTaskGroup;
     private Button buttonShareTaskGroup;
     private TaskGroupDao taskGroupDao;
+    private EditText editGroupName;
+    private EditText editCategory;
+    private EditText editEstimatedDays;
+    private boolean isCreateMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_group);
 
-        // 获取传递的代办集ID
-        String groupId = getIntent().getStringExtra("group_id");
-        if (groupId == null) {
-            Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
+        // 检查是否新建模式
+        isCreateMode = getIntent().getBooleanExtra("create_mode", false);
 
         // 初始化DAO
         taskGroupDao = AppDatabase.getInstance(this).taskGroupDao();
@@ -80,7 +79,7 @@ public class TaskGroupActivity extends BaseActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("代办集详情");
+        getSupportActionBar().setTitle(isCreateMode ? "新建代办集" : "代办集详情");
 
         textGroupName = findViewById(R.id.textGroupName);
         textCategory = findViewById(R.id.textCategory);
@@ -88,73 +87,113 @@ public class TaskGroupActivity extends BaseActivity {
         textCreatedAt = findViewById(R.id.textCreatedAt);
         recyclerSubTasks = findViewById(R.id.recyclerSubTasks);
         fabAddTask = findViewById(R.id.fabAddTask);
-        
-        // 初始化保存和删除按钮
         buttonSaveTaskGroup = findViewById(R.id.buttonSaveTaskGroup);
         buttonDeleteTaskGroup = findViewById(R.id.buttonDeleteTaskGroup);
         buttonShareTaskGroup = findViewById(R.id.buttonShareTaskGroup);
         buttonShareTaskGroup.setVisibility(View.VISIBLE);
 
+        // 新增：可编辑输入框
+        editGroupName = findViewById(R.id.editGroupName);
+        editCategory = findViewById(R.id.editCategory);
+        editEstimatedDays = findViewById(R.id.editEstimatedDays);
+        editGroupName.setVisibility(isCreateMode ? View.VISIBLE : View.GONE);
+        editCategory.setVisibility(isCreateMode ? View.VISIBLE : View.GONE);
+        editEstimatedDays.setVisibility(isCreateMode ? View.VISIBLE : View.GONE);
+        textGroupName.setVisibility(isCreateMode ? View.GONE : View.VISIBLE);
+        textCategory.setVisibility(isCreateMode ? View.GONE : View.VISIBLE);
+        textEstimatedDays.setVisibility(isCreateMode ? View.GONE : View.VISIBLE);
+
         // 设置RecyclerView
         recyclerSubTasks.setLayoutManager(new LinearLayoutManager(this));
-        
-        // 创建适配器
         adapter = new TaskAdapter(this, subTasks);
-        
-        // 设置点击事件
-        adapter.setOnItemClickListener(todo -> {
-            // 点击子任务打开编辑页面
-            Intent intent = new Intent(TaskGroupActivity.this, AddEditTaskActivity.class);
-            intent.putExtra("todo", todo);
-            intent.putExtra("parent_group_id", groupId);
-            startActivity(intent);
-        });
-        
-        // 设置长按事件
-        adapter.setOnItemLongClickListener(todo -> {
-            // 长按删除任务
-            Executors.newSingleThreadExecutor().execute(() -> {
-                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodoForUser(todo.id, todo.userId);
-                
-                // 从代办集中移除
-                if (taskGroup != null) {
-                    taskGroup.removeSubTask(todo.id);
-                    taskGroupDao.insertTaskGroup(taskGroup);
-                    
-                    // 同步到云端
-                    SyncWorker.pushTaskGroupsToCloud(TaskGroupActivity.this);
-                    SyncWorker.pushLocalToCloud(TaskGroupActivity.this);
-                }
-                
-                runOnUiThread(() -> {
-                    int position = subTasks.indexOf(todo);
-                    if (position != -1) {
-                        subTasks.remove(position);
-                        adapter.notifyItemRemoved(position);
-                        Toast.makeText(TaskGroupActivity.this, "任务已删除", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            });
-        });
-        
         recyclerSubTasks.setAdapter(adapter);
 
-        // 添加新任务按钮
-        fabAddTask.setOnClickListener(v -> {
-            String currentUserId = CurrentUserUtil.getCurrentUserId();
-            if (currentUserId == null) {
-                Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
+        // 新建模式下初始化空代办集
+        if (isCreateMode) {
+            taskGroup = new TaskGroup();
+            subTasks.clear();
+            adapter.updateList(subTasks);
+        } else {
+            // 获取传递的代办集ID
+            String groupId = getIntent().getStringExtra("group_id");
+            if (groupId == null) {
+                Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
+                finish();
                 return;
             }
-            Intent intent = new Intent(this, AddEditTaskActivity.class);
-            intent.putExtra("parent_group_id", groupId);
-            // No need to pass currentUserId explicitly if AddEditTaskActivity gets it itself
-            startActivity(intent);
+            loadTaskGroup(groupId);
+        }
+
+        // fabAddTask：添加子任务
+        fabAddTask.setOnClickListener(v -> {
+            if (isCreateMode) {
+                // 新建模式下弹窗输入子任务
+                showAddSubTaskDialog();
+            } else {
+                // 详情模式下跳转到AddEditTaskActivity
+                String groupId = taskGroup != null ? taskGroup.id : null;
+                Intent intent = new Intent(this, AddEditTaskActivity.class);
+                intent.putExtra("parent_group_id", groupId);
+                startActivity(intent);
+            }
         });
-        
-        // 设置保存按钮点击事件
+
+        // 在onCreate方法中，给textGroupName、textCategory、textEstimatedDays设置点击事件
+        textGroupName.setOnClickListener(v -> {
+            textGroupName.setVisibility(View.GONE);
+            editGroupName.setText(taskGroup != null ? taskGroup.title : "");
+            editGroupName.setVisibility(View.VISIBLE);
+            editGroupName.requestFocus();
+        });
+        textCategory.setOnClickListener(v -> {
+            textCategory.setVisibility(View.GONE);
+            editCategory.setText(taskGroup != null ? taskGroup.category : "");
+            editCategory.setVisibility(View.VISIBLE);
+            editCategory.requestFocus();
+        });
+        textEstimatedDays.setOnClickListener(v -> {
+            textEstimatedDays.setVisibility(View.GONE);
+            editEstimatedDays.setText(taskGroup != null ? String.valueOf(taskGroup.estimatedDays) : "");
+            editEstimatedDays.setVisibility(View.VISIBLE);
+            editEstimatedDays.requestFocus();
+        });
+        // 保存时，如果EditText可见则用EditText的内容覆盖taskGroup
         buttonSaveTaskGroup.setOnClickListener(v -> {
-            saveTaskGroup();
+            if (editGroupName.getVisibility() == View.VISIBLE) {
+                String newTitle = editGroupName.getText().toString().trim();
+                if (!TextUtils.isEmpty(newTitle)) {
+                    taskGroup.title = newTitle;
+                    textGroupName.setText(newTitle);
+                }
+                editGroupName.setVisibility(View.GONE);
+                textGroupName.setVisibility(View.VISIBLE);
+            }
+            if (editCategory.getVisibility() == View.VISIBLE) {
+                String newCategory = editCategory.getText().toString().trim();
+                if (!TextUtils.isEmpty(newCategory)) {
+                    taskGroup.category = newCategory;
+                    textCategory.setText("类别: " + newCategory);
+                }
+                editCategory.setVisibility(View.GONE);
+                textCategory.setVisibility(View.VISIBLE);
+            }
+            if (editEstimatedDays.getVisibility() == View.VISIBLE) {
+                String newDays = editEstimatedDays.getText().toString().trim();
+                if (!TextUtils.isEmpty(newDays)) {
+                    try {
+                        taskGroup.estimatedDays = Integer.parseInt(newDays);
+                        textEstimatedDays.setText("预计完成天数: " + newDays);
+                    } catch (Exception ignored) {}
+                }
+                editEstimatedDays.setVisibility(View.GONE);
+                textEstimatedDays.setVisibility(View.VISIBLE);
+            }
+            // 其余保存逻辑保持不变
+            if (isCreateMode) {
+                saveNewTaskGroup();
+            } else {
+                saveTaskGroup();
+            }
         });
         
         // 设置删除按钮点击事件
@@ -170,9 +209,6 @@ public class TaskGroupActivity extends BaseActivity {
                 Toast.makeText(this, "无法共享此代办集", Toast.LENGTH_SHORT).show();
             }
         });
-
-        // 加载代办集和子任务
-        loadTaskGroup(groupId);
     }
     
     /**
@@ -265,8 +301,8 @@ public class TaskGroupActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // 刷新代办集和子任务
-        if (taskGroup != null) {
+        // 只在非新建模式下刷新代办集和子任务
+        if (!isCreateMode && taskGroup != null) {
             loadTaskGroup(taskGroup.id);
         }
     }
@@ -575,5 +611,63 @@ public class TaskGroupActivity extends BaseActivity {
                 android.util.Log.e("TaskGroupActivity", "查询子任务失败: " + (e != null ? e.getMessage() : "未找到子任务"));
             }
         });
+    }
+
+    // 新建模式下弹窗添加子任务
+    private void showAddSubTaskDialog() {
+        EditText input = new EditText(this);
+        new AlertDialog.Builder(this)
+            .setTitle("添加子任务")
+            .setView(input)
+            .setPositiveButton("添加", (dialog, which) -> {
+                String title = input.getText().toString().trim();
+                if (!TextUtils.isEmpty(title)) {
+                    Todo subTask = new Todo();
+                    subTask.title = title;
+                    subTasks.add(subTask);
+                    adapter.updateList(subTasks);
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    // 新建模式下保存代办集及子任务
+    private void saveNewTaskGroup() {
+        String groupName = editGroupName.getText().toString().trim();
+        String category = editCategory.getText().toString().trim();
+        int estimatedDays = 1;
+        try {
+            estimatedDays = Integer.parseInt(editEstimatedDays.getText().toString().trim());
+        } catch (Exception ignored) {}
+        if (TextUtils.isEmpty(groupName)) {
+            Toast.makeText(this, "请输入代办集标题", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        taskGroup.title = groupName;
+        taskGroup.category = category;
+        taskGroup.estimatedDays = estimatedDays;
+        taskGroup.subTaskIds.clear();
+
+        // 数据库操作放到子线程
+        new Thread(() -> {
+            long now = System.currentTimeMillis();
+            if (taskGroup.createdAt == 0) {
+                taskGroup.createdAt = now;
+            }
+            for (Todo t : subTasks) {
+                String uuid = java.util.UUID.randomUUID().toString();
+                t.id = uuid;
+                t.belongsToTaskGroup = true;
+                if (t.time == 0) t.time = now;
+                taskGroup.subTaskIds.add(uuid);
+                AppDatabase.getInstance(this).taskDao().insertTodo(t);
+            }
+            AppDatabase.getInstance(this).taskGroupDao().insertTaskGroup(taskGroup);
+            runOnUiThread(() -> {
+                Toast.makeText(this, "代办集已创建", Toast.LENGTH_SHORT).show();
+                finish();
+            });
+        }).start();
     }
 } 

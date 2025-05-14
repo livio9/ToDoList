@@ -93,17 +93,15 @@ public class TaskGroupsFragment extends Fragment {
             // 添加待办集按钮
             FloatingActionButton fabAddGroup = view.findViewById(R.id.fabAddGroup);
             fabAddGroup.setOnClickListener(v -> {
-                // 显示选择对话框：直接创建待办集或使用AI分解
                 new AlertDialog.Builder(requireContext())
                     .setTitle("创建代办集")
                     .setItems(new String[]{"手动创建", "AI任务分解"}, (dialog, which) -> {
                         if (which == 0) {
-                            // 手动创建代办集
-                            Intent addIntent = new Intent(requireContext(), AddEditTaskActivity.class);
-                            addIntent.putExtra("task_group_mode", true);
-                            startActivity(addIntent);
+                            // 跳转到TaskGroupActivity，进入新建模式
+                            Intent intent = new Intent(requireContext(), TaskGroupActivity.class);
+                            intent.putExtra("create_mode", true);
+                            startActivity(intent);
                         } else {
-                            // AI任务分解
                             showCreateTaskGroupDialog();
                         }
                     })

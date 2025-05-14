@@ -57,6 +57,12 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:text="代办集名称"/>
+                    <EditText
+                        android:id="@+id/editGroupName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="请输入代办集标题"
+                        android:visibility="gone"/>
 
                     <TextView
                         android:id="@+id/textCategory"
@@ -65,6 +71,12 @@
                         android:textSize="13sp"
                         android:layout_marginTop="6dp"
                         android:text="类别: 工作"/>
+                    <EditText
+                        android:id="@+id/editCategory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="请输入类别"
+                        android:visibility="gone"/>
 
                     <TextView
                         android:id="@+id/textEstimatedDays"
@@ -73,6 +85,13 @@
                         android:textSize="13sp"
                         android:layout_marginTop="3dp"
                         android:text="预计完成天数: 7"/>
+                    <EditText
+                        android:id="@+id/editEstimatedDays"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="预计完成天数"
+                        android:inputType="number"
+                        android:visibility="gone"/>
 
                     <TextView
                         android:id="@+id/textCreatedAt"

@@ -73,8 +73,9 @@ public class StatisticsFragment extends Fragment {
                 try {
                     String currentUserId = CurrentUserUtil.getCurrentUserId();
                     // 从数据库加载所有非删除的任务
-                    List<Todo> tasks = taskDao.getVisibleTasksForUser(currentUserId);
-                    
+//                    List<Todo> tasks = taskDao.getVisibleTasksForUser(currentUserId);
+                    List<Todo> tasks = taskDao.getVisibleTasksForUser();
+
                     // 计算统计信息
                     int totalTasks = tasks.size();
                     int completedTasks = 0;

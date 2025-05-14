@@ -71,7 +71,8 @@ public class StatisticsActivity extends BaseActivity {
         new Thread(() -> {
             String currentUserId = CurrentUserUtil.getCurrentUserId();
             // 获取所有可见任务
-            List<Todo> allTasks = taskDao.getVisibleTasksForUser(currentUserId);
+//            List<Todo> allTasks = taskDao.getVisibleTasksForUser(currentUserId);
+            List<Todo> allTasks = taskDao.getVisibleTasksForUser();
             
             // 如果没有任务，设置默认值并返回
             if (allTasks == null || allTasks.isEmpty()) {

@@ -134,7 +134,8 @@ public class TaskGroupsFragment extends Fragment {
             new Thread(() -> {
                 try {
                     Log.d(TAG, "正在加载所有代办集...");
-                    List<TaskGroup> groups = taskGroupDao != null ? taskGroupDao.getAllTaskGroupsForUser(currentUserId) : new ArrayList<>();
+//                    List<TaskGroup> groups = taskGroupDao != null ? taskGroupDao.getAllTaskGroupsForUser(currentUserId) : new ArrayList<>();
+                    List<TaskGroup> groups = taskGroupDao != null ? taskGroupDao.getAllTaskGroupsForUser() : new ArrayList<>();
                     if (groups == null) {
                         Log.e(TAG, "代办集查询返回 null");
                         groups = new ArrayList<>();
@@ -149,7 +150,8 @@ public class TaskGroupsFragment extends Fragment {
                         // 遍历子任务ID，统计已完成数量
                         for (String taskId : group.subTaskIds) {
                             try {
-                                Todo todo = taskDao.getTodoByIdForUser(taskId, currentUserId);
+//                                Todo todo = taskDao.getTodoByIdForUser(taskId, currentUserId);
+                                Todo todo = taskDao.getTodoByIdForUser(taskId);
                                 if (todo != null && todo.completed && !todo.deleted) {
                                     group.completedCount++;
                                 }

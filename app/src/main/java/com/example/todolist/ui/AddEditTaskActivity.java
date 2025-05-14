@@ -375,7 +375,8 @@ public class AddEditTaskActivity extends BaseActivity {
                         // 如果是属于代办集的子任务，处理ACL
                         if (parentGroupId != null) {
                             // 当获取父任务组时，也应该基于当前用户ID
-                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
+//                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
+                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId);
                             if (parentGroup != null) {
                                 parentGroup.addSubTask(newTodo.id); // 确保 addSubTask 内部做了null检查
                                 taskGroupDao.insertTaskGroup(parentGroup);
@@ -428,7 +429,8 @@ public class AddEditTaskActivity extends BaseActivity {
                                 
                                 // 如果是子任务，从代办集中移除
                                 if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
-                                    TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentTodo.userId);
+//                                    TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentTodo.userId);
+                                    TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId);
                                     if (group != null) {
                                         group.removeSubTask(currentTodo.id);
                                         taskGroupDao.insertTaskGroup(group);

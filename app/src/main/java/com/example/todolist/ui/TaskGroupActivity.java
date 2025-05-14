@@ -288,7 +288,8 @@ public class TaskGroupActivity extends BaseActivity {
             try {
                 String currentUserId = CurrentUserUtil.getCurrentUserId();
                 // 加载代办集
-                taskGroup = taskGroupDao.getTaskGroupByIdForUser(groupId, currentUserId);
+//                taskGroup = taskGroupDao.getTaskGroupByIdForUser(groupId, currentUserId);
+                taskGroup = taskGroupDao.getTaskGroupByIdForUser(groupId);
                 if (taskGroup == null) {
                     runOnUiThread(() -> {
                         Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
@@ -338,7 +339,8 @@ public class TaskGroupActivity extends BaseActivity {
                 
                 if (subTaskIds != null && !subTaskIds.isEmpty()) {
                     for (String taskId : subTaskIds) {
-                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoByIdForUser(taskId, currentUserId);
+//                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoByIdForUser(taskId, currentUserId);
+                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoByIdForUser(taskId);
                         if (task != null && !task.deleted) {
                             tasks.add(task);
                         }

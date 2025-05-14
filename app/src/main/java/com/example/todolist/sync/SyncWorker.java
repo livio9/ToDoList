@@ -274,7 +274,7 @@ public class SyncWorker extends Worker {
                     List<Todo> localTasks;
                     String currentUserId = user.getObjectId();
                     try {
-                        localTasks = finalTaskDao.getAllTasksForUser(currentUserId);
+                        localTasks = finalTaskDao.getAllTasksForUser();
                         if (localTasks == null) {
                             localTasks = new ArrayList<>();
                         }
@@ -379,7 +379,8 @@ public class SyncWorker extends Worker {
                 try {
                     String currentUserId = user.getObjectId();
                     // 获取所有本地任务
-                    List<Todo> localTasks = taskDao.getAllTasksForUser(currentUserId);
+//                    List<Todo> localTasks = taskDao.getAllTasksForUser(currentUserId);
+                    List<Todo> localTasks = taskDao.getAllUnfiltered(); // 获取所有任务，不过滤用户ID
                     if (localTasks == null || localTasks.isEmpty()) {
                         Log.d(TAG, "本地无任务，跳过上传");
                         return;
@@ -556,8 +557,8 @@ public class SyncWorker extends Worker {
 
             try {
                 String currentUserId = user.getObjectId();
-                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser(currentUserId);
-
+//                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser(currentUserId);
+                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser();
                 if (localTaskGroups == null || localTaskGroups.isEmpty()) {
                     Log.d(TAG, "TaskGroup 推送：本地无当前用户的待办集，跳过上传。");
                     sendSyncCompletedBroadcast(applicationContext, "task_group", 0, 0, null);
@@ -759,7 +760,8 @@ public class SyncWorker extends Worker {
                     List<TaskGroup> localTaskGroups;
                     try {
                         String currentUserId = user.getObjectId();
-                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser(currentUserId);
+//                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser(currentUserId);
+                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser(); // 获取所有任务组，不过滤用户ID
                         if (localTaskGroups == null) {
                             localTaskGroups = new ArrayList<>();
                         }

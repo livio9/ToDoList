@@ -13,13 +13,15 @@ public interface TaskGroupDao {
     void insertTaskGroup(TaskGroup taskGroup); // TaskGroup object should now contain userId
 
     // Get all non-deleted task groups for a specific user
-    @Query("SELECT * FROM taskgroups WHERE deleted = 0 AND userId = :userId ORDER BY createdAt DESC")
-    List<TaskGroup> getAllTaskGroupsForUser(String userId);
+//    @Query("SELECT * FROM taskgroups WHERE deleted = 0 AND userId = :userId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM taskgroups WHERE deleted = 0 ORDER BY createdAt DESC")
+    List<TaskGroup> getAllTaskGroupsForUser();
 
 
     // Get a specific non-deleted task group by ID, ensuring it belongs to the user
-    @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 AND userId = :userId")
-    TaskGroup getTaskGroupByIdForUser(String groupId, String userId);
+//    @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 AND userId = :userId")
+    @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 ORDER BY createdAt DESC")
+    TaskGroup getTaskGroupByIdForUser(String groupId);
 
     // Get sub-tasks by their IDs, ensuring they belong to the specified user
     // (Assuming sub-tasks (Todos) also have a userId field and are filtered by it)

@@ -154,26 +154,41 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonLogin"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
                 android:text="登录"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginTop="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 app:cornerRadius="8dp"
-                android:backgroundTint="#4568DC"/>
+                android:backgroundTint="#4568DC"
+                android:minHeight="48dp"
+                app:layout_constraintTop_toBottomOf="@id/checkboxRememberMe"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/buttonRegister" />
                 
             <!-- 注册按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonRegister"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
+                android:minHeight="48dp"
                 android:text="注册新账号"
-                android:textSize="12sp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 android:layout_marginTop="8dp"
                 app:cornerRadius="8dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 app:strokeColor="#4568DC"
-                android:textColor="#4568DC"/>
+                android:textColor="#4568DC"
+                app:layout_constraintTop_toBottomOf="@id/buttonLogin"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0.12" />
                 
             <!-- 其他登录选项 -->
             <TextView
@@ -185,13 +200,18 @@
                 android:textColor="@color/text_secondary"
                 android:layout_gravity="center"
                 android:layout_marginTop="8dp"
-                android:padding="4dp"/>
+                android:padding="4dp"
+                app:layout_constraintTop_toBottomOf="@id/buttonRegister"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/textCopyright" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
     
     <!-- 底部版权信息 -->
     <TextView
+        android:id="@+id/textCopyright"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="© 2023 待办清单"

@@ -139,9 +139,6 @@ public class SyncWorker extends Worker {
             // 获取estimatedDays，默认为1
             taskGroup.estimatedDays = o.has("estimatedDays") ? o.getInt("estimatedDays") : 1;
             
-            // 获取createdAt，默认为当前时间
-            taskGroup.createdAt = o.has("createdAt") ? o.getLong("createdAt") : System.currentTimeMillis();
-            
             // 获取子任务ID列表
             List<String> subTaskIds = o.getList("subTaskIds");
             if (subTaskIds != null) {
@@ -178,7 +175,6 @@ public class SyncWorker extends Worker {
         o.put("title", taskGroup.title != null ? taskGroup.title : "");
         o.put("category", taskGroup.category != null ? taskGroup.category : "其他");
         o.put("estimatedDays", taskGroup.estimatedDays);
-        o.put("createdAt", taskGroup.createdAt);
         o.put("subTaskIds", taskGroup.subTaskIds != null ? taskGroup.subTaskIds : new ArrayList<String>());
         o.put("deleted", taskGroup.deleted);
         
@@ -236,10 +232,6 @@ public class SyncWorker extends Worker {
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
             query.whereEqualTo("user", ParseUser.getCurrentUser());
             
-            // 设置查询超时，避免长时间等待
-            query.setMaxCacheAge(60 * 60 * 24); // 1天的缓存
-            query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE); // 网络优先，本地缓存备用
-
             final TaskDao finalTaskDao = taskDao;
             new Thread(() -> {
                 try {
@@ -566,8 +558,6 @@ public class SyncWorker extends Worker {
             // 创建查询并设置策略
             ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
             query.whereEqualTo("user", ParseUser.getCurrentUser());
-            query.setMaxCacheAge(60 * 60 * 24); // 1天的缓存
-            query.setCachePolicy(ParseQuery.CachePolicy.NETWORK_ELSE_CACHE);
 
             final TaskGroupDao finalTaskGroupDao = taskGroupDao;
             new Thread(() -> {

@@ -19,13 +19,13 @@ public interface TaskGroupDao {
 
 
     // Get a specific non-deleted task group by ID, ensuring it belongs to the user
-//    @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 AND userId = :userId")
-    @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 ORDER BY createdAt DESC")
+//    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId AND deleted = 0 AND userId = :userId")
+    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId AND deleted = 0 ORDER BY createdAt DESC")
     TaskGroup getTaskGroupByIdForUser(String groupId);
 
     // Get sub-tasks by their IDs, ensuring they belong to the specified user
     // (Assuming sub-tasks (Todos) also have a userId field and are filtered by it)
-    @Query("SELECT * FROM todos WHERE id IN (:taskIds) AND deleted = 0 AND userId = :userId ORDER BY time ASC")
+    @Query("SELECT * FROM todos WHERE uuid IN (:taskIds) AND deleted = 0 AND userId = :userId ORDER BY time ASC")
     List<Todo> getSubTasksByIdsForUser(List<String> taskIds, String userId);
 
     // Delete all task groups for a specific user (used on logout)

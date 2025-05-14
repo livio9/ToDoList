@@ -10,7 +10,7 @@ import java.io.Serializable;
 public class Todo implements Serializable {
     @PrimaryKey
     @NonNull
-    public String id;
+    public String uuid;
 
     public String title;
     public long time;          // 任务时间（毫秒时间戳）
@@ -35,8 +35,8 @@ public class Todo implements Serializable {
 
     // 构造函数：新增任务时，默认更新时间为当前时间，且删除标记为 false
     @Ignore
-    public Todo(@NonNull String id, String title, long time, String place, String category, boolean completed, @NonNull String userId) {
-        this.id = id;
+    public Todo(@NonNull String uuid, String title, long time, String place, String category, boolean completed, @NonNull String userId) {
+        this.uuid = uuid;
         this.title = title;
         this.time = time;
         this.place = place;

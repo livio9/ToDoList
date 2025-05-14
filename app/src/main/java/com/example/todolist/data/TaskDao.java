@@ -24,8 +24,8 @@ public interface TaskDao {
     List<Todo> getVisibleTasksForUser();
 
     // 修改：根据ID和用户ID查询单个任务
-//    @Query("SELECT * FROM todos WHERE id = :taskId AND userId = :userId")
-    @Query("SELECT * FROM todos WHERE id = :taskId")
+//    @Query("SELECT * FROM todos WHERE uuid = :taskId AND userId = :userId")
+    @Query("SELECT * FROM todos WHERE uuid = :taskId")
     Todo getTodoByIdForUser(String taskId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -46,13 +46,13 @@ public interface TaskDao {
     int deleteAll();
 
     // 修改：软删除特定用户的任务
-//    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId AND userId = :userId")
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+//    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId AND userId = :userId")
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId")
     void logicalDeleteTodoForUser(String taskId, long timestamp);
     
     // 重载方法，使用当前时间戳
-//    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId AND userId = :userId")
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId")
+//    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId AND userId = :userId")
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId")
     default void logicalDeleteTodoForUser(String taskId, String userId) {
         logicalDeleteTodoForUser(taskId, System.currentTimeMillis());
     }

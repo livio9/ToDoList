@@ -378,10 +378,10 @@ public class AddEditTaskActivity extends BaseActivity {
 //                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
                             TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId);
                             if (parentGroup != null) {
-                                parentGroup.addSubTask(newTodo.id); // 确保 addSubTask 内部做了null检查
+                                parentGroup.addSubTask(newTodo.uuid); // 确保 addSubTask 内部做了null检查
                                 taskGroupDao.insertTaskGroup(parentGroup);
                             } else {
-                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId + " when adding subtask " + newTodo.id);
+                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId + " when adding subtask " + newTodo.uuid);
                                 // 根据业务逻辑决定如何处理：是允许子任务独立存在，还是提示错误？
                                 // 如果父任务组找不到，可能意味着数据不一致或权限问题。
                             }
@@ -432,7 +432,7 @@ public class AddEditTaskActivity extends BaseActivity {
 //                                    TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentTodo.userId);
                                     TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId);
                                     if (group != null) {
-                                        group.removeSubTask(currentTodo.id);
+                                        group.removeSubTask(currentTodo.uuid);
                                         taskGroupDao.insertTaskGroup(group);
                                     }
                                 }

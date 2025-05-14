@@ -876,7 +876,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="云同步设置"
+                            android:text="点击云同步"
                             android:textSize="14sp"
                             android:fontFamily="sans-serif"
                             android:textColor="@color/text_primary"

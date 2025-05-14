@@ -145,7 +145,8 @@ public class ProfileFragment extends Fragment {
             });
             
             settingAbout.setOnClickListener(v -> {
-                Toast.makeText(requireContext(), "关于应用功能即将上线", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(requireContext(), AboutActivity.class);
+                startActivity(intent);
             });
             
             // 设置兑换奖励按钮
@@ -675,19 +676,39 @@ public class ProfileFragment extends Fragment {
     
     private void loadTaskStatistics() {
         try {
-            // 从MainActivity获取积分信息
-            if (getActivity() instanceof MainActivity) {
-                MainActivity activity = (MainActivity) getActivity();
-                int points = activity.getUserPoints();
-                int completedTasksCount = activity.getCompletedTasksCount();
-                
-                // 更新UI
-                textTotalPoints.setText(String.valueOf(points));
-                textCompletedTasks.setText(String.valueOf(completedTasksCount));
-                
-                // 更新快捷积分显示
-                quickPointsIndicator.setText("积分: " + points);
-            }
+            // 统计所有已完成任务
+            new Thread(() -> {
+                try {
+                    List<Todo> allTasks = taskDao.getAllTasksForUser();
+                    int completedCount = 0;
+                    int points = 0;
+                    for (Todo todo : allTasks) {
+                        if (todo.completed) {
+                            completedCount++;
+                            // 按优先级计分
+                            if ("高".equals(todo.priority)) {
+                                points += 3;
+                            } else if ("中".equals(todo.priority)) {
+                                points += 2;
+                            } else if ("低".equals(todo.priority)) {
+                                points += 1;
+                            }
+                        }
+                    }
+                    // 更新UI
+                    final int finalPoints = points;
+                    final int finalCompletedCount = completedCount;
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            textTotalPoints.setText(String.valueOf(finalPoints));
+                            textCompletedTasks.setText(String.valueOf(finalCompletedCount));
+                            quickPointsIndicator.setText("积分: " + finalPoints);
+                        });
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "统计任务数据失败", e);
+                }
+            }).start();
         } catch (Exception e) {
             Log.e(TAG, "加载统计数据失败", e);
         }

@@ -86,7 +86,7 @@ public class TaskGroupsFragment extends Fragment {
             // 设置代办集点击事件
             taskGroupAdapter.setOnItemClickListener(taskGroup -> {
                 Intent intent = new Intent(requireContext(), TaskGroupActivity.class);
-                intent.putExtra("group_id", taskGroup.id);
+                intent.putExtra("group_id", taskGroup.uuid);
                 startActivity(intent);
             });
             
@@ -324,7 +324,7 @@ public class TaskGroupsFragment extends Fragment {
                 taskDao.insertTodo(newTask);
                 
                 // 添加到代办集
-                taskGroup.addSubTask(newTask.id);
+                taskGroup.addSubTask(newTask.uuid);
             }
             
             // 更新代办集
@@ -442,7 +442,7 @@ public class TaskGroupsFragment extends Fragment {
                 };
                 
                 // 使用taskGroup.id的hashCode来选择背景，确保相同ID的代办集保持相同背景
-                int index = Math.abs(taskGroup.id.hashCode()) % backgroundResources.length;
+                int index = Math.abs(taskGroup.uuid.hashCode()) % backgroundResources.length;
                 ImageView backgroundImage = taskGroupHolder.itemView.findViewById(R.id.task_group_bg_img);
                 if (backgroundImage != null) {
                     backgroundImage.setImageResource(backgroundResources[index]);

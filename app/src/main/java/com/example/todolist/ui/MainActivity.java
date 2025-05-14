@@ -388,13 +388,20 @@ public class MainActivity extends BaseActivity {
             navigation_statistics.setOnClickListener(v -> {
                 updateNavSelection(v);
                 switchFragment(statisticsFragment);
-                setTitle("数据统计");
+                setTitle("同步");
             });
             
             navigation_profile.setOnClickListener(v -> {
                 updateNavSelection(v);
                 switchFragment(profileFragment);
                 setTitle("个人中心");
+            });
+
+            // 添加关于应用的点击事件
+            View settingAbout = findViewById(R.id.settingAbout);
+            settingAbout.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+                startActivity(intent);
             });
         } catch (Exception e) {
             Log.e(TAG, "设置底部导航失败", e);
@@ -673,6 +680,33 @@ public class MainActivity extends BaseActivity {
             }
         };
         handler.post(runnable);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        // 将"任务统计"菜单项标题改为"同步"
+        MenuItem syncItem = menu.findItem(R.id.action_statistics);
+        if (syncItem != null) {
+            syncItem.setTitle("同步");
+            syncItem.setIcon(android.R.drawable.stat_notify_sync);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_statistics) {
+            // 点击"同步"按钮，自动同步数据
+            Toast.makeText(this, "正在同步数据...", Toast.LENGTH_SHORT).show();
+            SyncWorker.pullCloudToLocal(this);
+            SyncWorker.pullTaskGroupsToLocal(this);
+            SyncWorker.pushLocalToCloud(this);
+            SyncWorker.pushTaskGroupsToCloud(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
 

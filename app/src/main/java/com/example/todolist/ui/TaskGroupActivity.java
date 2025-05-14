@@ -111,7 +111,7 @@ public class TaskGroupActivity extends BaseActivity {
         adapter.setOnItemClickListener(todo -> {
             Intent intent = new Intent(TaskGroupActivity.this, AddEditTaskActivity.class);
             intent.putExtra("todo", todo);
-            intent.putExtra("parent_group_id", taskGroup != null ? taskGroup.id : null);
+            intent.putExtra("parent_group_id", taskGroup != null ? taskGroup.uuid : null);
             startActivity(intent);
         });
 
@@ -138,7 +138,7 @@ public class TaskGroupActivity extends BaseActivity {
                 showAddSubTaskDialog();
             } else {
                 // 详情模式下跳转到AddEditTaskActivity
-                String groupId = taskGroup != null ? taskGroup.id : null;
+                String groupId = taskGroup != null ? taskGroup.uuid : null;
                 Intent intent = new Intent(this, AddEditTaskActivity.class);
                 intent.putExtra("parent_group_id", groupId);
                 startActivity(intent);
@@ -211,7 +211,7 @@ public class TaskGroupActivity extends BaseActivity {
         // 设置共享按钮点击事件
         buttonShareTaskGroup.setOnClickListener(v -> {
             if (taskGroup != null && com.parse.ParseUser.getCurrentUser() != null) {
-                fetchTaskGroupFromParseAndShowShareDialog(taskGroup.id);
+                fetchTaskGroupFromParseAndShowShareDialog(taskGroup.uuid);
             } else {
                 Toast.makeText(this, "无法共享此代办集", Toast.LENGTH_SHORT).show();
             }
@@ -310,7 +310,7 @@ public class TaskGroupActivity extends BaseActivity {
         super.onResume();
         // 只在非新建模式下刷新代办集和子任务
         if (!isCreateMode && taskGroup != null) {
-            loadTaskGroup(taskGroup.id);
+            loadTaskGroup(taskGroup.uuid);
         }
     }
 
@@ -420,7 +420,7 @@ public class TaskGroupActivity extends BaseActivity {
                     
                     // 先上传TaskGroup本身
                     com.parse.ParseObject taskGroupObject = new com.parse.ParseObject("TaskGroup");
-                    taskGroupObject.put("uuid", taskGroup.id);
+                    taskGroupObject.put("uuid", taskGroup.uuid);
                     taskGroupObject.put("title", taskGroup.title != null ? taskGroup.title : "");
                     taskGroupObject.put("category", taskGroup.category != null ? taskGroup.category : "其他");
                     taskGroupObject.put("estimatedDays", taskGroup.estimatedDays);
@@ -665,7 +665,7 @@ public class TaskGroupActivity extends BaseActivity {
             }
             for (Todo t : subTasks) {
                 String uuid = java.util.UUID.randomUUID().toString();
-                t.id = uuid;
+                t.uuid = uuid;
                 t.belongsToTaskGroup = true;
                 if (t.time == 0) t.time = now;
                 taskGroup.subTaskIds.add(uuid);

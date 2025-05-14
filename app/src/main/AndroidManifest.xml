@@ -37,5 +37,7 @@
         <!-- 测试背景Activity -->
         <activity android:name=".ui.TestBackgroundActivity"
             android:exported="true" />
+        <!-- AboutActivity -->
+        <activity android:name=".ui.AboutActivity" />
     </application>
 </manifest>

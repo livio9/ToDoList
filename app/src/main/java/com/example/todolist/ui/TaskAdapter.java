@@ -116,7 +116,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         };
         
         // 使用todo.id的hashCode来选择背景，确保相同ID的任务保持相同背景
-        int index = Math.abs(todo.id.hashCode()) % backgroundResources.length;
+        int index = Math.abs(todo.uuid.hashCode()) % backgroundResources.length;
         ImageView backgroundImage = holder.itemView.findViewById(R.id.todoBackgroundImage);
         if (backgroundImage != null) {
             backgroundImage.setImageResource(backgroundResources[index]);

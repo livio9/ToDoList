@@ -40,7 +40,7 @@ public interface TaskDao {
 
     // 保持一个通用的 deleteAll (如果确实需要在某些场景下清除所有数据)
     @Query("DELETE FROM todos")
-    void deleteAll();
+    int deleteAll();
 
     // 修改：软删除特定用户的任务
     @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE id = :taskId AND userId = :userId")

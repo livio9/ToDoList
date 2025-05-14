@@ -30,8 +30,10 @@ import androidx.fragment.app.Fragment;
 
 import com.example.todolist.R;
 import com.example.todolist.auth.LoginActivity;
+import com.example.todolist.auth.SessionManager;
 import com.example.todolist.data.AppDatabase;
 import com.example.todolist.data.TaskDao;
+import com.example.todolist.data.TaskGroupDao;
 import com.example.todolist.data.Todo;
 import com.example.todolist.sync.SyncWorker;
 import com.google.android.material.button.MaterialButton;
@@ -43,6 +45,9 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.concurrent.ExecutorService; // 引入 ExecutorService
+import java.util.concurrent.Executors; // 引入 Executors
+
 
 public class ProfileFragment extends Fragment {
     private static final String TAG = "ProfileFragment";
@@ -87,6 +92,10 @@ public class ProfileFragment extends Fragment {
 
     private CircleImageView profileImageLarge;
 
+    private SessionManager sessionManager; // 添加 SessionManager 实例
+    private ExecutorService databaseExecutor; // 用于数据库操作的线程池
+
+
     public ProfileFragment() {
         // Required empty public constructor
     }
@@ -113,6 +122,9 @@ public class ProfileFragment extends Fragment {
             // 初始化大头像
             profileImageLarge = view.findViewById(R.id.profileImageLarge);
             profileImageLarge.setOnClickListener(v -> showAvatarOptions());
+
+            sessionManager = SessionManager.getInstance(requireContext()); // 初始化 SessionManager
+            databaseExecutor = Executors.newSingleThreadExecutor(); // 初始化线程池
             
             // 设置用户信息
             setupUserInfo();
@@ -144,8 +156,10 @@ public class ProfileFragment extends Fragment {
             // 设置退出登录按钮
             buttonLogout = view.findViewById(R.id.buttonLogout);
             buttonLogout.setOnClickListener(v -> {
-                logoutUser();
+//                logoutUser();
+                showLogoutConfirmationDialog();
             });
+
             
             // 初始化主题卡片
             initThemeCards(view);
@@ -158,6 +172,116 @@ public class ProfileFragment extends Fragment {
         }
         
         return view;
+    }
+
+    private void showLogoutConfirmationDialog() {
+        try {
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("退出登录")
+                    .setMessage("确定要退出登录并清除所有本地数据吗？此操作不可恢复。") // 强调会清除数据
+                    .setPositiveButton("确定退出", (dialog, which) -> {
+                        performLogoutAndClearData(); // 调用执行登出和数据清理的方法
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        } catch (Exception e) {
+            Log.e(TAG, "显示登出确认对话框失败", e);
+            Toast.makeText(requireContext(), "操作失败，请重试", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void performLogoutAndClearData() {
+        try {
+            // 1. Parse 用户登出 (必须首先执行，以获取正确的 userId)
+            ParseUser currentUser = ParseUser.getCurrentUser();
+            if (currentUser == null) {
+                // 如果用户已经为空，可能之前已经登出或会话无效，直接清理并跳转
+                Log.w(TAG, "ParseUser.getCurrentUser() 为空，可能已登出，直接清理本地数据。");
+                clearLocalDataAndNavigateToLogin(null); // 传入null，因为没有当前用户
+                return;
+            }
+
+            String userIdToClear = currentUser.getObjectId(); // 获取当前用户的 ID
+            Log.d(TAG, "准备为用户 " + userIdToClear + " 清理数据并登出。");
+
+            ParseUser.logOutInBackground(e -> {
+                if (e == null) {
+                    Log.d(TAG, "Parse 用户成功登出。");
+                    // 2. 清理本地数据 (在后台线程执行)
+                    clearLocalDataAndNavigateToLogin(userIdToClear);
+                } else {
+                    Log.e(TAG, "Parse 登出失败", e);
+                    // 即便 Parse 登出失败，也尝试清理本地数据并跳转，但给用户提示
+                    Toast.makeText(requireContext(), "云端登出失败，但仍会清理本地数据。", Toast.LENGTH_LONG).show();
+                    clearLocalDataAndNavigateToLogin(userIdToClear);
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "退出登录并清理数据过程中发生错误", e);
+            Toast.makeText(requireContext(), "操作失败，请重试", Toast.LENGTH_SHORT).show();
+            // 即使发生未知错误，也尝试清理并跳转，防止用户数据残留
+            if (ParseUser.getCurrentUser() != null) {
+                clearLocalDataAndNavigateToLogin(ParseUser.getCurrentUser().getObjectId());
+            } else {
+                clearLocalDataAndNavigateToLogin(null); // 如果无法获取用户ID，则尝试清理所有
+            }
+        }
+    }
+
+    private void clearLocalDataAndNavigateToLogin(final String userId) {
+        databaseExecutor.execute(() -> {
+            try {
+                AppDatabase db = AppDatabase.getInstance(requireContext());
+                TaskDao taskDao = db.taskDao();
+                TaskGroupDao taskGroupDao = db.taskGroupDao();
+
+                Log.d(TAG, "开始清理所有 Room 数据库数据...");
+                int tasksDeleted = taskDao.deleteAll(); // 调用删除所有任务的方法
+                int groupsDeleted = taskGroupDao.deleteAllTaskGroupsUnfiltered(); // 调用删除所有任务组的方法
+                Log.d(TAG, "所有 Room 数据已清理。删除了 " + tasksDeleted + " 个任务和 " + groupsDeleted + " 个任务组。");
+
+                // 清理 SharedPreferences (这部分逻辑不变，因为 SharedPreferences 通常是应用级别的，也应该在登出时重置)
+                if (sessionManager != null) {
+                    Log.d(TAG, "开始清理会话信息 (SessionManager)...");
+                    sessionManager.clearUserSession();
+                    Log.d(TAG, "会话信息已清理。");
+                }
+
+                SharedPreferences.Editor prefsEditor = preferences.edit();
+                prefsEditor.remove(PREF_THEME);
+                prefsEditor.remove("user_points");
+                prefsEditor.remove("completed_tasks");
+                prefsEditor.apply();
+                Log.d(TAG, "其他 SharedPreferences 数据已清理。");
+
+                // Parse 本地缓存由 ParseUser.logOut() 处理
+
+                // 跳转到登录页 (在主线程执行)
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        // ... (UI 清理和跳转逻辑不变) ...
+                        Log.d(TAG, "所有本地数据清理完毕，跳转到登录页。");
+                        Toast.makeText(requireContext(), "已退出登录并清除所有本地数据", Toast.LENGTH_SHORT).show(); // 消息可以更明确
+                        Intent intent = new Intent(requireContext(), LoginActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        requireActivity().finish();
+                    });
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "清理所有本地数据时发生错误", ex);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "清理本地数据失败，请手动清除应用数据。", Toast.LENGTH_LONG).show();
+                        // 即使清理失败，也尝试跳转到登录页
+                        Intent intent = new Intent(requireContext(), LoginActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        requireActivity().finish();
+                    });
+                }
+            }
+        });
     }
 
     @Override

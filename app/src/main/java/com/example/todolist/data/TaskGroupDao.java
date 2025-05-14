@@ -36,7 +36,7 @@ public interface TaskGroupDao {
 
     // Delete all task groups from the table (used for complete local wipe)
     @Query("DELETE FROM taskgroups")
-    void deleteAllTaskGroupsUnfiltered();
+    int deleteAllTaskGroupsUnfiltered();
 
     // Get all task groups unfiltered (for sync or admin purposes)
     @Query("SELECT * FROM taskgroups ORDER BY createdAt DESC")

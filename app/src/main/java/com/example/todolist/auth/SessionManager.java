@@ -161,19 +161,15 @@ public class SessionManager {
      */
     public void clearUserSession() {
         try {
-            // 保留邮箱地址，方便下次登录
-            String email = preferences.getString(KEY_USER_EMAIL, null);
-            
-            editor.clear();
-            editor.apply();
-            
-            // 重新保存邮箱地址
-            if (!TextUtils.isEmpty(email)) {
-                editor.putString(KEY_USER_EMAIL, email);
-                editor.apply();
-            }
-            
-            Log.d(TAG, "清除用户会话成功");
+            String email = preferences.getString(KEY_USER_EMAIL, null); // 保留邮箱
+
+            editor.remove(KEY_USER_PASSWORD); // 明确移除密码
+            editor.remove(KEY_SESSION_TOKEN); // 移除会话令牌
+            editor.remove(KEY_REMEMBER_ME); // 移除记住我状态
+            // 如果有其他与会话相关的键，也在这里移除
+            editor.apply(); // 先应用一次移除操作
+
+            Log.d(TAG, "用户会话信息已清除 (密码、令牌、记住我状态)。邮箱保留（如果之前存在）。");
         } catch (Exception e) {
             Log.e(TAG, "清除用户会话失败", e);
         }

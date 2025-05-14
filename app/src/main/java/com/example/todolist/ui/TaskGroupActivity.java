@@ -566,6 +566,8 @@ public class TaskGroupActivity extends BaseActivity {
                     if (eSave == null) {
                         android.util.Log.d("TaskGroupActivity", "TaskGroup ACL保存成功");
                         Toast.makeText(this, "成功共享", Toast.LENGTH_SHORT).show();
+                        // 新增：成功共享后显示用户名
+                        Toast.makeText(this, "成功共享给" + emailToShareWith, Toast.LENGTH_SHORT).show();
                         // 递归更新所有子任务的ACL
                         if (taskGroup != null && taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
                             android.util.Log.d("TaskGroupActivity", "开始更新子任务ACL，子任务数量: " + taskGroup.subTaskIds.size());

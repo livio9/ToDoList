@@ -118,7 +118,7 @@ public class TaskGroupActivity extends BaseActivity {
                 
                 // 从代办集中移除
                 if (taskGroup != null) {
-                    taskGroup.subTaskIds.remove(todo.id);
+                    taskGroup.removeSubTask(todo.id);
                     taskGroupDao.insertTaskGroup(taskGroup);
                     
                     // 同步到云端
@@ -242,6 +242,7 @@ public class TaskGroupActivity extends BaseActivity {
                 
                 // 设置删除标记
                 taskGroup.deleted = true;
+                taskGroup.touch();
                 taskGroupDao.insertTaskGroup(taskGroup);
                 
                 // 同步到云端

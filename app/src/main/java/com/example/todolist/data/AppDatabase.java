@@ -10,7 +10,7 @@ import androidx.room.TypeConverters;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {Todo.class, TaskGroup.class}, version = 9, exportSchema = false)
+@Database(entities = {Todo.class, TaskGroup.class}, version = 10, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase instance;
@@ -134,6 +134,24 @@ public abstract class AppDatabase extends RoomDatabase {
             }
         }
     };
+    static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            Log.d(TAG, "Migrating database from version 9 to 10: Adding updatedAt to taskgroups");
+            try {
+                // 为 taskgroups 表添加 updatedAt 列，并设置默认值为 createdAt 的值，或者当前时间
+                // 使用System.currentTimeMillis()作为默认值可能更简单，如果旧数据没有createdAt，或createdAt不准确
+                database.execSQL("ALTER TABLE taskgroups ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0");
+                // 可选：将现有记录的 updatedAt 更新为 createdAt 的值（如果 createdAt 存在且有意义）
+                // database.execSQL("UPDATE taskgroups SET updatedAt = createdAt WHERE updatedAt = 0");
+                // 或者更新为当前时间
+                database.execSQL("UPDATE taskgroups SET updatedAt = " + System.currentTimeMillis() + " WHERE updatedAt = 0");
+                Log.d(TAG, "Added updatedAt column to taskgroups table and set default values.");
+            } catch (Exception e) {
+                Log.w(TAG, "Adding updatedAt column to taskgroups failed, it might already exist or other error: " + e.getMessage());
+            }
+        }
+    };
 
     // 获取单例数据库实例
     public static AppDatabase getInstance(Context context) {
@@ -145,7 +163,7 @@ public abstract class AppDatabase extends RoomDatabase {
                         // 建立本地数据库 "todo_db"
                         instance = Room.databaseBuilder(context.getApplicationContext(),
                                         AppDatabase.class, "todo_db")
-                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // 添加所有迁移策略
+                                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10) // 添加所有迁移策略
                                 .fallbackToDestructiveMigration() // 当迁移失败时允许重建数据库
                                 .build();
                         Log.d(TAG, "数据库创建成功");

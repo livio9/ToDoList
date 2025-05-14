@@ -356,17 +356,17 @@ public class AddEditTaskActivity extends BaseActivity {
                         newTodo.pomodoroEnabled = pomodoroEnabled;
                         
                         // 如果是属于代办集的子任务
-                        if (parentGroupId != null) {
-                            newTodo.belongsToTaskGroup = true;
-                            // 添加到代办集
-                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
-                            if (parentGroup != null) {
-                                parentGroup.addSubTask(id);
-                                taskGroupDao.insertTaskGroup(parentGroup);
-                            }else {
-                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId);
-                            }
-                        }
+//                        if (parentGroupId != null) {
+//                            newTodo.belongsToTaskGroup = true;
+//                            // 添加到代办集
+//                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
+//                            if (parentGroup != null) {
+//                                parentGroup.addSubTask(id);
+//                                taskGroupDao.insertTaskGroup(parentGroup);
+//                            }else {
+//                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId);
+//                            }
+//                        }
                         
                         // 先保存到本地数据库并设置为当前任务
                         taskDao.insertTodo(newTodo);

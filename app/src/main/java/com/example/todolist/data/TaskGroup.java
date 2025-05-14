@@ -24,6 +24,7 @@ public class TaskGroup implements Serializable {
     public String category;      // 分类
     public int estimatedDays;    // 预计完成天数
     public long createdAt;       // 创建时间
+    public long updatedAt;       // 更新时间
     public List<String> subTaskIds; // 子任务ID列表
     public boolean deleted;      // 是否已删除
 //    public String ownerId;       // 创建者objectId
@@ -64,13 +65,26 @@ public class TaskGroup implements Serializable {
         this.totalCount = 0;
     }
 
+    public void touch() {
+        this.updatedAt = System.currentTimeMillis();
+    }
+
     public void addSubTask(String taskId) {
+        if (subTaskIds == null) {
+            subTaskIds = new ArrayList<>();
+        }
         if (!subTaskIds.contains(taskId)) {
             subTaskIds.add(taskId);
+            touch(); // 修改了子任务列表，更新时间戳
         }
     }
-    
+
     public void removeSubTask(String taskId) {
-        subTaskIds.remove(taskId);
+        if (subTaskIds != null) {
+            if (subTaskIds.remove(taskId)) {
+                touch(); // 修改了子任务列表，更新时间戳
+            }
+        }
     }
+
 } 

@@ -118,7 +118,15 @@ public class MainActivity extends BaseActivity {
             
             // 初始化应用
             initializeApp();
-            
+
+            // 检查是否需要定时刷新任务列表
+            Intent intent = getIntent();
+            if (intent != null && intent.getBooleanExtra("extra_refresh_tasks", false)) {
+                // 延迟执行，确保Fragment已初始化
+                new Handler().postDelayed(() -> {
+                    refreshTasksFragmentPeriodically();
+                }, 500);
+            }
         } catch (Exception e) {
             Log.e(TAG, "onCreate 过程异常", e);
             Toast.makeText(this, "应用启动失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -639,6 +647,32 @@ public class MainActivity extends BaseActivity {
             // 显示加载失败状态
             loadingStateManager.showState(LoadingStateManager.STATE_ERROR);
         }
+    }
+
+    // 定时刷新TasksFragment
+    private void refreshTasksFragmentPeriodically() {
+        final int[] count = {0};
+        final Handler handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (tasksFragment == null) {
+                        tasksFragment = (TasksFragment) getSupportFragmentManager().findFragmentByTag("TasksFragment");
+                    }
+                    if (tasksFragment != null) {
+                        tasksFragment.loadTasks();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "定时刷新任务列表异常", e);
+                }
+                count[0]++;
+                if (count[0] < 10) {
+                    handler.postDelayed(this, 500);
+                }
+            }
+        };
+        handler.post(runnable);
     }
 }
 

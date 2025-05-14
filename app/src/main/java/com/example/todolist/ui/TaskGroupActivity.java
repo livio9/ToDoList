@@ -107,6 +107,13 @@ public class TaskGroupActivity extends BaseActivity {
         recyclerSubTasks.setLayoutManager(new LinearLayoutManager(this));
         adapter = new TaskAdapter(this, subTasks);
         recyclerSubTasks.setAdapter(adapter);
+        // 设置子任务点击事件，跳转到编辑页面
+        adapter.setOnItemClickListener(todo -> {
+            Intent intent = new Intent(TaskGroupActivity.this, AddEditTaskActivity.class);
+            intent.putExtra("todo", todo);
+            intent.putExtra("parent_group_id", taskGroup != null ? taskGroup.id : null);
+            startActivity(intent);
+        });
 
         // 新建模式下初始化空代办集
         if (isCreateMode) {
@@ -546,6 +553,7 @@ public class TaskGroupActivity extends BaseActivity {
             if (e == null && result != null) {
                 Map<String, Object> resultMap = (Map<String, Object>) result;
                 String userId = (String) resultMap.get("objectId");
+                String username = resultMap.get("username") != null ? resultMap.get("username").toString() : null;
                 if (userId == null) {
                     android.util.Log.e("TaskGroupActivity", "云函数返回的用户ID为空");
                     Toast.makeText(this, "查找用户失败: 用户不存在", Toast.LENGTH_SHORT).show();
@@ -565,9 +573,7 @@ public class TaskGroupActivity extends BaseActivity {
                 parseTaskGroupObject.saveInBackground(eSave -> {
                     if (eSave == null) {
                         android.util.Log.d("TaskGroupActivity", "TaskGroup ACL保存成功");
-                        Toast.makeText(this, "成功共享", Toast.LENGTH_SHORT).show();
-                        // 新增：成功共享后显示用户名
-                        Toast.makeText(this, "成功共享给" + emailToShareWith, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "成功共享给" + (username != null ? username : emailToShareWith), Toast.LENGTH_SHORT).show();
                         // 递归更新所有子任务的ACL
                         if (taskGroup != null && taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
                             android.util.Log.d("TaskGroupActivity", "开始更新子任务ACL，子任务数量: " + taskGroup.subTaskIds.size());

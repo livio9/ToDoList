@@ -141,6 +141,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             todo.completed = newStatus;
             new Thread(() -> {
                 AppDatabase.getInstance(context).taskDao().updateTodo(todo);
+                // 自动同步到云端
+                com.example.todolist.sync.SyncWorker.pushLocalToCloud(context);
             }).start();
         });
 

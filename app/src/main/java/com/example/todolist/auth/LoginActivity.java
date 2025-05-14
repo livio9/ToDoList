@@ -211,9 +211,14 @@ public class LoginActivity extends BaseActivity {
                                 }
                                 
                                 Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
-                                
-                                // 直接进入主界面
-                                startMainActivity();
+                                // 登录成功后先同步云端数据到本地（无回调）
+                                SyncWorker.pullCloudToLocal(LoginActivity.this);
+                                // 直接进入主界面，并传递刷新参数
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                intent.putExtra("extra_refresh_tasks", true);
+                                startActivity(intent);
+                                finish();
                             } else {
                                 // 登录失败
                                 btnLogin.setEnabled(true);

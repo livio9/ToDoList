@@ -67,6 +67,9 @@ dependencies {
     // Gson for JSON conversion
     implementation("com.google.code.gson:gson:2.9.1")
     
+    // MPAndroidChart - 图表库
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:4.8.0")
     testImplementation("org.robolectric:robolectric:4.9")

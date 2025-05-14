@@ -20,8 +20,8 @@ public class TaskDecomposer {
     private static final String MODEL = "GLM-4-Flash-250414";
     private static final String BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
     private static final String API_KEY = "22fb4bd2fce54f63a78af621a8312edd.s5iLeOQdtX0Sqk5f";
-    
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

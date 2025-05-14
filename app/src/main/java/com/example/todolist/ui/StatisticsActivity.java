@@ -69,8 +69,9 @@ public class StatisticsActivity extends BaseActivity {
     private void loadStatistics() {
         // 在后台线程中获取所有（未删除的）任务数据
         new Thread(() -> {
+            String currentUserId = CurrentUserUtil.getCurrentUserId();
             // 获取所有可见任务
-            List<Todo> allTasks = taskDao.getVisibleTodos();
+            List<Todo> allTasks = taskDao.getVisibleTasksForUser(currentUserId);
             
             // 如果没有任务，设置默认值并返回
             if (allTasks == null || allTasks.isEmpty()) {

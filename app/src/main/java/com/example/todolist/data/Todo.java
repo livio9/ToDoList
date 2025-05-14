@@ -27,12 +27,15 @@ public class Todo implements Serializable {
     public boolean belongsToTaskGroup = false; // 是否属于代办集，默认为false
     public int points = 0;     // 任务积分，完成任务时奖励
 
+    @NonNull
+    public String userId; // 新增：用于关联 ParseUser的objectId
+
     // 默认构造函数（Room 和 Firestore 映射需要）
-    public Todo() { }
+    public Todo() { this.userId = ""; }
 
     // 构造函数：新增任务时，默认更新时间为当前时间，且删除标记为 false
     @Ignore
-    public Todo(@NonNull String id, String title, long time, String place, String category, boolean completed) {
+    public Todo(@NonNull String id, String title, long time, String place, String category, boolean completed, @NonNull String userId) {
         this.id = id;
         this.title = title;
         this.time = time;
@@ -44,6 +47,7 @@ public class Todo implements Serializable {
         this.belongsToTaskGroup = false;
         this.priority = "中";  // 默认优先级为中
         this.pomodoroEnabled = false; // 默认不启用番茄时钟
+        this.userId = userId; // 设置 userId
         this.points = calculatePoints(); // 根据优先级等计算积分
     }
     

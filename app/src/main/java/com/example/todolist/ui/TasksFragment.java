@@ -136,6 +136,7 @@ public class TasksFragment extends Fragment {
     
     private void loadTasks() {
         try {
+            String currentUserId = CurrentUserUtil.getCurrentUserId();
             new Thread(() -> {
                 try {
                     Log.d(TAG, "正在加载所有非代办集任务...");
@@ -160,13 +161,13 @@ public class TasksFragment extends Fragment {
                     // 安全地查询数据
                     List<Todo> dbTasks;
                     try {
-                        dbTasks = taskDao.getVisibleTodos();
+                        dbTasks = taskDao.getVisibleTasksForUser(currentUserId);
                         Log.d(TAG, "数据库查询执行成功");
                     } catch (Exception ex) {
                         Log.e(TAG, "获取可见任务时出错: " + ex.getMessage(), ex);
                         // 如果查询特定方法失败，尝试获取所有任务
                         try {
-                            dbTasks = taskDao.getAll();
+                            dbTasks = taskDao.getAllTasksForUser(currentUserId);
                             Log.d(TAG, "回退到获取所有任务成功");
                             // 手动过滤任务
                             List<Todo> filteredTasks = new ArrayList<>();
@@ -319,5 +320,20 @@ public class TasksFragment extends Fragment {
         
         // 更新空视图状态
         emptyView.setVisibility(filteredTasks.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    // Method to clear UI (called from MainActivity on logout)
+    public void clearTasksAndUpdateUI() {
+        if (allTasks != null) {
+            allTasks.clear();
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        if (emptyView != null && recyclerView != null) {
+            emptyView.setVisibility(allTasks == null || allTasks.isEmpty() ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(allTasks == null || allTasks.isEmpty() ? View.GONE : View.VISIBLE);
+        }
+        Log.d(TAG, "TasksFragment UI cleared.");
     }
 } 

@@ -129,10 +129,12 @@ public class TaskGroupsFragment extends Fragment {
     
     private void loadTaskGroups() {
         try {
+            String currentUserId = CurrentUserUtil.getCurrentUserId();
+
             new Thread(() -> {
                 try {
                     Log.d(TAG, "正在加载所有代办集...");
-                    List<TaskGroup> groups = taskGroupDao != null ? taskGroupDao.getAllTaskGroups() : new ArrayList<>();
+                    List<TaskGroup> groups = taskGroupDao != null ? taskGroupDao.getAllTaskGroupsForUser(currentUserId) : new ArrayList<>();
                     if (groups == null) {
                         Log.e(TAG, "代办集查询返回 null");
                         groups = new ArrayList<>();
@@ -147,7 +149,7 @@ public class TaskGroupsFragment extends Fragment {
                         // 遍历子任务ID，统计已完成数量
                         for (String taskId : group.subTaskIds) {
                             try {
-                                Todo todo = taskDao.getTodoById(taskId);
+                                Todo todo = taskDao.getTodoByIdForUser(taskId, currentUserId);
                                 if (todo != null && todo.completed && !todo.deleted) {
                                     group.completedCount++;
                                 }
@@ -273,12 +275,16 @@ public class TaskGroupsFragment extends Fragment {
      */
     private void saveAsTaskGroup(TaskDecomposer.DecompositionResult result) {
         // 创建代办集
+
+        String currentUserId = CurrentUserUtil.getCurrentUserId();
+
         String groupId = UUID.randomUUID().toString();
         TaskGroup taskGroup = new TaskGroup(
             groupId,
             result.getMainTask(),
             result.getCategory(),
-            result.getEstimatedDays()
+            result.getEstimatedDays(),
+            currentUserId
         );
         
         // 保存代办集
@@ -304,7 +310,8 @@ public class TaskGroupsFragment extends Fragment {
                     taskCalendar.getTimeInMillis(),
                     "", // 地点为空
                     finalCategory,
-                    false
+                    false,
+                    currentUserId
                 );
                 // 重要：标记这个任务属于代办集，不应显示在主页面
                 newTask.updatedAt = System.currentTimeMillis();

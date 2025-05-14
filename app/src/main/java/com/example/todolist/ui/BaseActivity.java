@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.todolist.R;
+import com.parse.ParseUser;
 
 /**
  * 基础Activity类，所有Activity都应该继承这个类
@@ -98,4 +99,4 @@ public class BaseActivity extends AppCompatActivity {
             Log.e(TAG, "设置应用主题失败", e);
         }
     }
-} 
+}

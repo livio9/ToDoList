@@ -312,6 +312,11 @@ public class AddEditTaskActivity extends BaseActivity {
             // 保存到本地数据库
             new Thread(() -> {
                 try {
+                    String currentUserId = CurrentUserUtil.getCurrentUserId();
+                    if (currentUserId == null) {
+                        runOnUiThread(() -> Toast.makeText(AddEditTaskActivity.this, "用户未登录，无法保存任务", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
                     if (currentTodo != null) {
                         // 编辑现有任务
                         currentTodo.title = title;
@@ -322,16 +327,29 @@ public class AddEditTaskActivity extends BaseActivity {
                         currentTodo.completed = completed;
                         currentTodo.pomodoroEnabled = pomodoroEnabled;
                         currentTodo.updatedAt = System.currentTimeMillis();
+                        currentTodo.userId = currentUserId; // Ensure userId is set/correct for existing task
                         
                         // 更新积分
                         currentTodo.points = currentTodo.calculatePoints();
                         
                         // 保存到本地数据库
                         taskDao.updateTodo(currentTodo);
+                        // Broadcast data update
+                        Intent dataUpdatedIntent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
+                        if (currentTodo.completed && currentTodo.points > 0) {
+                            dataUpdatedIntent.putExtra("task_completed", true);
+                            dataUpdatedIntent.putExtra("task_points", currentTodo.points);
+                        }
+                        sendBroadcast(dataUpdatedIntent);
+
+                        runOnUiThread(() -> {
+                            Toast.makeText(AddEditTaskActivity.this, "任务已更新", Toast.LENGTH_SHORT).show();
+                            finish();
+                        });
                     } else {
                         // 新建任务
                         String id = UUID.randomUUID().toString();
-                        Todo newTodo = new Todo(id, title, selectedCalendar.getTimeInMillis(), place, category, completed);
+                        Todo newTodo = new Todo(id, title, selectedCalendar.getTimeInMillis(), place, category, completed, currentUserId);
                         
                         // 设置优先级和番茄时钟
                         newTodo.priority = priority;
@@ -341,10 +359,12 @@ public class AddEditTaskActivity extends BaseActivity {
                         if (parentGroupId != null) {
                             newTodo.belongsToTaskGroup = true;
                             // 添加到代办集
-                            TaskGroup parentGroup = taskGroupDao.getTaskGroupById(parentGroupId);
+                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
                             if (parentGroup != null) {
                                 parentGroup.addSubTask(id);
                                 taskGroupDao.insertTaskGroup(parentGroup);
+                            }else {
+                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId);
                             }
                         }
                         
@@ -354,22 +374,32 @@ public class AddEditTaskActivity extends BaseActivity {
                         
                         // 如果是属于代办集的子任务，处理ACL
                         if (parentGroupId != null) {
-                            // 更新父代办集的子任务列表
-                            TaskGroup parentGroup = taskGroupDao.getTaskGroupById(parentGroupId);
+                            // 当获取父任务组时，也应该基于当前用户ID
+                            TaskGroup parentGroup = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentUserId);
                             if (parentGroup != null) {
-                                if (parentGroup.subTaskIds == null) {
-                                    parentGroup.subTaskIds = new ArrayList<>();
-                                }
-                                parentGroup.subTaskIds.add(newTodo.id);
+                                parentGroup.addSubTask(newTodo.id); // 确保 addSubTask 内部做了null检查
                                 taskGroupDao.insertTaskGroup(parentGroup);
+                            } else {
+                                Log.w(TAG, "Parent group " + parentGroupId + " not found for user " + currentUserId + " when adding subtask " + newTodo.id);
+                                // 根据业务逻辑决定如何处理：是允许子任务独立存在，还是提示错误？
+                                // 如果父任务组找不到，可能意味着数据不一致或权限问题。
                             }
                         }
-                        
-                        // 立即同步到云端
-                        SyncWorker.pushLocalToCloud(this);
+
+                        // Trigger sync
+                        Log.d(TAG, "New task saved locally, triggering sync.");
+                        SyncWorker.pushLocalToCloud(getApplicationContext()); // [修改1] 使用 getApplicationContext()
                         if (parentGroupId != null) {
-                            SyncWorker.pushTaskGroupsToCloud(this);
+                            SyncWorker.pushTaskGroupsToCloud(getApplicationContext()); // [修改2] 使用 getApplicationContext()
                         }
+
+                        // 发送数据更新广播，以便其他界面（如MainActivity/TasksFragment）可以刷新
+                        Intent dataUpdatedIntent = new Intent("com.example.todolist.ACTION_DATA_UPDATED");
+                        if (newTodo.completed && newTodo.points > 0) { // 如果任务在创建时就已完成并有积分
+                            dataUpdatedIntent.putExtra("task_completed", true);
+                            dataUpdatedIntent.putExtra("task_points", newTodo.points);
+                        }
+                        sendBroadcast(dataUpdatedIntent); // [修改3] 发送广播
                         
                         runOnUiThread(() -> {
                             Toast.makeText(this, "任务已保存", Toast.LENGTH_SHORT).show();
@@ -398,7 +428,7 @@ public class AddEditTaskActivity extends BaseActivity {
                                 
                                 // 如果是子任务，从代办集中移除
                                 if (parentGroupId != null && !TextUtils.isEmpty(parentGroupId)) {
-                                    TaskGroup group = taskGroupDao.getTaskGroupById(parentGroupId);
+                                    TaskGroup group = taskGroupDao.getTaskGroupByIdForUser(parentGroupId, currentTodo.userId);
                                     if (group != null) {
                                         group.removeSubTask(currentTodo.id);
                                         taskGroupDao.insertTaskGroup(group);
@@ -489,12 +519,19 @@ public class AddEditTaskActivity extends BaseActivity {
      */
     private void saveAsTaskGroup(TaskDecomposer.DecompositionResult result) {
         // 创建代办集
+        String currentUserId = CurrentUserUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            Toast.makeText(this, "用户未登录，无法保存代办集", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String groupId = UUID.randomUUID().toString();
         TaskGroup taskGroup = new TaskGroup(
-            groupId,
-            result.getMainTask(),
-            result.getCategory(),
-            result.getEstimatedDays()
+                groupId,
+                result.getMainTask(),
+                result.getCategory(),
+                result.getEstimatedDays(),
+                currentUserId // Pass userId here
         );
         
         // 保存代办集
@@ -520,9 +557,9 @@ public class AddEditTaskActivity extends BaseActivity {
             
             for (TaskDecomposer.SubTask subTask : result.getSubTasks()) {
                 String uuid = UUID.randomUUID().toString();
-                Todo newTodo = new Todo(uuid, subTask.getTitle(), taskCalendar.getTimeInMillis(), place, finalCategory, false);
-                newTodo.belongsToTaskGroup = true;
-                taskDao.insertTodo(newTodo);
+                Todo newSubTodo = new Todo(uuid, subTask.getTitle(), taskCalendar.getTimeInMillis(), place, finalCategory, false, currentUserId);
+                newSubTodo.belongsToTaskGroup = true;
+                taskDao.insertTodo(newSubTodo);
                 subTaskIds.add(uuid);
             }
             

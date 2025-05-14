@@ -249,7 +249,7 @@ public class MainActivity extends BaseActivity {
         try {
             // 注册广播接收器，用于监听数据更新
             IntentFilter filter = new IntentFilter("com.example.todolist.ACTION_DATA_UPDATED");
-            registerReceiver(dataUpdateReceiver, filter);
+//            registerReceiver(dataUpdateReceiver, filter);
         } catch (Exception e) {
             Log.e(TAG, "注册广播接收器失败", e);
         }
@@ -270,7 +270,7 @@ public class MainActivity extends BaseActivity {
                 if (intent.hasExtra("task_points")) {
                     int points = intent.getIntExtra("task_points", 10);
                     addUserPoints(points);
-                    
+
                     // 显示积分获取提示
                     Toast.makeText(MainActivity.this, 
                             "恭喜完成任务！获得 " + points + " 积分", 
@@ -510,8 +510,9 @@ public class MainActivity extends BaseActivity {
                 try {
                     new Thread(() -> {
                         try {
+                            String currentUserId = ParseUser.getCurrentUser().getObjectId();
                             // 获取所有任务
-                            List<Todo> allTasks = taskDao.getAll();
+                            List<Todo> allTasks = taskDao.getAllTasksForUser(currentUserId);
                             Log.d(TAG, "获取到 " + allTasks.size() + " 个任务进行迁移检查");
                             
                             int fixedCount = 0;

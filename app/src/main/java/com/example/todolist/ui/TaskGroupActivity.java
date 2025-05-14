@@ -114,7 +114,7 @@ public class TaskGroupActivity extends BaseActivity {
         adapter.setOnItemLongClickListener(todo -> {
             // 长按删除任务
             Executors.newSingleThreadExecutor().execute(() -> {
-                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodo(todo.id);
+                AppDatabase.getInstance(TaskGroupActivity.this).taskDao().logicalDeleteTodoForUser(todo.id, todo.userId);
                 
                 // 从代办集中移除
                 if (taskGroup != null) {
@@ -141,8 +141,14 @@ public class TaskGroupActivity extends BaseActivity {
 
         // 添加新任务按钮
         fabAddTask.setOnClickListener(v -> {
+            String currentUserId = CurrentUserUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent intent = new Intent(this, AddEditTaskActivity.class);
             intent.putExtra("parent_group_id", groupId);
+            // No need to pass currentUserId explicitly if AddEditTaskActivity gets it itself
             startActivity(intent);
         });
         
@@ -226,10 +232,11 @@ public class TaskGroupActivity extends BaseActivity {
         
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                String currentUserId = CurrentUserUtil.getCurrentUserId();
                 // 先删除所有子任务
                 if (taskGroup.subTaskIds != null && !taskGroup.subTaskIds.isEmpty()) {
                     for (String taskId : taskGroup.subTaskIds) {
-                        AppDatabase.getInstance(this).taskDao().logicalDeleteTodo(taskId);
+                        AppDatabase.getInstance(this).taskDao().logicalDeleteTodoForUser(taskId, currentUserId);
                     }
                 }
                 
@@ -278,8 +285,9 @@ public class TaskGroupActivity extends BaseActivity {
     private void loadTaskGroup(String groupId) {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                String currentUserId = CurrentUserUtil.getCurrentUserId();
                 // 加载代办集
-                taskGroup = taskGroupDao.getTaskGroupById(groupId);
+                taskGroup = taskGroupDao.getTaskGroupByIdForUser(groupId, currentUserId);
                 if (taskGroup == null) {
                     runOnUiThread(() -> {
                         Toast.makeText(this, "代办集不存在", Toast.LENGTH_SHORT).show();
@@ -329,7 +337,7 @@ public class TaskGroupActivity extends BaseActivity {
                 
                 if (subTaskIds != null && !subTaskIds.isEmpty()) {
                     for (String taskId : subTaskIds) {
-                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoById(taskId);
+                        Todo task = AppDatabase.getInstance(this).taskDao().getTodoByIdForUser(taskId, currentUserId);
                         if (task != null && !task.deleted) {
                             tasks.add(task);
                         }

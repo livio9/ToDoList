@@ -237,8 +237,8 @@ public class ProfileFragment extends Fragment {
                 TaskGroupDao taskGroupDao = db.taskGroupDao();
 
                 Log.d(TAG, "开始清理所有 Room 数据库数据...");
-                int tasksDeleted = taskDao.deleteAll(); // 调用删除所有任务的方法
-                int groupsDeleted = taskGroupDao.deleteAllTaskGroupsUnfiltered(); // 调用删除所有任务组的方法
+                int tasksDeleted = taskDao.deleteAll();
+                int groupsDeleted = taskGroupDao.deleteAllTaskGroupsUnfiltered();
                 Log.d(TAG, "所有 Room 数据已清理。删除了 " + tasksDeleted + " 个任务和 " + groupsDeleted + " 个任务组。");
 
                 // 清理 SharedPreferences (这部分逻辑不变，因为 SharedPreferences 通常是应用级别的，也应该在登出时重置)
@@ -677,38 +677,33 @@ public class ProfileFragment extends Fragment {
     private void loadTaskStatistics() {
         try {
             // 统计所有已完成任务
-            new Thread(() -> {
-                try {
-                    List<Todo> allTasks = taskDao.getAllTasksForUser();
-                    int completedCount = 0;
-                    int points = 0;
-                    for (Todo todo : allTasks) {
-                        if (todo.completed) {
-                            completedCount++;
-                            // 按优先级计分
-                            if ("高".equals(todo.priority)) {
-                                points += 3;
-                            } else if ("中".equals(todo.priority)) {
-                                points += 2;
-                            } else if ("低".equals(todo.priority)) {
-                                points += 1;
-                            }
-                        }
+            String currentUserId = com.example.todolist.ui.CurrentUserUtil.getCurrentUserId();
+            List<Todo> allTasks = taskDao.getAllTasksForUser();
+            int completedCount = 0;
+            int points = 0;
+            for (Todo todo : allTasks) {
+                if (todo.completed) {
+                    completedCount++;
+                    // 按优先级计分
+                    if ("高".equals(todo.priority)) {
+                        points += 3;
+                    } else if ("中".equals(todo.priority)) {
+                        points += 2;
+                    } else if ("低".equals(todo.priority)) {
+                        points += 1;
                     }
-                    // 更新UI
-                    final int finalPoints = points;
-                    final int finalCompletedCount = completedCount;
-                    if (getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            textTotalPoints.setText(String.valueOf(finalPoints));
-                            textCompletedTasks.setText(String.valueOf(finalCompletedCount));
-                            quickPointsIndicator.setText("积分: " + finalPoints);
-                        });
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "统计任务数据失败", e);
                 }
-            }).start();
+            }
+            // 更新UI
+            final int finalPoints = points;
+            final int finalCompletedCount = completedCount;
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    textTotalPoints.setText(String.valueOf(finalPoints));
+                    textCompletedTasks.setText(String.valueOf(finalCompletedCount));
+                    quickPointsIndicator.setText("积分: " + finalPoints);
+                });
+            }
         } catch (Exception e) {
             Log.e(TAG, "加载统计数据失败", e);
         }

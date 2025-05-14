@@ -12,35 +12,31 @@ public interface TaskGroupDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTaskGroup(TaskGroup taskGroup); // TaskGroup object should now contain userId
 
-    // Get all non-deleted task groups for a specific user
-//    @Query("SELECT * FROM taskgroups WHERE deleted = 0 AND userId = :userId ORDER BY createdAt DESC")
+    // 获取特定用户的所有未删除任务组
     @Query("SELECT * FROM taskgroups WHERE deleted = 0 ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroupsForUser();
 
-
-    // Get a specific non-deleted task group by ID, ensuring it belongs to the user
-//    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId AND deleted = 0 AND userId = :userId")
-    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId AND deleted = 0 ORDER BY createdAt DESC")
+    // 根据uuid和用户ID查询单个未删除任务组
+    @Query("SELECT * FROM taskgroups WHERE uuid = :groupId AND deleted = 0")
     TaskGroup getTaskGroupByIdForUser(String groupId);
 
-    // Get sub-tasks by their IDs, ensuring they belong to the specified user
-    // (Assuming sub-tasks (Todos) also have a userId field and are filtered by it)
-    @Query("SELECT * FROM todos WHERE uuid IN (:taskIds) AND deleted = 0 AND userId = :userId ORDER BY time ASC")
-    List<Todo> getSubTasksByIdsForUser(List<String> taskIds, String userId);
+    // 根据子任务uuid列表和用户ID获取子任务
+    @Query("SELECT * FROM todos WHERE uuid IN (:taskIds) AND deleted = 0 ORDER BY time ASC")
+    List<Todo> getSubTasksByIdsForUser(List<String> taskIds);
 
-    // Delete all task groups for a specific user (used on logout)
-    @Query("DELETE FROM taskgroups WHERE userId = :userId")
-    void deleteAllTaskGroupsForUser(String userId);
+    // 删除特定用户的所有任务组（用于登出时清理）
+    @Query("DELETE FROM taskgroups")
+    void deleteAllTaskGroupsForUser();
 
-    // Delete a specific task group (can be used if taskGroup object is available)
+    // 删除单个任务组
     @Delete
-    void deleteTaskGroup(TaskGroup taskGroup); // Added this for convenience
+    void deleteTaskGroup(TaskGroup taskGroup);
 
-    // Delete all task groups from the table (used for complete local wipe)
+    // 删除所有任务组（用于本地清空）
     @Query("DELETE FROM taskgroups")
     int deleteAllTaskGroupsUnfiltered();
 
-    // Get all task groups unfiltered (for sync or admin purposes)
+    // 获取所有任务组（不区分用户，内部同步用）
     @Query("SELECT * FROM taskgroups ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroupsUnfiltered();
 }

@@ -161,14 +161,12 @@ public class TasksFragment extends Fragment {
                     // 安全地查询数据
                     List<Todo> dbTasks;
                     try {
-//                        dbTasks = taskDao.getVisibleTasksForUser(currentUserId);
                         dbTasks = taskDao.getVisibleTasksForUser();
                         Log.d(TAG, "数据库查询执行成功");
                     } catch (Exception ex) {
                         Log.e(TAG, "获取可见任务时出错: " + ex.getMessage(), ex);
                         // 如果查询特定方法失败，尝试获取所有任务
                         try {
-//                            dbTasks = taskDao.getAllTasksForUser(currentUserId);
                             dbTasks = taskDao.getAllTasksForUser();
                             Log.d(TAG, "回退到获取所有任务成功");
                             // 手动过滤任务

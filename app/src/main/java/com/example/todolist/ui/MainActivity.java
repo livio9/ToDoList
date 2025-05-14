@@ -588,8 +588,7 @@ public class MainActivity extends BaseActivity {
                         try {
                             String currentUserId = ParseUser.getCurrentUser().getObjectId();
                             // 获取所有任务
-//                            List<Todo> allTasks = taskDao.getAllTasksForUser(currentUserId);
-                            List<Todo> allTasks = taskDao.getAllTasks();
+                            List<Todo> allTasks = taskDao.getAllTasksForUser();
                             Log.d(TAG, "获取到 " + allTasks.size() + " 个任务进行迁移检查");
                             
                             int fixedCount = 0;

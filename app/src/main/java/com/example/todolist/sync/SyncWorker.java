@@ -379,8 +379,7 @@ public class SyncWorker extends Worker {
                 try {
                     String currentUserId = user.getObjectId();
                     // 获取所有本地任务
-//                    List<Todo> localTasks = taskDao.getAllTasksForUser(currentUserId);
-                    List<Todo> localTasks = taskDao.getAllUnfiltered(); // 获取所有任务，不过滤用户ID
+                    List<Todo> localTasks = taskDao.getAllTasksForUser();
                     if (localTasks == null || localTasks.isEmpty()) {
                         Log.d(TAG, "本地无任务，跳过上传");
                         return;
@@ -557,7 +556,6 @@ public class SyncWorker extends Worker {
 
             try {
                 String currentUserId = user.getObjectId();
-//                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser(currentUserId);
                 List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser();
                 if (localTaskGroups == null || localTaskGroups.isEmpty()) {
                     Log.d(TAG, "TaskGroup 推送：本地无当前用户的待办集，跳过上传。");
@@ -760,8 +758,7 @@ public class SyncWorker extends Worker {
                     List<TaskGroup> localTaskGroups;
                     try {
                         String currentUserId = user.getObjectId();
-//                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser(currentUserId);
-                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser(); // 获取所有任务组，不过滤用户ID
+                        localTaskGroups = finalTaskGroupDao.getAllTaskGroupsForUser();
                         if (localTaskGroups == null) {
                             localTaskGroups = new ArrayList<>();
                         }

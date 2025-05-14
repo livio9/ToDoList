@@ -55,6 +55,12 @@ public class SyncWorker extends Worker {
             todo.updatedAt = o.has("clientUpdatedAt") ? o.getLong("clientUpdatedAt") : System.currentTimeMillis();
             todo.deleted = o.has("deleted") ? o.getBoolean("deleted") : false;
             todo.belongsToTaskGroup = o.has("belongsToTaskGroup") ? o.getBoolean("belongsToTaskGroup") : false;
+            todo.userId = o.has("user") ? o.getParseUser("user").getObjectId() : "";
+            if (todo.userId == null) {
+                Log.e(TAG, "错误：从云端拉取的任务 " + o.getString("uuid") + " 的所有者(ParseUser)的 objectId 为空！");
+                return null; // userId 必须有效才能正确关联本地数据
+            }
+            Log.d(TAG, "调试：从云端任务 " + o.getString("uuid") + " 成功提取 userId: " + todo.userId);
 
             // 处理可选字段
             if (o.has("priority")) {
@@ -369,23 +375,79 @@ public class SyncWorker extends Worker {
                     int failureCount = 0;
 
                     // 批量上传到Parse
-                    for (Todo todo : localTasks) { // [1]
+                    for (Todo localTodo : localTasks) {
+                        if (localTodo == null || localTodo.id == null) {
+                            Log.w(TAG, "Todo 同步：本地任务为空或其ID (uuid) 为空，跳过推送。");
+                            continue;
+                        }
+
+                        ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
+                        query.whereEqualTo("uuid", localTodo.id); // 使用自定义的唯一ID (uuid) 进行查询
+                        query.whereEqualTo("user", user);       // 确保是当前用户的对象
+
                         try {
-                            if (todo == null || todo.id == null) {
-                                Log.w(TAG, "任务为空或ID为空，跳过");
-                                continue;
+                            // 尝试获取云端是否已存在该 uuid 的对象
+                            ParseObject cloudParseObject = query.getFirst(); // getFirst会抛出OBJECT_NOT_FOUND异常
+
+                            // 如果执行到这里，说明云端存在该对象，进行更新逻辑
+                            Log.d(TAG, "Todo 同步：云端已存在 uuid: " + localTodo.id + " 的任务，准备比较时间戳并可能更新。");
+
+                            long localUpdatedAt = localTodo.updatedAt;
+                            long cloudClientUpdatedAt = cloudParseObject.has("clientUpdatedAt") ? cloudParseObject.getLong("clientUpdatedAt") : 0;
+                            // Date cloudServerUpdatedAt = cloudParseObject.getUpdatedAt(); // 这是服务器的更新时间
+
+                            // 冲突解决：如果本地更新时间 > 云端更新时间，才推送更新
+                            // (或者根据您的策略，例如总是以本地为准，或者更复杂的合并)
+                            if (localUpdatedAt > cloudClientUpdatedAt) {
+                                Log.d(TAG, "Todo 同步：本地版本较新 (本地: " + localUpdatedAt + ", 云端: " + cloudClientUpdatedAt + ")，更新云端对象: " + localTodo.id);
+                                // 将 localTodo 的属性更新到 cloudParseObject 上
+                                // 注意：不能直接用 toParse(localTodo) 返回的新实例，必须在 cloudParseObject 上修改
+                                cloudParseObject.put("title", localTodo.title != null ? localTodo.title : "");
+                                cloudParseObject.put("time", localTodo.time);
+                                cloudParseObject.put("place", localTodo.place != null ? localTodo.place : "");
+                                cloudParseObject.put("category", localTodo.category != null ? localTodo.category : "其他");
+                                cloudParseObject.put("completed", localTodo.completed);
+                                cloudParseObject.put("clientUpdatedAt", localTodo.updatedAt); // 更新云端的 clientUpdatedAt
+                                cloudParseObject.put("deleted", localTodo.deleted);
+                                cloudParseObject.put("belongsToTaskGroup", localTodo.belongsToTaskGroup);
+                                cloudParseObject.put("priority", localTodo.priority != null ? localTodo.priority : "中");
+                                cloudParseObject.put("pomodoroEnabled", localTodo.pomodoroEnabled != null ? localTodo.pomodoroEnabled : false);
+                                cloudParseObject.put("points", localTodo.points);
+                                cloudParseObject.put("pomodoroMinutes", localTodo.pomodoroMinutes);
+                                cloudParseObject.put("pomodoroCompletedCount", localTodo.pomodoroCompletedCount);
+                                // user 和 ACL 通常在创建时设定，更新时一般不需要改，除非有特殊需求
+
+                                cloudParseObject.saveInBackground(e -> {
+                                    if (e == null) {
+                                        Log.d(TAG, "Todo 同步：成功更新云端对象: " + localTodo.id);
+                                    } else {
+                                        Log.e(TAG, "Todo 同步：更新云端对象失败: " + localTodo.id + ", 错误: " + e.getMessage(), e);
+                                    }
+                                });
+                            } else {
+                                Log.d(TAG, "Todo 同步：本地版本不比云端新 (本地: " + localUpdatedAt + ", 云端: " + cloudClientUpdatedAt + ")，跳过推送: " + localTodo.id);
                             }
 
-                            ParseObject parseObject = toParse(todo); // [2]
-
-                            // 使用同步方法确保上传完成
-                            parseObject.save(); // [3]
-
-                            Log.d(TAG, "成功上传任务: id=" + todo.id + ", title=" + todo.title);
-                            successCount++;
                         } catch (ParseException e) {
-                            Log.e(TAG, "上传任务失败: id=" + todo.id + ", 错误: " + e.getMessage(), e);
-                            failureCount++;
+                            if (e.getCode() == ParseException.OBJECT_NOT_FOUND) {
+                                // 云端不存在该 uuid 的对象，创建新对象
+                                Log.d(TAG, "Todo 同步：云端不存在 uuid: " + localTodo.id + " 的任务，创建新对象。");
+                                ParseObject newCloudParseObject = toParse(localTodo); // toParse 应该包含设置 user 和 ACL
+                                if (newCloudParseObject != null) { // 确保 toParse 成功
+                                    newCloudParseObject.saveInBackground(saveException -> {
+                                        if (saveException == null) {
+                                            Log.d(TAG, "Todo 同步：成功上传新对象到云端: " + localTodo.id + "，新 objectId: " + newCloudParseObject.getObjectId());
+                                        } else {
+                                            Log.e(TAG, "Todo 同步：上传新对象失败: " + localTodo.id + ", 错误: " + saveException.getMessage(), saveException);
+                                        }
+                                    });
+                                } else {
+                                    Log.e(TAG, "Todo 同步：toParse(localTodo) 返回 null，无法创建新对象 for uuid: " + localTodo.id);
+                                }
+                            } else {
+                                // 其他查询错误
+                                Log.e(TAG, "Todo 同步：查询云端对象失败 for uuid: " + localTodo.id + ", 错误: " + e.getMessage(), e);
+                            }
                         }
                     }
                     // ... (Broadcast logic) ...

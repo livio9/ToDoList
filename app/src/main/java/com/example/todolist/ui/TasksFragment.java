@@ -134,7 +134,7 @@ public class TasksFragment extends Fragment {
         loadTasks();
     }
     
-    private void loadTasks() {
+    void loadTasks() {
         try {
             String currentUserId = CurrentUserUtil.getCurrentUserId();
             new Thread(() -> {

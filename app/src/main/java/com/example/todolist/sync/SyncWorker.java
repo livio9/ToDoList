@@ -33,6 +33,15 @@ import java.util.*;
 
 public class SyncWorker extends Worker {
     private static final String TAG = "SyncWorker";
+    // 广播 Action 和 Extras 定义
+    public static final String ACTION_SYNC_COMPLETED = "com.example.todolist.ACTION_SYNC_COMPLETED";
+    public static final String ACTION_SYNC_FAILED = "com.example.todolist.ACTION_SYNC_FAILED"; // 用于同步启动失败或过程中的通用失败
+    public static final String EXTRA_SYNC_TYPE = "sync_type"; // "todo" 或 "task_group"
+    public static final String EXTRA_SUCCESS_COUNT = "sync_success_count";
+    public static final String EXTRA_FAILURE_COUNT = "sync_failure_count";
+    public static final String EXTRA_SYNC_ERROR_MESSAGE = "sync_error_message";
+    public static final String EXTRA_REASON = "reason"; // 用于 ACTION_SYNC_FAILED
+
 
     private static Todo toTodo(ParseObject o) {
         try {
@@ -144,6 +153,12 @@ public class SyncWorker extends Worker {
 
             // 获取estimatedDays，默认为1
             taskGroup.estimatedDays = o.has("estimatedDays") ? o.getInt("estimatedDays") : 1;
+            taskGroup.createdAt = o.getCreatedAt().getTime();
+            if (o.getUpdatedAt().getTime() > taskGroup.createdAt) {
+                taskGroup.updatedAt = o.getUpdatedAt().getTime();
+            } else {
+                taskGroup.updatedAt = taskGroup.createdAt; // 如果没有更新时间，使用创建时间
+            }
 
             // 获取子任务ID列表
             List<String> subTaskIds = o.getList("subTaskIds");
@@ -236,7 +251,7 @@ public class SyncWorker extends Worker {
 
             // 创建查询但延迟执行
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-            query.whereEqualTo("user", ParseUser.getCurrentUser());
+//            query.whereEqualTo("user", ParseUser.getCurrentUser());
 
             final TaskDao finalTaskDao = taskDao;
             new Thread(() -> {
@@ -518,76 +533,180 @@ public class SyncWorker extends Worker {
 
     // 推送本地TaskGroup到云端
     public static void pushTaskGroupsToCloud(Context applicationContext) {
-        try {
-            ParseUser user = ParseUser.getCurrentUser();
-            if (user == null) {
-                Log.e(TAG, "用户未登录，无法上传TaskGroup到云端");
-                return;
-            }
+        if (!isNetworkAvailable(applicationContext)) {
+            Log.w(TAG, "TaskGroup 推送：网络不可用，跳过上传。");
+            sendSyncFailedBroadcast(applicationContext, "task_group", "network_unavailable");
+            return;
+        }
 
-            TaskGroupDao taskGroupDao = AppDatabase.getInstance(applicationContext).taskGroupDao();
+        ParseUser user = ParseUser.getCurrentUser();
+        if (user == null) {
+            Log.e(TAG, "TaskGroup 推送：用户未登录，无法上传到云端。");
+            sendSyncFailedBroadcast(applicationContext, "task_group", "user_not_logged_in");
+            return;
+        }
 
-            new Thread(() -> {
-                try {
-                    String currentUserId = user.getObjectId();
-                    List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser(currentUserId);
-                    // ... (null checks) ...
+        TaskGroupDao taskGroupDao = AppDatabase.getInstance(applicationContext).taskGroupDao();
 
-                    for (TaskGroup localTaskGroup : localTaskGroups) {
-                        if (localTaskGroup == null || localTaskGroup.id == null) {
-                            // ...
-                            continue;
-                        }
+        new Thread(() -> {
+            final List<ParseObject> objectsToProcessInCloud = new ArrayList<>();
+            // 用于跟踪哪些本地对象是成功处理的（无论是上传、更新还是跳过）
+            final List<String> processedLocalGroupIds = new ArrayList<>();
+            final List<String> failedLocalGroupIds = new ArrayList<>(); // 记录处理失败的本地group ID
 
-                        ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
-                        query.whereEqualTo("uuid", localTaskGroup.id);
-                        query.whereEqualTo("user", user); // 确保只查找当前用户的对象
+            try {
+                String currentUserId = user.getObjectId();
+                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser(currentUserId);
 
-                        try {
-                            ParseObject cloudTaskGroup = query.getFirst(); // 尝试获取已存在的对象
-
-                            // 如果对象已存在于云端，则更新它
-                            // 将 localTaskGroup 的属性设置到 cloudTaskGroup
-                            cloudTaskGroup.put("title", localTaskGroup.title != null ? localTaskGroup.title : "");
-                            cloudTaskGroup.put("category", localTaskGroup.category != null ? localTaskGroup.category : "其他");
-                            cloudTaskGroup.put("estimatedDays", localTaskGroup.estimatedDays);
-                            cloudTaskGroup.put("subTaskIds", localTaskGroup.subTaskIds != null ? localTaskGroup.subTaskIds : new ArrayList<String>());
-                            cloudTaskGroup.put("deleted", localTaskGroup.deleted);
-                            // ownerId 和 user 应该在创建时已设定，通常不需要在此更新，除非逻辑允许
-                            // ACL 权限也应该在对象创建时设置，按需更新
-
-                            cloudTaskGroup.saveInBackground(e -> {
-                                if (e == null) {
-                                    Log.d(TAG, "成功更新云端TaskGroup: id=" + localTaskGroup.id);
-                                } else {
-                                    Log.e(TAG, "更新云端TaskGroup失败: id=" + localTaskGroup.id + ", 错误: " + e.getMessage(), e);
-                                }
-                            });
-
-                        } catch (ParseException e) {
-                            if (e.getCode() == ParseException.OBJECT_NOT_FOUND) {
-                                // 对象在云端不存在，创建新对象
-                                ParseObject newCloudTaskGroup = toParseTaskGroup(localTaskGroup);
-                                newCloudTaskGroup.saveInBackground(saveException -> {
-                                    if (saveException == null) {
-                                        Log.d(TAG, "成功上传新TaskGroup到云端: id=" + localTaskGroup.id);
-                                    } else {
-                                        Log.e(TAG, "上传新TaskGroup失败: id=" + localTaskGroup.id + ", 错误: " + saveException.getMessage(), saveException);
-                                    }
-                                });
-                            } else {
-                                // 其他查询错误
-                                Log.e(TAG, "查询云端TaskGroup失败: id=" + localTaskGroup.id + ", 错误: " + e.getMessage(), e);
-                            }
-                        }
-                    }
-                    // ... (success/failure counts and broadcast) ...
-                } catch (Exception e) {
-                    Log.e(TAG, "TaskGroup上传过程异常: " + e.getMessage(), e);
+                if (localTaskGroups == null || localTaskGroups.isEmpty()) {
+                    Log.d(TAG, "TaskGroup 推送：本地无当前用户的待办集，跳过上传。");
+                    sendSyncCompletedBroadcast(applicationContext, "task_group", 0, 0, null);
+                    return;
                 }
-            }).start();
+
+                Log.d(TAG, "TaskGroup 推送：准备处理 " + localTaskGroups.size() + " 个本地待办集。");
+
+                // 使用 CountDownLatch 等待所有异步查询完成
+                final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(localTaskGroups.size());
+
+                for (TaskGroup localTaskGroup : localTaskGroups) {
+                    if (localTaskGroup == null || localTaskGroup.id == null) {
+                        Log.w(TAG, "TaskGroup 推送：本地待办集为空或其ID (uuid) 为空，标记为失败。");
+                        synchronized (failedLocalGroupIds) {
+                            failedLocalGroupIds.add("null_or_empty_id");
+                        }
+                        latch.countDown();
+                        continue;
+                    }
+
+                    ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
+                    query.whereEqualTo("uuid", localTaskGroup.id);
+                    query.whereEqualTo("user", user);
+
+                    final TaskGroup currentLocalGroup = localTaskGroup; // effectively final for lambda
+
+                    query.getFirstInBackground((cloudTaskGroup, e) -> {
+                        try {
+                            if (e == null && cloudTaskGroup != null) { // 对象已存在于云端
+                                Log.d(TAG, "TaskGroup 推送：云端已存在 uuid: " + currentLocalGroup.id + " 的待办集。");
+                                long localUpdatedAt = currentLocalGroup.updatedAt;
+                                long cloudClientUpdatedAt = cloudTaskGroup.has("clientUpdatedAt") ? cloudTaskGroup.getLong("clientUpdatedAt") : 0;
+
+                                if (localUpdatedAt > cloudClientUpdatedAt) {
+                                    Log.d(TAG, "TaskGroup 推送：本地版本较新 (本地 updatedAt: " + localUpdatedAt + ", 云端 clientUpdatedAt: " + cloudClientUpdatedAt + ")，准备更新云端对象: " + currentLocalGroup.id);
+                                    // 更新 cloudTaskGroup 的属性
+//                                    updateParseObjectFromLocalTaskGroup(cloudTaskGroup, currentLocalGroup); // 确保此方法也更新 clientUpdatedAt
+                                    cloudTaskGroup.put("clientUpdatedAt", localUpdatedAt); // 显式更新云端的 clientUpdatedAt
+                                    synchronized (objectsToProcessInCloud) {
+                                        objectsToProcessInCloud.add(cloudTaskGroup);
+                                    }
+                                    synchronized (processedLocalGroupIds) {
+                                        processedLocalGroupIds.add(currentLocalGroup.id);
+                                    }
+                                } else {
+                                    Log.d(TAG, "TaskGroup 推送：本地版本不比云端新或相同，跳过推送: " + currentLocalGroup.id);
+                                    synchronized (processedLocalGroupIds) { // 也算作已处理
+                                        processedLocalGroupIds.add(currentLocalGroup.id);
+                                    }
+                                }
+                            } else if (e != null && e.getCode() == ParseException.OBJECT_NOT_FOUND) { // 对象在云端不存在
+                                Log.d(TAG, "TaskGroup 推送：云端不存在 uuid: " + currentLocalGroup.id + " 的待办集，准备创建新对象。");
+                                ParseObject newCloudTaskGroup = toParseTaskGroup(currentLocalGroup); // toParseTaskGroup 内部应设置 user, ACL, 和 clientUpdatedAt
+                                if (newCloudTaskGroup != null) {
+                                    // clientUpdatedAt 应该在 toParseTaskGroup 中根据 localTaskGroup.updatedAt 设置
+                                    synchronized (objectsToProcessInCloud) {
+                                        objectsToProcessInCloud.add(newCloudTaskGroup);
+                                    }
+                                    synchronized (processedLocalGroupIds) {
+                                        processedLocalGroupIds.add(currentLocalGroup.id);
+                                    }
+                                } else {
+                                    Log.e(TAG, "TaskGroup 推送：toParseTaskGroup(localTaskGroup) 返回 null for uuid: " + currentLocalGroup.id);
+                                    synchronized (failedLocalGroupIds) {
+                                        failedLocalGroupIds.add(currentLocalGroup.id);
+                                    }
+                                }
+                            } else { // 其他查询错误
+                                Log.e(TAG, "TaskGroup 推送：查询云端对象失败 for uuid: " + currentLocalGroup.id + ", 错误: " + (e != null ? e.getMessage() : "未知查询错误"), e);
+                                synchronized (failedLocalGroupIds) {
+                                    failedLocalGroupIds.add(currentLocalGroup.id);
+                                }
+                            }
+                        } finally {
+                            latch.countDown(); // 确保 latch 总是被递减
+                        }
+                    });
+                }
+
+                // 等待所有 getFirstInBackground 操作完成
+                try {
+                    latch.await(60, java.util.concurrent.TimeUnit.SECONDS); // 设置一个超时时间，防止无限等待
+                    Log.d(TAG, "TaskGroup 推送：所有查询操作已完成或超时。");
+                } catch (InterruptedException interruptedException) {
+                    Log.e(TAG, "TaskGroup 推送：等待查询操作完成时被中断。", interruptedException);
+                    Thread.currentThread().interrupt(); // 重新设置中断状态
+                    sendSyncCompletedBroadcast(applicationContext, "task_group", 0, localTaskGroups.size(), "同步被中断");
+                    return;
+                }
+
+                // 现在 objectsToProcessInCloud 包含了所有需要创建或更新的 ParseObject
+                if (!objectsToProcessInCloud.isEmpty()) {
+                    Log.d(TAG, "TaskGroup 推送：开始批量保存/更新 " + objectsToProcessInCloud.size() + " 个待办集到云端。");
+                    ParseObject.saveAllInBackground(objectsToProcessInCloud, e -> {
+                        if (e == null) {
+                            Log.d(TAG, "TaskGroup 推送：批量保存/更新成功 " + objectsToProcessInCloud.size() + " 个待办集。");
+                            sendSyncCompletedBroadcast(applicationContext, "task_group", objectsToProcessInCloud.size(), failedLocalGroupIds.size(), null);
+                        } else {
+                            Log.e(TAG, "TaskGroup 推送：批量保存/更新到云端失败: " + e.getMessage(), e);
+                            // 失败时，objectsToProcessInCloud 中的对象可能部分成功部分失败，或者全部失败
+                            // ParseException for saveAll can be a list. For simplicity, count all as failed on any error.
+                            sendSyncCompletedBroadcast(applicationContext, "task_group", 0, processedLocalGroupIds.size() + failedLocalGroupIds.size(), "批量上传待办集失败: " + e.getMessage());
+                        }
+                    });
+                } else if (!failedLocalGroupIds.isEmpty() || !processedLocalGroupIds.isEmpty()) {
+                    // 没有对象需要保存，但之前有查询失败或成功跳过的
+                    Log.d(TAG, "TaskGroup 推送：没有新的待办集需要上传或更新到云端。已处理: " + processedLocalGroupIds.size() + ", 查询/创建失败: " + failedLocalGroupIds.size());
+                    sendSyncCompletedBroadcast(applicationContext, "task_group", processedLocalGroupIds.size() - failedLocalGroupIds.size(), failedLocalGroupIds.size(), null);
+                } else {
+                    Log.d(TAG, "TaskGroup 推送：没有本地待办集需要处理。");
+                    sendSyncCompletedBroadcast(applicationContext, "task_group", 0, 0, null);
+                }
+
+            } catch (Exception e) { // 捕获整个线程中的其他未知异常
+                Log.e(TAG, "TaskGroup 推送：上传过程发生未知异常: " + e.getMessage(), e);
+                // successCount 和 failureCount 在这里不准确，发送一个通用失败消息
+//                sendSyncCompletedBroadcast(applicationContext, "task_group", 0, (localTaskGroups != null ? localTaskGroups.size() : 0) , "同步过程中发生严重错误: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private static void sendSyncCompletedBroadcast(Context context, String syncType, int successCount, int failureCount, String errorMessage) {
+        try {
+            Intent intent = new Intent(ACTION_SYNC_COMPLETED);
+            intent.setPackage(context.getPackageName()); // 确保广播是应用内广播，更安全
+            intent.putExtra(EXTRA_SYNC_TYPE, syncType);
+            intent.putExtra(EXTRA_SUCCESS_COUNT, successCount);
+            intent.putExtra(EXTRA_FAILURE_COUNT, failureCount);
+            if (errorMessage != null) {
+                intent.putExtra(EXTRA_SYNC_ERROR_MESSAGE, errorMessage);
+            }
+            context.sendBroadcast(intent);
+            Log.d(TAG, "发送同步完成广播: 类型=" + syncType + ", 成功=" + successCount + ", 失败=" + failureCount + (errorMessage != null ? ", 错误=" + errorMessage : ""));
         } catch (Exception e) {
-            Log.e(TAG, "启动TaskGroup上传失败: " + e.getMessage(), e);
+            Log.e(TAG, "发送同步完成广播失败: " + e.getMessage(), e);
+        }
+    }
+
+    private static void sendSyncFailedBroadcast(Context context, String syncType, String reason) {
+        try {
+            Intent intent = new Intent("com.example.todolist.ACTION_SYNC_FAILED"); // 可以定义一个新的Action表示同步启动失败
+            intent.setPackage(context.getPackageName());
+            intent.putExtra(EXTRA_SYNC_TYPE, syncType);
+            intent.putExtra("reason", reason); // 例如 "network_unavailable", "user_not_logged_in"
+            context.sendBroadcast(intent);
+            Log.w(TAG, "发送同步失败广播: 类型=" + syncType + ", 原因=" + reason);
+        } catch (Exception e) {
+            Log.e(TAG, "发送同步失败广播失败: " + e.getMessage(), e);
         }
     }
 
@@ -616,7 +735,7 @@ public class SyncWorker extends Worker {
 
             // 创建查询并设置策略
             ParseQuery<ParseObject> query = ParseQuery.getQuery("TaskGroup");
-            query.whereEqualTo("user", ParseUser.getCurrentUser());
+//            query.whereEqualTo("user", ParseUser.getCurrentUser());
 
             final TaskGroupDao finalTaskGroupDao = taskGroupDao;
             new Thread(() -> {
@@ -679,9 +798,9 @@ public class SyncWorker extends Worker {
                                 Log.d(TAG, "本地不存在TaskGroup " + cloudTaskGroup.id + "，从云端导入");
                                 finalTaskGroupDao.insertTaskGroup(cloudTaskGroup);
                                 updatedCount++;
-                            } else if (cloudTaskGroup.createdAt > localTaskGroup.createdAt) {
-                                // 通常情况下不会出现，但如有两个人同时创建同UUID的TaskGroup，会以晚创建的为准
-                                Log.d(TAG, "云端TaskGroup " + cloudTaskGroup.id + " 创建时间晚于本地，更新");
+                            } else if (cloudTaskGroup.updatedAt > localTaskGroup.updatedAt) {
+                                // 通常情况下不会出现，但如有两个人同时创建同UUID的TaskGroup，会以晚更新的为准
+                                Log.d(TAG, "云端TaskGroup " + cloudTaskGroup.id + " 更新时间晚于本地，更新");
                                 finalTaskGroupDao.insertTaskGroup(cloudTaskGroup);
                                 updatedCount++;
                             } else {

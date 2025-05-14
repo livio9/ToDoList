@@ -13,6 +13,9 @@ public interface TaskDao {
     // 修改：获取特定用户的所有任务
     @Query("SELECT * FROM todos WHERE userId = :userId")
     List<Todo> getAllTasksForUser(String userId);
+    // 获取所有任务
+    @Query("SELECT * FROM todos")
+    List<Todo> getAllTasks();
 
     // 修改：获取特定用户所有可见（未删除且不属于任务组）的任务
     @Query("SELECT * FROM todos WHERE deleted = 0 AND belongsToTaskGroup = 0 AND userId = :userId")

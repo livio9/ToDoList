@@ -16,6 +16,7 @@ public interface TaskGroupDao {
     @Query("SELECT * FROM taskgroups WHERE deleted = 0 AND userId = :userId ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroupsForUser(String userId);
 
+
     // Get a specific non-deleted task group by ID, ensuring it belongs to the user
     @Query("SELECT * FROM taskgroups WHERE id = :groupId AND deleted = 0 AND userId = :userId")
     TaskGroup getTaskGroupByIdForUser(String groupId, String userId);

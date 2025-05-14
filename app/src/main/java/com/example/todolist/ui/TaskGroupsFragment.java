@@ -127,7 +127,7 @@ public class TaskGroupsFragment extends Fragment {
         loadTaskGroups();
     }
     
-    private void loadTaskGroups() {
+    void loadTaskGroups() {
         try {
             String currentUserId = CurrentUserUtil.getCurrentUserId();
 

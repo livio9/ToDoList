@@ -40,6 +40,7 @@ import android.view.View;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
@@ -275,6 +276,66 @@ public class MainActivity extends BaseActivity {
                     Toast.makeText(MainActivity.this, 
                             "恭喜完成任务！获得 " + points + " 积分", 
                             Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    };
+    private BroadcastReceiver syncStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (SyncWorker.ACTION_SYNC_COMPLETED.equals(action)) {
+                String syncType = intent.getStringExtra(SyncWorker.EXTRA_SYNC_TYPE);
+                int successCount = intent.getIntExtra(SyncWorker.EXTRA_SUCCESS_COUNT, 0);
+                int failureCount = intent.getIntExtra(SyncWorker.EXTRA_FAILURE_COUNT, 0);
+                String errorMessage = intent.getStringExtra(SyncWorker.EXTRA_SYNC_ERROR_MESSAGE);
+
+                Log.d("MainActivity_SyncLog", "接收到同步完成广播: 类型=" + syncType + ", 成功=" + successCount + ", 失败=" + failureCount);
+
+                // 根据 syncType 判断是哪个同步完成了，然后刷新对应的列表
+                if ("todo".equals(syncType)) {
+                    // 刷新 Todo 列表的逻辑
+                    if (tasksFragment != null && tasksFragment.isAdded()) {
+                        tasksFragment.loadTasks(); // 假设 TasksFragment 有一个公共的刷新方法
+                    }
+                } else if ("task_group".equals(syncType)) {
+                    // 刷新 TaskGroup 列表的逻辑
+                    if (taskGroupsFragment != null && taskGroupsFragment.isAdded()) {
+                        taskGroupsFragment.loadTaskGroups(); // 假设 TaskGroupsFragment 有一个公共的刷新方法
+                    }
+                }
+
+                // 可以给用户一个提示
+                String message;
+                if (failureCount > 0) {
+                    message = String.format(Locale.getDefault(), "%s同步部分失败: %d 成功, %d 失败. %s",
+                            "待办事项".equals(syncType) ? "任务" : "待办集",
+                            successCount,
+                            failureCount,
+                            errorMessage != null ? errorMessage : "");
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                } else if (successCount > 0) {
+                    // message = String.format(Locale.getDefault(), "%s数据已同步 (%d 项)",
+                    //        "待办事项".equals(syncType) ? "任务" : "待办集",
+                    //        successCount);
+                    // Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                    // 成功的提示可以更柔和或不提示，避免过多打扰
+                } else {
+                    // 没有成功也没有失败，可能是没有数据需要同步
+                    Log.d("MainActivity_SyncLog", syncType + " 同步完成，没有数据更新。");
+                }
+
+            } else if ("com.example.todolist.ACTION_SYNC_FAILED".equals(action)) {
+                String syncType = intent.getStringExtra(SyncWorker.EXTRA_SYNC_TYPE);
+                String reason = intent.getStringExtra("reason");
+                Log.w("MainActivity_SyncLog", "接收到同步失败广播: 类型=" + syncType + ", 原因=" + reason);
+                String typeName = "待办事项".equals(syncType) ? "任务" : "待办集";
+                if ("network_unavailable".equals(reason)) {
+                    Toast.makeText(context, typeName + "同步失败：网络不可用", Toast.LENGTH_LONG).show();
+                } else if ("user_not_logged_in".equals(reason)) {
+                    // 通常不会到这里，因为 SyncWorker 会先检查
+                } else {
+                    Toast.makeText(context, typeName + "同步失败，请稍后重试", Toast.LENGTH_LONG).show();
                 }
             }
         }

@@ -11,11 +11,11 @@ import java.util.List;
 @Dao
 public interface TaskDao {
     // 获取特定用户的所有任务
-    @Query("SELECT * FROM todos")
+    @Query("SELECT * FROM todos WHERE deleted = 0")
     List<Todo> getAllTasksForUser();
 
     // 获取所有任务
-    @Query("SELECT * FROM todos")
+    @Query("SELECT * FROM todos WHERE deleted = 0")
     List<Todo> getAllTasks();
 
     // 获取特定用户所有可见（未删除且不属于任务组）的任务
@@ -23,7 +23,7 @@ public interface TaskDao {
     List<Todo> getVisibleTasksForUser();
 
     // 根据uuid和用户ID查询单个任务
-    @Query("SELECT * FROM todos WHERE uuid = :taskId")
+    @Query("SELECT * FROM todos WHERE uuid = :taskId AND deleted = 0")
     Todo getTodoByIdForUser(String taskId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -40,11 +40,11 @@ public interface TaskDao {
     void deleteAllTasksForUser(String userId);
 
     // 保持一个通用的 deleteAll (如果确实需要在某些场景下清除所有数据)
-    @Query("DELETE FROM todos")
+    @Query("DELETE FROM todos WHERE deleted = 0")
     int deleteAll();
 
     // 软删除特定用户的任务
-    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId")
+    @Query("UPDATE todos SET deleted = 1, updatedAt = :timestamp WHERE uuid = :taskId AND deleted = 0")
     void logicalDeleteTodoForUser(String taskId, long timestamp);
 
     // 重载方法，使用当前时间戳
@@ -54,4 +54,7 @@ public interface TaskDao {
 
     @Query("SELECT * FROM todos")
     List<Todo> getAllUnfiltered(); // 用于同步等内部操作，不直接展示给UI
+
+    @Query("SELECT * FROM todos")
+    List<Todo> getAllTodosIncludingDeleted();
 }

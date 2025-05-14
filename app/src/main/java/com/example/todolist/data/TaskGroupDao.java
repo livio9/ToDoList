@@ -33,10 +33,14 @@ public interface TaskGroupDao {
     void deleteTaskGroup(TaskGroup taskGroup);
 
     // 删除所有任务组（用于本地清空）
-    @Query("DELETE FROM taskgroups")
+    @Query("DELETE FROM taskgroups WHERE deleted = 0")
     int deleteAllTaskGroupsUnfiltered();
 
     // 获取所有任务组（不区分用户，内部同步用）
     @Query("SELECT * FROM taskgroups ORDER BY createdAt DESC")
     List<TaskGroup> getAllTaskGroupsUnfiltered();
+
+    // 获取所有任务组（包括已软删除）
+    @Query("SELECT * FROM taskgroups")
+    List<TaskGroup> getAllTaskGroupsIncludingDeleted();
 }

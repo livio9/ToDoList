@@ -30,6 +30,8 @@ public class Todo implements Serializable {
     @NonNull
     public String userId; // 新增：用于关联 ParseUser的objectId
 
+    public String objectId = null; // 新增：Parse云端objectId
+
     // 默认构造函数（Room 和 Firestore 映射需要）
     public Todo() { this.userId = ""; }
 

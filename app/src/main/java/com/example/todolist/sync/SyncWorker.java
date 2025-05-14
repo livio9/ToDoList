@@ -49,6 +49,7 @@ public class SyncWorker extends Worker {
 
             Todo todo = new Todo();
             todo.uuid = o.getString("uuid");
+            todo.objectId = o.getObjectId();
 
             // 确保UUID不为空
             if (todo.uuid == null) {
@@ -96,7 +97,12 @@ public class SyncWorker extends Worker {
     }
 
     private static ParseObject toParse(Todo t) {
-        ParseObject o = new ParseObject("Todo");
+        ParseObject o;
+        if (t.objectId != null) {
+            o = ParseObject.createWithoutData("Todo", t.objectId);
+        } else {
+            o = new ParseObject("Todo");
+        }
 
         // 确保必要字段不为空
         o.put("uuid", t.uuid);
@@ -141,6 +147,7 @@ public class SyncWorker extends Worker {
 
             TaskGroup taskGroup = new TaskGroup();
             taskGroup.uuid = o.getString("uuid");
+            taskGroup.objectId = o.getObjectId();
 
             // 确保必要字段不为null
             if (taskGroup.uuid == null) {
@@ -189,7 +196,12 @@ public class SyncWorker extends Worker {
     }
 
     private static ParseObject toParseTaskGroup(TaskGroup taskGroup) {
-        ParseObject o = new ParseObject("TaskGroup");
+        ParseObject o;
+        if (taskGroup.objectId != null) {
+            o = ParseObject.createWithoutData("TaskGroup", taskGroup.objectId);
+        } else {
+            o = new ParseObject("TaskGroup");
+        }
 
         // 确保必要字段不为空
         o.put("uuid", taskGroup.uuid);
@@ -379,7 +391,7 @@ public class SyncWorker extends Worker {
                 try {
                     String currentUserId = user.getObjectId();
                     // 获取所有本地任务
-                    List<Todo> localTasks = taskDao.getAllTasksForUser();
+                    List<Todo> localTasks = taskDao.getAllTodosIncludingDeleted();
                     if (localTasks == null || localTasks.isEmpty()) {
                         Log.d(TAG, "本地无任务，跳过上传");
                         return;
@@ -397,32 +409,21 @@ public class SyncWorker extends Worker {
                         }
 
                         ParseQuery<ParseObject> query = ParseQuery.getQuery("Todo");
-                        query.whereEqualTo("uuid", localTodo.uuid); // 使用自定义的唯一ID (uuid) 进行查询
-                        query.whereEqualTo("user", user);       // 确保是当前用户的对象
+                        query.whereEqualTo("uuid", localTodo.uuid);
+                        query.whereEqualTo("user", user);
 
                         try {
-                            // 尝试获取云端是否已存在该 uuid 的对象
-                            ParseObject cloudParseObject = query.getFirst(); // getFirst会抛出OBJECT_NOT_FOUND异常
-
-                            // 如果执行到这里，说明云端存在该对象，进行更新逻辑
-                            Log.d(TAG, "Todo 同步：云端已存在 uuid: " + localTodo.uuid + " 的任务，准备比较时间戳并可能更新。");
-
+                            ParseObject cloudParseObject = query.getFirst();
                             long localUpdatedAt = localTodo.updatedAt;
                             long cloudClientUpdatedAt = cloudParseObject.has("clientUpdatedAt") ? cloudParseObject.getLong("clientUpdatedAt") : 0;
-                            // Date cloudServerUpdatedAt = cloudParseObject.getUpdatedAt(); // 这是服务器的更新时间
-
-                            // 冲突解决：如果本地更新时间 > 云端更新时间，才推送更新
-                            // (或者根据您的策略，例如总是以本地为准，或者更复杂的合并)
-                            if (localUpdatedAt > cloudClientUpdatedAt) {
-                                Log.d(TAG, "Todo 同步：本地版本较新 (本地: " + localUpdatedAt + ", 云端: " + cloudClientUpdatedAt + ")，更新云端对象: " + localTodo.uuid);
-                                // 将 localTodo 的属性更新到 cloudParseObject 上
-                                // 注意：不能直接用 toParse(localTodo) 返回的新实例，必须在 cloudParseObject 上修改
+                            // 只要本地 deleted=true，强制推送到云端
+                            if (localTodo.deleted || localUpdatedAt > cloudClientUpdatedAt) {
                                 cloudParseObject.put("title", localTodo.title != null ? localTodo.title : "");
                                 cloudParseObject.put("time", localTodo.time);
                                 cloudParseObject.put("place", localTodo.place != null ? localTodo.place : "");
                                 cloudParseObject.put("category", localTodo.category != null ? localTodo.category : "其他");
                                 cloudParseObject.put("completed", localTodo.completed);
-                                cloudParseObject.put("clientUpdatedAt", localTodo.updatedAt); // 更新云端的 clientUpdatedAt
+                                cloudParseObject.put("clientUpdatedAt", localTodo.updatedAt);
                                 cloudParseObject.put("deleted", localTodo.deleted);
                                 cloudParseObject.put("belongsToTaskGroup", localTodo.belongsToTaskGroup);
                                 cloudParseObject.put("priority", localTodo.priority != null ? localTodo.priority : "中");
@@ -430,38 +431,14 @@ public class SyncWorker extends Worker {
                                 cloudParseObject.put("points", localTodo.points);
                                 cloudParseObject.put("pomodoroMinutes", localTodo.pomodoroMinutes);
                                 cloudParseObject.put("pomodoroCompletedCount", localTodo.pomodoroCompletedCount);
-                                // user 和 ACL 通常在创建时设定，更新时一般不需要改，除非有特殊需求
-
-                                cloudParseObject.saveInBackground(e -> {
-                                    if (e == null) {
-                                        Log.d(TAG, "Todo 同步：成功更新云端对象: " + localTodo.uuid);
-                                    } else {
-                                        Log.e(TAG, "Todo 同步：更新云端对象失败: " + localTodo.uuid + ", 错误: " + e.getMessage(), e);
-                                    }
-                                });
-                            } else {
-                                Log.d(TAG, "Todo 同步：本地版本不比云端新 (本地: " + localUpdatedAt + ", 云端: " + cloudClientUpdatedAt + ")，跳过推送: " + localTodo.uuid);
+                                cloudParseObject.saveInBackground();
                             }
-
                         } catch (ParseException e) {
                             if (e.getCode() == ParseException.OBJECT_NOT_FOUND) {
-                                // 云端不存在该 uuid 的对象，创建新对象
-                                Log.d(TAG, "Todo 同步：云端不存在 uuid: " + localTodo.uuid + " 的任务，创建新对象。");
-                                ParseObject newCloudParseObject = toParse(localTodo); // toParse 应该包含设置 user 和 ACL
-                                if (newCloudParseObject != null) { // 确保 toParse 成功
-                                    newCloudParseObject.saveInBackground(saveException -> {
-                                        if (saveException == null) {
-                                            Log.d(TAG, "Todo 同步：成功上传新对象到云端: " + localTodo.uuid + "，新 objectId: " + newCloudParseObject.getObjectId());
-                                        } else {
-                                            Log.e(TAG, "Todo 同步：上传新对象失败: " + localTodo.uuid + ", 错误: " + saveException.getMessage(), saveException);
-                                        }
-                                    });
-                                } else {
-                                    Log.e(TAG, "Todo 同步：toParse(localTodo) 返回 null，无法创建新对象 for uuid: " + localTodo.uuid);
+                                ParseObject newCloudParseObject = toParse(localTodo);
+                                if (newCloudParseObject != null) {
+                                    newCloudParseObject.saveInBackground();
                                 }
-                            } else {
-                                // 其他查询错误
-                                Log.e(TAG, "Todo 同步：查询云端对象失败 for uuid: " + localTodo.uuid + ", 错误: " + e.getMessage(), e);
                             }
                         }
                     }
@@ -556,7 +533,7 @@ public class SyncWorker extends Worker {
 
             try {
                 String currentUserId = user.getObjectId();
-                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsForUser();
+                List<TaskGroup> localTaskGroups = taskGroupDao.getAllTaskGroupsIncludingDeleted();
                 if (localTaskGroups == null || localTaskGroups.isEmpty()) {
                     Log.d(TAG, "TaskGroup 推送：本地无当前用户的待办集，跳过上传。");
                     sendSyncCompletedBroadcast(applicationContext, "task_group", 0, 0, null);
@@ -590,12 +567,18 @@ public class SyncWorker extends Worker {
                                 Log.d(TAG, "TaskGroup 推送：云端已存在 uuid: " + currentLocalGroup.uuid + " 的待办集。");
                                 long localUpdatedAt = currentLocalGroup.updatedAt;
                                 long cloudClientUpdatedAt = cloudTaskGroup.has("clientUpdatedAt") ? cloudTaskGroup.getLong("clientUpdatedAt") : 0;
-
-                                if (localUpdatedAt > cloudClientUpdatedAt) {
+                                // 只要本地 deleted=true，强制推送到云端
+                                if (currentLocalGroup.deleted || localUpdatedAt > cloudClientUpdatedAt) {
                                     Log.d(TAG, "TaskGroup 推送：本地版本较新 (本地 updatedAt: " + localUpdatedAt + ", 云端 clientUpdatedAt: " + cloudClientUpdatedAt + ")，准备更新云端对象: " + currentLocalGroup.uuid);
-                                    // 更新 cloudTaskGroup 的属性
-//                                    updateParseObjectFromLocalTaskGroup(cloudTaskGroup, currentLocalGroup); // 确保此方法也更新 clientUpdatedAt
-                                    cloudTaskGroup.put("clientUpdatedAt", localUpdatedAt); // 显式更新云端的 clientUpdatedAt
+                                    cloudTaskGroup.put("title", currentLocalGroup.title != null ? currentLocalGroup.title : "");
+                                    cloudTaskGroup.put("category", currentLocalGroup.category != null ? currentLocalGroup.category : "其他");
+                                    cloudTaskGroup.put("estimatedDays", currentLocalGroup.estimatedDays);
+                                    cloudTaskGroup.put("subTaskIds", currentLocalGroup.subTaskIds != null ? currentLocalGroup.subTaskIds : new ArrayList<String>());
+                                    cloudTaskGroup.put("deleted", currentLocalGroup.deleted);
+                                    cloudTaskGroup.put("clientUpdatedAt", currentLocalGroup.updatedAt);
+                                    if (currentLocalGroup.userId != null) {
+                                        cloudTaskGroup.put("ownerId", currentLocalGroup.userId);
+                                    }
                                     synchronized (objectsToProcessInCloud) {
                                         objectsToProcessInCloud.add(cloudTaskGroup);
                                     }
@@ -612,7 +595,6 @@ public class SyncWorker extends Worker {
                                 Log.d(TAG, "TaskGroup 推送：云端不存在 uuid: " + currentLocalGroup.uuid + " 的待办集，准备创建新对象。");
                                 ParseObject newCloudTaskGroup = toParseTaskGroup(currentLocalGroup); // toParseTaskGroup 内部应设置 user, ACL, 和 clientUpdatedAt
                                 if (newCloudTaskGroup != null) {
-                                    // clientUpdatedAt 应该在 toParseTaskGroup 中根据 localTaskGroup.updatedAt 设置
                                     synchronized (objectsToProcessInCloud) {
                                         objectsToProcessInCloud.add(newCloudTaskGroup);
                                     }

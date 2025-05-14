@@ -16,6 +16,7 @@ public class StatisticsActivity extends BaseActivity {
     private TextView textTotalTasks;
     private TextView textCompletedTasks;
     private TextView textPendingTasks;
+    private TextView textTotalPoints;
     private ProgressBar progressCompletionRate;
     private TextView textCompletionRate;
     private ProgressBar progressWork;
@@ -52,6 +53,7 @@ public class StatisticsActivity extends BaseActivity {
         textTotalTasks = findViewById(R.id.textTotalTasks);
         textCompletedTasks = findViewById(R.id.textCompletedTasks);
         textPendingTasks = findViewById(R.id.textPendingTasks);
+        textTotalPoints = findViewById(R.id.textTotalPoints);
         
         // 完成率相关视图
         progressCompletionRate = findViewById(R.id.progressCompletionRate);
@@ -82,6 +84,7 @@ public class StatisticsActivity extends BaseActivity {
             // 统计数据计算
             final int totalTasks = allTasks.size();
             int completedTasks = 0;
+            int totalPoints = 0;
             
             // 分类任务计数
             Map<String, Integer> categoryCounts = new HashMap<>();
@@ -94,6 +97,16 @@ public class StatisticsActivity extends BaseActivity {
                 // 计算已完成任务
                 if (task.completed) {
                     completedTasks++;
+                    // 统计积分
+                    if ("高".equals(task.priority)) {
+                        totalPoints += 3;
+                    } else if ("中".equals(task.priority)) {
+                        totalPoints += 2;
+                    } else if ("低".equals(task.priority)) {
+                        totalPoints += 1;
+                    } else {
+                        totalPoints += 2;
+                    }
                 }
                 
                 // 计算各分类任务数量
@@ -109,6 +122,7 @@ public class StatisticsActivity extends BaseActivity {
             // 计算未完成任务
             final int pendingTasks = totalTasks - completedTasks;
             final int completedTasksFinal = completedTasks;
+            final int finalTotalPoints = totalPoints;
             
             // 计算完成率
             final int completionRate = (totalTasks > 0) ? (completedTasksFinal * 100 / totalTasks) : 0;
@@ -129,6 +143,7 @@ public class StatisticsActivity extends BaseActivity {
                 textTotalTasks.setText(String.valueOf(totalTasks));
                 textCompletedTasks.setText(String.valueOf(completedTasksFinal));
                 textPendingTasks.setText(String.valueOf(pendingTasks));
+                textTotalPoints.setText(String.valueOf(finalTotalPoints));
                 
                 // 更新完成率
                 progressCompletionRate.setProgress(completionRate);
@@ -152,6 +167,7 @@ public class StatisticsActivity extends BaseActivity {
         textTotalTasks.setText("0");
         textCompletedTasks.setText("0");
         textPendingTasks.setText("0");
+        textTotalPoints.setText("0");
         
         // 完成率默认值
         progressCompletionRate.setProgress(0);

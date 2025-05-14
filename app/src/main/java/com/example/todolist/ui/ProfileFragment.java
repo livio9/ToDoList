@@ -676,13 +676,13 @@ public class ProfileFragment extends Fragment {
     
     private void loadTaskStatistics() {
         try {
-            // 统计所有已完成任务
+            // 统计所有已完成且未删除的任务
             String currentUserId = com.example.todolist.ui.CurrentUserUtil.getCurrentUserId();
-            List<Todo> allTasks = taskDao.getAllTasksForUser();
+            List<Todo> allTasks = taskDao.getAllUnfiltered();
             int completedCount = 0;
             int points = 0;
             for (Todo todo : allTasks) {
-                if (todo.completed) {
+                if (todo.completed && !todo.deleted && currentUserId.equals(todo.userId)) {
                     completedCount++;
                     // 按优先级计分
                     if ("高".equals(todo.priority)) {
@@ -691,6 +691,8 @@ public class ProfileFragment extends Fragment {
                         points += 2;
                     } else if ("低".equals(todo.priority)) {
                         points += 1;
+                    } else {
+                        points += 2; // 默认中
                     }
                 }
             }

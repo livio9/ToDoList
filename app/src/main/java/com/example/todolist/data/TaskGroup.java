@@ -27,6 +27,7 @@ public class TaskGroup implements Serializable {
     public long updatedAt;       // 更新时间
     public List<String> subTaskIds; // 子任务ID列表
     public boolean deleted;      // 是否已删除
+    public String objectId = null; // 新增：Parse云端objectId
 //    public String ownerId;       // 创建者objectId
 
     @NonNull

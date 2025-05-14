@@ -21,17 +21,21 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:alpha="0.67"
             android:src="@drawable/background_1"
             android:contentDescription="任务背景" />
 
-        <!-- 半透明遮罩+内容 -->
+        <!-- 黑色半透明蒙版 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#35000000" />
+
+        <!-- 内容 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="bottom"
-            android:background="#50000000"
             android:padding="18dp">
 
             <LinearLayout

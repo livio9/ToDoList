@@ -139,17 +139,6 @@
                     android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- 记住我复选框 -->
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/checkboxRememberMe"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="记住我"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"/>
-
             <!-- 登录按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonLogin"

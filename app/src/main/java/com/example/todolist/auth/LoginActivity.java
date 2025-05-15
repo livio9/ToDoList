@@ -8,7 +8,6 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -17,7 +16,6 @@ import com.example.todolist.sync.SyncWorker;
 import com.example.todolist.ui.BaseActivity;
 import com.example.todolist.ui.MainActivity;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.parse.ParseUser;
@@ -34,7 +32,6 @@ public class LoginActivity extends BaseActivity {
     private MaterialButton btnLogin;
     private MaterialButton btnRegister;
     private TextView txtForgotPassword;
-    private MaterialCheckBox checkboxRememberMe;
     private SessionManager sessionManager;
     private static final String TAG = "LoginActivity";
 
@@ -57,7 +54,6 @@ public class LoginActivity extends BaseActivity {
         btnLogin = findViewById(R.id.buttonLogin);
         btnRegister = findViewById(R.id.buttonRegister);
         txtForgotPassword = findViewById(R.id.textForgotPassword);
-        checkboxRememberMe = findViewById(R.id.checkboxRememberMe);
         
         // 设置点击事件
         btnLogin.setOnClickListener(v -> {
@@ -175,7 +171,6 @@ public class LoginActivity extends BaseActivity {
         try {
             String email = editEmail.getText().toString().trim();
             String password = editPassword.getText().toString().trim();
-            boolean rememberMe = checkboxRememberMe.isChecked();
             
             // 显示加载进度
             btnLogin.setEnabled(false);
@@ -204,7 +199,7 @@ public class LoginActivity extends BaseActivity {
                                         email, 
                                         password, 
                                         user.getSessionToken(), 
-                                        rememberMe
+                                        false // 记住我已移除，始终为false
                                     );
                                 } catch (Exception ex) {
                                     Log.e(TAG, "保存会话信息失败", ex);
@@ -272,7 +267,6 @@ public class LoginActivity extends BaseActivity {
         try {
             String email = editEmail.getText().toString().trim();
             String password = editPassword.getText().toString().trim();
-            boolean rememberMe = checkboxRememberMe.isChecked();
             
             // 显示加载进度
             btnRegister.setEnabled(false);
@@ -311,7 +305,7 @@ public class LoginActivity extends BaseActivity {
                                         email, 
                                         password, 
                                         loggedInUser.getSessionToken(), 
-                                        rememberMe
+                                        false // 记住我已移除，始终为false
                                     );
                                 }
                             } catch (Exception ex) {
